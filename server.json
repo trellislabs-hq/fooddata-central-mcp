@@ -1,0 +1,35 @@
+{
+  "name": "fooddata-central-mcp",
+  "version": "1.0.0",
+  "description": "MCP server wrapping the USDA FoodData Central API — search and retrieve food nutrition data",
+  "repository": "https://github.com/PLACEHOLDER/fooddata-central-mcp",
+  "homepage": "https://github.com/PLACEHOLDER/fooddata-central-mcp",
+  "author": "PLACEHOLDER",
+  "license": "MIT",
+  "runtime": "node",
+  "command": "fooddata-central-mcp",
+  "env": {
+    "FDC_API_KEY": {
+      "description": "USDA FoodData Central API key. Get a free key at https://fdc.nal.usda.gov/api-guide. Use DEMO_KEY for testing (30 req/hr limit).",
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "search_foods",
+      "description": "Search the USDA FoodData Central database by keyword or food name"
+    },
+    {
+      "name": "get_food",
+      "description": "Get full nutrient details for a single food by FDC ID"
+    },
+    {
+      "name": "get_foods",
+      "description": "Batch lookup of up to 20 foods by FDC ID"
+    },
+    {
+      "name": "list_foods",
+      "description": "Paginated browse of the FoodData Central catalog"
+    }
+  ]
+}

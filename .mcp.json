@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fooddata-central": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "FDC_API_KEY": "DEMO_KEY"
+      }
+    }
+  }
+}

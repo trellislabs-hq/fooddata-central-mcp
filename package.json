@@ -1,0 +1,46 @@
+{
+  "name": "fooddata-central-mcp",
+  "version": "1.0.0",
+  "description": "MCP server wrapping the USDA FoodData Central API — search and retrieve food nutrition data",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "fooddata-central-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "usda",
+    "fooddata",
+    "nutrition",
+    "food",
+    "model-context-protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "files": [
+    "dist/",
+    "server.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
