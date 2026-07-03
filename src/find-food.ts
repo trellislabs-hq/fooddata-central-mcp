@@ -25,7 +25,7 @@
 
 import type { FdcFood, FdcSearchParams, FdcSearchResult } from "./fdc-client.js";
 import { formatFoodSummary, formatKeyNutrients } from "./format.js";
-import { buildCandidateQueries } from "./normalize.js";
+import { buildCandidateQueries, normalize } from "./normalize.js";
 
 export type SearchFoodsFn = (params: FdcSearchParams) => Promise<FdcSearchResult>;
 
@@ -163,7 +163,7 @@ export async function findFood(
     }
   }
 
-  if (matchedQuery !== name.trim().toLowerCase() && matchedQuery !== name) {
+  if (matchedQuery !== name.trim().toLowerCase() && matchedQuery !== name && matchedQuery !== normalize(name)) {
     lines.push("");
     lines.push(`(Matched via normalized/alias query: "${matchedQuery}")`);
   }

@@ -303,17 +303,19 @@ export class FdcClient {
 
     if (response.status === 404 && requestedFormat === "full") {
       const fallbackResponse = await fetchOnce("abridged");
-      if (fallbackResponse.ok) {
-        const food = await this.handleResponse<FdcFood>(fallbackResponse);
-        return { food, usedFallback: true };
+      if (fallbackResponse.status === 404) {
+        // Both formats 404 — surface the original 404 with better guidance.
+        throw new FdcError(
+          404,
+          "Not Found",
+          `Food not found (HTTP 404) for FDC ID ${params.fdcId}, even after retrying with abridged format. ` +
+            `The ID may have been superseded or removed. Try re-running search_foods or find_food to get a current FDC ID.`
+        );
       }
-      // Both failed — surface the original full-format 404 with better guidance.
-      throw new FdcError(
-        404,
-        "Not Found",
-        `Food not found (HTTP 404) for FDC ID ${params.fdcId}, even after retrying with abridged format. ` +
-          `The ID may have been superseded or removed. Try re-running search_foods or find_food to get a current FDC ID.`
-      );
+      // Any other fallback outcome (200, 429, 5xx) goes through the normal funnel so
+      // a rate-limit or server error on the retry is never misreported as a 404.
+      const food = await this.handleResponse<FdcFood>(fallbackResponse);
+      return { food, usedFallback: true };
     }
 
     const food = await this.handleResponse<FdcFood>(response);
