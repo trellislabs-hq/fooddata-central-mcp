@@ -7,7 +7,9 @@
  * Major Sections:
  *   - Type definitions (API response shapes)
  *   - FdcError class
- *   - FdcClient class with four endpoint methods
+ *   - FdcClient class with five endpoint methods (search, get, batch get,
+ *     list) plus request hardening (timeout, 429 Retry-After, 404->abridged
+ *     fallback for getFood)
  *
  * Dependencies: Native fetch (Node 18+)
  * State: Stateless — no caching, no connection pooling
@@ -137,6 +139,8 @@ export class FdcError extends Error {
 export class FdcClient {
   private readonly baseUrl = "https://api.nal.usda.gov/fdc/v1";
   private readonly apiKey: string;
+  /** Fetch timeout for every FDC request (AbortController-driven). */
+  private readonly timeoutMs = 10_000;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -155,6 +159,50 @@ export class FdcClient {
       }
     }
     return url.toString();
+  }
+
+  /**
+   * fetch() wrapper enforcing a 10s timeout via AbortController, and
+   * retrying once on HTTP 429 honoring the Retry-After header (falls back to
+   * a fixed 1s wait if the header is absent or unparsable). Never retries
+   * more than once — a persistent 429 should surface to the caller.
+   */
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit = {},
+    attempt = 0
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    let response: Response;
+    try {
+      response = await fetch(url, { ...init, signal: controller.signal });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new FdcError(
+          0,
+          "Timeout",
+          `FDC API request timed out after ${this.timeoutMs / 1000}s.`
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (response.status === 429 && attempt === 0) {
+      const retryAfterHeader = response.headers.get("Retry-After");
+      const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+      const waitMs =
+        Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0
+          ? retryAfterSeconds * 1000
+          : 1000;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      return this.fetchWithTimeout(url, init, attempt + 1);
+    }
+
+    return response;
   }
 
   /**
@@ -209,7 +257,7 @@ export class FdcClient {
       ...(params.nutrients && { nutrients: params.nutrients }),
     };
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -220,22 +268,56 @@ export class FdcClient {
 
   /**
    * Get full details (including all nutrients) for a single food by FDC ID.
+   *
+   * Hardening: some Foundation records 404 on full-format detail even though
+   * the record exists and is searchable (observed for FDC IDs 328637 and
+   * 746767 — confirmed with both DEMO_KEY and a registered key; see
+   * tests/fixtures/README.md). When the caller requested (or defaulted to)
+   * "full" format and the request 404s, this method retries ONCE with
+   * format=abridged. `usedFallback` is set to true when that happened so
+   * callers can note it in output. If both requests 404, the original
+   * full-format error is thrown, with a message steering the caller to
+   * re-run search_foods/find_food (the ID may have been superseded).
    */
-  async getFood(params: FdcGetFoodParams): Promise<FdcFood> {
-    const queryParams: Record<string, string> = {};
-    if (params.format) queryParams["format"] = params.format;
-    const url = this.buildUrl(`/food/${params.fdcId}`, queryParams);
+  async getFood(
+    params: FdcGetFoodParams
+  ): Promise<{ food: FdcFood; usedFallback: boolean }> {
+    const requestedFormat = params.format ?? "full";
 
-    // FDC GET endpoint expects repeated query params for nutrients: ?nutrients=208&nutrients=203
-    const urlObj = new URL(url);
-    if (params.nutrients?.length) {
-      for (const n of params.nutrients) {
-        urlObj.searchParams.append("nutrients", String(n));
+    const fetchOnce = async (format: FdcFormat): Promise<Response> => {
+      const queryParams: Record<string, string> = { format };
+      const url = this.buildUrl(`/food/${params.fdcId}`, queryParams);
+
+      // FDC GET endpoint expects repeated query params for nutrients: ?nutrients=208&nutrients=203
+      const urlObj = new URL(url);
+      if (params.nutrients?.length) {
+        for (const n of params.nutrients) {
+          urlObj.searchParams.append("nutrients", String(n));
+        }
       }
+
+      return this.fetchWithTimeout(urlObj.toString());
+    };
+
+    const response = await fetchOnce(requestedFormat);
+
+    if (response.status === 404 && requestedFormat === "full") {
+      const fallbackResponse = await fetchOnce("abridged");
+      if (fallbackResponse.ok) {
+        const food = await this.handleResponse<FdcFood>(fallbackResponse);
+        return { food, usedFallback: true };
+      }
+      // Both failed — surface the original full-format 404 with better guidance.
+      throw new FdcError(
+        404,
+        "Not Found",
+        `Food not found (HTTP 404) for FDC ID ${params.fdcId}, even after retrying with abridged format. ` +
+          `The ID may have been superseded or removed. Try re-running search_foods or find_food to get a current FDC ID.`
+      );
     }
 
-    const response = await fetch(urlObj.toString());
-    return this.handleResponse<FdcFood>(response);
+    const food = await this.handleResponse<FdcFood>(response);
+    return { food, usedFallback: false };
   }
 
   /**
@@ -255,7 +337,7 @@ export class FdcClient {
       ...(params.nutrients?.length && { nutrients: params.nutrients }),
     };
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -286,7 +368,7 @@ export class FdcClient {
       ...(params.sortOrder && { sortOrder: params.sortOrder }),
     };
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

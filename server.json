@@ -1,10 +1,10 @@
 {
   "name": "fooddata-central-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server wrapping the USDA FoodData Central API — search and retrieve food nutrition data",
-  "repository": "https://github.com/PLACEHOLDER/fooddata-central-mcp",
-  "homepage": "https://github.com/PLACEHOLDER/fooddata-central-mcp",
-  "author": "PLACEHOLDER",
+  "repository": "https://github.com/trellislabs-hq/fooddata-central-mcp",
+  "homepage": "https://github.com/trellislabs-hq/fooddata-central-mcp",
+  "author": "Trellis Labs",
   "license": "MIT",
   "runtime": "node",
   "command": "fooddata-central-mcp",
@@ -30,6 +30,10 @@
     {
       "name": "list_foods",
       "description": "Paginated browse of the FoodData Central catalog"
+    },
+    {
+      "name": "find_food",
+      "description": "Find the best canonical match for a food name. Returns the top match with a key-nutrient summary plus up to 3 alternates, preferring Foundation and SR Legacy data over branded noise."
     }
   ]
 }

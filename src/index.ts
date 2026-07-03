@@ -6,14 +6,17 @@
  *
  * Major Sections:
  *   - Environment validation (FDC_API_KEY check)
- *   - Output formatters (LLM-readable text, not raw JSON dumps)
- *   - Tool registrations (search_foods, get_food, get_foods, list_foods)
+ *   - Query validation helper (empty/whitespace guard)
+ *   - Tool registrations (search_foods, get_food, get_foods, list_foods, find_food)
  *   - Transport connection (stdio)
  *
  * Dependencies:
  *   - @modelcontextprotocol/sdk ^1.29.0
  *   - zod ^3.24.0
  *   - ./fdc-client.ts (FdcClient, FdcError, types)
+ *   - ./format.ts (output formatters — extracted here from a prior version
+ *     of this file; text output for the four original tools is unchanged)
+ *   - ./find-food.ts (find_food's search/dedup/formatting pipeline)
  *
  * State: Stateless — each tool call is an independent HTTP request to FDC.
  *   API key is read once at startup and fails fast if missing.
@@ -22,7 +25,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { FdcClient, FdcError, type FdcFood, type FdcNutrient, type FdcListParams } from "./fdc-client.js";
+import { FdcClient, FdcError, type FdcListParams } from "./fdc-client.js";
+import { formatFoodSummary, formatFoodDetail, formatError } from "./format.js";
+import { findFood } from "./find-food.js";
 
 // ─── Environment Validation ──────────────────────────────────────────────────
 
@@ -39,177 +44,18 @@ if (!apiKey) {
 
 const client = new FdcClient(apiKey);
 
-// ─── Output Formatters ───────────────────────────────────────────────────────
+// ─── Query Validation ─────────────────────────────────────────────────────────
 
 /**
- * Normalize the three different nutrient object shapes the FDC API returns
- * into a consistent { name, number, unit, value } tuple.
- *
- * Shapes handled:
- *   1. Search results:  { nutrientId, nutrientName, unitName, value }
- *   2. Abridged format: { name, number, amount, unitName }  (flat)
- *   3. Full format:     { nutrient: { id, number, name, unitName }, amount }  (nested)
+ * Returns a user-readable error message if `query` is empty/whitespace-only,
+ * or null if the query is valid. Callers return this through the same
+ * isError/formatError contract used for FDC API errors — never throw.
  */
-function resolveNutrient(n: FdcNutrient): {
-  id: number | undefined;
-  name: string;
-  number: string;
-  unit: string;
-  value: number | undefined;
-} {
-  // Full format: nested nutrient sub-object
-  if (n.nutrient) {
-    return {
-      id: n.nutrient.id,
-      name: n.nutrient.name,
-      number: n.nutrient.number,
-      unit: n.nutrient.unitName,
-      value: n.amount,
-    };
+function validateQuery(query: string): string | null {
+  if (!query || query.trim().length === 0) {
+    return "Query must not be empty. Provide a food name or search term.";
   }
-  // Search result shape: nutrientId / nutrientName
-  if (n.nutrientId !== undefined || n.nutrientName !== undefined) {
-    return {
-      id: n.nutrientId,
-      name: n.nutrientName ?? "Unknown",
-      number: n.nutrientNumber ?? "",
-      unit: n.unitName ?? "",
-      value: n.value ?? n.amount,
-    };
-  }
-  // Abridged format: flat name/number/amount/unitName
-  return {
-    id: undefined,
-    name: n.name ?? "Unknown",
-    number: n.number ?? "",
-    unit: n.unitName ?? "",
-    value: n.amount ?? n.value,
-  };
-}
-
-/**
- * Extract key nutrients from a food's nutrient list.
- * Returns a readable string like "Energy: 402 KCAL | Protein: 24.9 G | ..."
- *
- * Priority nutrient numbers (USDA standard): 208=Energy, 203=Protein,
- * 204=Total Fat, 205=Carbs, 307=Sodium, 291=Fiber, 269=Sugars
- */
-function formatKeyNutrients(nutrients: FdcNutrient[] | undefined): string {
-  if (!nutrients || nutrients.length === 0) return "No nutrient data available";
-
-  // Key nutrient numbers we always want to surface (if present)
-  const priorityNumbers = new Set(["208", "203", "204", "205", "307", "291", "269"]);
-  const priorityIds = new Set([208, 203, 204, 205, 307, 291, 269]);
-  const priorityNames = new Set([
-    "Energy", "Protein", "Total lipid (fat)", "Carbohydrate, by difference",
-    "Sodium, Na", "Fiber, total dietary", "Sugars, Total"
-  ]);
-
-  const found: string[] = [];
-  const seen = new Set<string>();
-
-  for (const n of nutrients) {
-    const { id, name, number, unit, value } = resolveNutrient(n);
-    const isPriority =
-      priorityNumbers.has(number) ||
-      (id !== undefined && priorityIds.has(id)) ||
-      priorityNames.has(name);
-
-    // Deduplicate by nutrient number (or name if number unavailable)
-    const dedupeKey = number || name;
-    if (isPriority && value !== undefined && !seen.has(dedupeKey)) {
-      seen.add(dedupeKey);
-      const shortName = name
-        .replace(", by difference", "")
-        .replace(", total dietary", "");
-      found.push(`${shortName}: ${value} ${unit}`);
-    }
-  }
-
-  if (found.length === 0) {
-    // Fall back to first 5 nutrients if none match our priority list
-    const fallback = nutrients.slice(0, 5).map((n) => {
-      const { name, unit, value } = resolveNutrient(n);
-      return `${name}: ${value ?? "?"} ${unit}`;
-    });
-    return fallback.join(" | ") || "No nutrient data";
-  }
-
-  return found.join(" | ");
-}
-
-/**
- * Format a food item as a concise summary line for search/list results.
- * Keeps output scannable — one food per line.
- */
-function formatFoodSummary(food: FdcFood): string {
-  const parts = [
-    `FDC ID: ${food.fdcId}`,
-    `Name: ${food.description}`,
-    `Type: ${food.dataType ?? "Unknown"}`,
-  ];
-
-  if (food.brandOwner || food.brandName) {
-    parts.push(`Brand: ${food.brandName ?? food.brandOwner}`);
-  }
-
-  const nutrients = formatKeyNutrients(food.foodNutrients);
-  if (nutrients !== "No nutrient data available" && nutrients !== "No nutrient data") {
-    parts.push(`Nutrients: ${nutrients}`);
-  }
-
-  return parts.join(" | ");
-}
-
-/**
- * Format a single food's full nutrient breakdown for get_food / get_foods.
- * Groups nutrients into a readable block.
- */
-function formatFoodDetail(food: FdcFood): string {
-  const lines: string[] = [
-    `=== ${food.description} ===`,
-    `FDC ID: ${food.fdcId}`,
-    `Data Type: ${food.dataType ?? "Unknown"}`,
-  ];
-
-  if (food.brandOwner) lines.push(`Brand Owner: ${food.brandOwner}`);
-  if (food.brandName && food.brandName !== food.brandOwner) {
-    lines.push(`Brand Name: ${food.brandName}`);
-  }
-  if (food.servingSize && food.servingSizeUnit) {
-    lines.push(`Serving Size: ${food.servingSize} ${food.servingSizeUnit}`);
-  }
-
-  const nutrients = food.foodNutrients ?? [];
-  if (nutrients.length > 0) {
-    lines.push("");
-    lines.push("--- Nutrients ---");
-
-    for (const n of nutrients) {
-      const { name, unit, value } = resolveNutrient(n);
-      if (value !== undefined) {
-        lines.push(`  ${name}: ${value} ${unit}`);
-      }
-    }
-  } else {
-    lines.push("No nutrient data available.");
-  }
-
-  return lines.join("\n");
-}
-
-/**
- * Wrap any caught error into a user-readable string.
- * FdcError gets a specialized message; other errors get generic treatment.
- */
-function formatError(err: unknown): string {
-  if (err instanceof FdcError) {
-    return `FDC API Error (${err.statusCode}): ${err.message}`;
-  }
-  if (err instanceof Error) {
-    return `Error: ${err.message}`;
-  }
-  return `Unexpected error: ${String(err)}`;
+  return null;
 }
 
 // ─── MCP Server Setup ─────────────────────────────────────────────────────────
@@ -263,6 +109,13 @@ server.registerTool(
     annotations: { readOnlyHint: true },
   },
   async ({ query, dataType, pageSize, pageNumber, brandOwner }) => {
+    const validationError = validateQuery(query);
+    if (validationError) {
+      return {
+        content: [{ type: "text", text: validationError }],
+        isError: true,
+      };
+    }
     try {
       const result = await client.searchFoods({
         query,
@@ -348,17 +201,22 @@ server.registerTool(
   },
   async ({ fdcId, format, nutrients }) => {
     try {
-      const food = await client.getFood({
+      const { food, usedFallback } = await client.getFood({
         fdcId,
         format: (format ?? "full") as "abridged" | "full",
         nutrients,
       });
 
+      const detail = formatFoodDetail(food);
+      const text = usedFallback
+        ? `Note: full-format detail was unavailable for this FDC ID (HTTP 404); served abridged format instead.\n\n${detail}`
+        : detail;
+
       return {
         content: [
           {
             type: "text",
-            text: formatFoodDetail(food),
+            text,
           },
         ],
       };
@@ -526,6 +384,56 @@ server.registerTool(
             text: header + lines.join("\n") + footer,
           },
         ],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: formatError(err) }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ─── Tool: find_food ──────────────────────────────────────────────────────────
+
+server.registerTool(
+  "find_food",
+  {
+    title: "Find Food",
+    description:
+      "Find the best canonical match for a food name. Returns the top match with a " +
+      "key-nutrient summary plus up to 3 alternates, preferring Foundation and SR Legacy " +
+      "data over branded noise.",
+    inputSchema: {
+      name: z
+        .string()
+        .describe("Food name to look up (e.g. 'cheddar cheese', 'paneer', 'raw broccoli')"),
+      includeBranded: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe(
+          "Include manufacturer-submitted Branded foods in the search. Default false — " +
+          "Branded is only searched when true, or automatically as a last resort if no " +
+          "Foundation/SR Legacy/Survey match is found."
+        ),
+    },
+    annotations: { readOnlyHint: true },
+  },
+  async ({ name, includeBranded }) => {
+    const validationError = validateQuery(name);
+    if (validationError) {
+      return {
+        content: [{ type: "text", text: validationError }],
+        isError: true,
+      };
+    }
+
+    try {
+      const result = await findFood(client.searchFoods.bind(client), name, { includeBranded });
+
+      return {
+        content: [{ type: "text", text: result.text }],
       };
     } catch (err) {
       return {
