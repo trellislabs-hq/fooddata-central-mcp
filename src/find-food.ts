@@ -58,6 +58,26 @@ export const PREFERRED_DATA_TYPES: Array<"Foundation" | "SR Legacy" | "Survey (F
 ];
 
 /**
+ * FDC's combined-type search ranks purely by text relevance, so a Survey
+ * entry can outrank the canonical Foundation entry for the same food
+ * (observed live: "cheddar cheese" -> Survey 2705709 above Foundation
+ * 328637). Stable-sort by data-type preference so relevance only breaks
+ * ties WITHIN a tier, never across tiers.
+ */
+const DATA_TYPE_RANK: Record<string, number> = {
+  Foundation: 0,
+  "SR Legacy": 1,
+  "Survey (FNDDS)": 2,
+  Branded: 3,
+};
+
+export function sortByDataTypePreference(foods: FdcFood[]): FdcFood[] {
+  return [...foods].sort(
+    (a, b) => (DATA_TYPE_RANK[a.dataType ?? ""] ?? 9) - (DATA_TYPE_RANK[b.dataType ?? ""] ?? 9)
+  );
+}
+
+/**
  * Collapse near-identical food names (case/whitespace-insensitive) so
  * alternates aren't just the same product from ten different brands.
  * Keeps the first (highest-relevance, since FDC search is score-sorted)
@@ -145,7 +165,7 @@ export async function findFood(
     };
   }
 
-  const deduped = dedupeByDescription(foods);
+  const deduped = dedupeByDescription(sortByDataTypePreference(foods));
   const best = deduped[0];
   const alternates = deduped.slice(1, 4);
 

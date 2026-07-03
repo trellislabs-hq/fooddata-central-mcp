@@ -111,6 +111,32 @@ describe("findFood() — preference cascade: Branded only as last resort", () =>
     assert.match(result.text, /showing Branded \(manufacturer\) data as a last resort/);
   });
 
+  test("Foundation outranks a higher-relevance Survey entry in combined-type results (SYNTHETIC: regression for live cheddar Survey-first, 2026-07-03 — FDC relevance ranking put Survey 2705709 above Foundation 328637)", async () => {
+    // Mirrors the live combined-type response shape: FDC's ranker returns the
+    // Survey entry FIRST. The preference sort must put Foundation on top anyway.
+    const mixed: FdcSearchResult = {
+      totalHits: 3,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [
+        { fdcId: 2705709, description: "Cheese, Cheddar", dataType: "Survey (FNDDS)", foodNutrients: [] },
+        { fdcId: 328637, description: "Cheese, cheddar", dataType: "Foundation", foodNutrients: [] },
+        { fdcId: 171244, description: "Cheese, cheshire", dataType: "SR Legacy", foodNutrients: [] },
+      ] as unknown as FdcFood[],
+    };
+    const searchFoods = async (): Promise<FdcSearchResult> => mixed;
+
+    const result = await findFood(searchFoods, "cheddar cheese");
+
+    assert.ok(result.best);
+    assert.equal(result.best!.fdcId, 328637);
+    assert.equal(result.best!.dataType, "Foundation");
+    // Survey entry survives as an alternate (dedupe is case-insensitive on
+    // description, so "Cheese, Cheddar" (Survey) collapses into the Foundation
+    // best match) — the SR Legacy cheshire remains.
+    assert.ok(result.text.includes("Cheese, cheshire"));
+  });
+
   test("no results anywhere returns a helpful no-match message, not an error (SYNTHETIC)", async () => {
     const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
     const searchFoods = async (): Promise<FdcSearchResult> => emptyResult;

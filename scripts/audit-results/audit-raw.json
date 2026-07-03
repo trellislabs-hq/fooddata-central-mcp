@@ -1,0 +1,4655 @@
+{
+  "metadata": {
+    "run_date": "2026-04-14",
+    "dictionary_path": "/Users/thomasstewart/Projects/recipe-app/data/ingredient-dictionary.base.json",
+    "total_entries": 100,
+    "completed": 100,
+    "api_calls_made": 95,
+    "duration_minutes": 5.8
+  },
+  "entries": {
+    "garlic": {
+      "_key": "garlic",
+      "product_name": "garlic",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": null,
+        "each_to_oz": 1.75,
+        "tbsp_to_oz": null,
+        "source": "manual — head/bulb ≈ 1.75 oz (USDA ~49g). bridgeUnits: head→each→oz.",
+        "learned_at": "2026-04-07T00:00:00.000Z"
+      },
+      "fdc_search": {
+        "query": "garlic",
+        "top_matches": [
+          {
+            "fdcId": 1662203,
+            "description": "GARLIC",
+            "dataType": "Branded",
+            "score": 1097.594
+          },
+          {
+            "fdcId": 1922376,
+            "description": "GARLIC",
+            "dataType": "Branded",
+            "score": 1097.594
+          },
+          {
+            "fdcId": 2072265,
+            "description": "GARLIC",
+            "dataType": "Branded",
+            "score": 1097.594
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ground lamb": {
+      "_key": "ground lamb",
+      "product_name": "ground lamb",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground lamb",
+        "top_matches": [
+          {
+            "fdcId": 1956290,
+            "description": "GROUND LAMB",
+            "dataType": "Branded",
+            "score": 1633.2638
+          },
+          {
+            "fdcId": 1568052,
+            "description": "GROUND LAMB",
+            "dataType": "Branded",
+            "score": 1633.2638
+          },
+          {
+            "fdcId": 1662606,
+            "description": "GROUND LAMB",
+            "dataType": "Branded",
+            "score": 1633.2638
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "diamond crystal kosher salt": {
+      "_key": "diamond crystal kosher salt",
+      "product_name": "Diamond Crystal kosher salt",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 5,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.3,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:20:00.494Z"
+      },
+      "fdc_search": {
+        "query": "Diamond Crystal kosher salt",
+        "top_matches": [
+          {
+            "fdcId": 1503820,
+            "description": "DIAMOND CRYSTAL, SALT SENSE, SALT",
+            "dataType": "Branded",
+            "score": 710.0144
+          },
+          {
+            "fdcId": 1475842,
+            "description": "DIAMOND CRYSTAL, RED CROSS, IODIZED SALT",
+            "dataType": "Branded",
+            "score": 571.0973
+          },
+          {
+            "fdcId": 324653,
+            "description": "Pickles, cucumber, dill or kosher dill",
+            "dataType": "Foundation",
+            "score": 350.81314
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "red onion": {
+      "_key": "red onion",
+      "product_name": "red onions",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "each_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "each_to_oz": 6,
+        "source": "ITEM_WEIGHT_OZ",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "red onions",
+        "top_matches": [
+          {
+            "fdcId": 790577,
+            "description": "Onions, red, raw",
+            "dataType": "Foundation",
+            "score": 551.64996
+          },
+          {
+            "fdcId": 2709795,
+            "description": "Onions, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 339.64557
+          },
+          {
+            "fdcId": 2707633,
+            "description": "Bread, onion",
+            "dataType": "Survey (FNDDS)",
+            "score": 319.35095
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "Onion",
+            "gramWeight": 197,
+            "amount": 1
+          },
+          {
+            "measureUnit": "RACC",
+            "gramWeight": 85,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "cumin": {
+      "_key": "cumin",
+      "product_name": "ground cumin",
+      "category": "spices",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground cumin",
+        "top_matches": [
+          {
+            "fdcId": 733462,
+            "description": "GROUND CUMIN",
+            "dataType": "Branded",
+            "score": 1647.7062
+          },
+          {
+            "fdcId": 2367682,
+            "description": "GROUND CUMIN",
+            "dataType": "Branded",
+            "score": 1647.7062
+          },
+          {
+            "fdcId": 2670939,
+            "description": "GROUND CUMIN",
+            "dataType": "Branded",
+            "score": 1647.7062
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "sugar": {
+      "_key": "sugar",
+      "product_name": "sugar",
+      "category": "pantry",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 7.1,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.44,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:18:32.869Z"
+      },
+      "fdc_search": {
+        "query": "sugar",
+        "top_matches": [
+          {
+            "fdcId": 2021609,
+            "description": "SUGAR",
+            "dataType": "Branded",
+            "score": 1163.7292
+          },
+          {
+            "fdcId": 2710262,
+            "description": "Sugar substitute and sugar blend",
+            "dataType": "Survey (FNDDS)",
+            "score": 307.53076
+          },
+          {
+            "fdcId": 2707988,
+            "description": "Cookie, sugar or plain, sugar free",
+            "dataType": "Survey (FNDDS)",
+            "score": 300.3433
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "persian cucumber": {
+      "_key": "persian cucumber",
+      "product_name": "Persian cucumbers",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "Persian cucumbers",
+        "top_matches": [
+          {
+            "fdcId": 1662920,
+            "description": "PERSIAN CUCUMBER",
+            "dataType": "Branded",
+            "score": 781.05634
+          },
+          {
+            "fdcId": 2611809,
+            "description": "MINI PERSIAN CUCUMBERS",
+            "dataType": "Branded",
+            "score": 677.57513
+          },
+          {
+            "fdcId": 2709821,
+            "description": "Cucumber salad made with cucumber and vinegar",
+            "dataType": "Survey (FNDDS)",
+            "score": 482.29477
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "parsley": {
+      "_key": "parsley",
+      "product_name": "parsley",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 1,
+        "each_to_oz": 1,
+        "tbsp_to_oz": 0.06,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:18:54.810Z"
+      },
+      "fdc_search": {
+        "query": "parsley",
+        "top_matches": [
+          {
+            "fdcId": 1663057,
+            "description": "PARSLEY",
+            "dataType": "Branded",
+            "score": 1270.3849
+          },
+          {
+            "fdcId": 2670943,
+            "description": "PARSLEY",
+            "dataType": "Branded",
+            "score": 1270.3849
+          },
+          {
+            "fdcId": 2129047,
+            "description": "PARSLEY",
+            "dataType": "Branded",
+            "score": 1270.3849
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "pitas": {
+      "_key": "pitas",
+      "product_name": "pitas",
+      "category": "bakery",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "pitas",
+        "top_matches": [
+          {
+            "fdcId": 2708215,
+            "description": "Pita chips",
+            "dataType": "Survey (FNDDS)",
+            "score": 484.36786
+          },
+          {
+            "fdcId": 2707616,
+            "description": "Bread, pita",
+            "dataType": "Survey (FNDDS)",
+            "score": 466.73233
+          },
+          {
+            "fdcId": 2707617,
+            "description": "Bread, pita with fruit",
+            "dataType": "Survey (FNDDS)",
+            "score": 446.4562
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 3,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 28,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 20,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 60,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 57,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 85,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 60,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "double concentrated tomato paste": {
+      "_key": "double concentrated tomato paste",
+      "product_name": "double-concentrated tomato paste",
+      "category": "canned",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "double-concentrated tomato paste",
+        "top_matches": [
+          {
+            "fdcId": 1920469,
+            "description": "DOUBLE CONCENTRATED TOMATO PASTE",
+            "dataType": "Branded",
+            "score": 802.0597
+          },
+          {
+            "fdcId": 2116433,
+            "description": "DOUBLE CONCENTRATED TOMATO PASTE",
+            "dataType": "Branded",
+            "score": 802.0597
+          },
+          {
+            "fdcId": 2400543,
+            "description": "DOUBLE CONCENTRATED TOMATO PASTE",
+            "dataType": "Branded",
+            "score": 802.0597
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "extra virgin olive oil": {
+      "_key": "extra virgin olive oil",
+      "product_name": "extra-virgin olive oil",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "extra-virgin olive oil",
+        "top_matches": [
+          {
+            "fdcId": 2157872,
+            "description": "EXTRA-VIRGIN OLIVE OIL",
+            "dataType": "Branded",
+            "score": 1862.3584
+          },
+          {
+            "fdcId": 1907770,
+            "description": "EXTRA-VIRGIN OLIVE OIL",
+            "dataType": "Branded",
+            "score": 1862.3584
+          },
+          {
+            "fdcId": 1926477,
+            "description": "EXTRA-VIRGIN OLIVE OIL",
+            "dataType": "Branded",
+            "score": 1862.3584
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "dried oregano": {
+      "_key": "dried oregano",
+      "product_name": "dried oregano",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": null,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.1,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-31T15:54:53.676Z"
+      },
+      "fdc_search": {
+        "query": "dried oregano",
+        "top_matches": [
+          {
+            "fdcId": 171328,
+            "description": "Spices, oregano, dried",
+            "dataType": "SR Legacy",
+            "score": 798.7703
+          },
+          {
+            "fdcId": 2709207,
+            "description": "Peach, dried",
+            "dataType": "Survey (FNDDS)",
+            "score": 362.0933
+          },
+          {
+            "fdcId": 2709211,
+            "description": "Prune, dried",
+            "dataType": "Survey (FNDDS)",
+            "score": 362.0933
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 1,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 1.8,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "black pepper": {
+      "_key": "black pepper",
+      "product_name": "black pepper",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.2,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T22:14:57.425Z"
+      },
+      "fdc_search": {
+        "query": "black pepper",
+        "top_matches": [
+          {
+            "fdcId": 2157235,
+            "description": "BLACK PEPPER",
+            "dataType": "Branded",
+            "score": 1431.5647
+          },
+          {
+            "fdcId": 170931,
+            "description": "Spices, pepper, black",
+            "dataType": "SR Legacy",
+            "score": 530.7106
+          },
+          {
+            "fdcId": 2710672,
+            "description": "Black Russian",
+            "dataType": "Survey (FNDDS)",
+            "score": 302.44464
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "crushed red pepper flakes": {
+      "_key": "crushed red pepper flakes",
+      "product_name": "crushed red pepper flakes",
+      "category": "spices",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "crushed red pepper flakes",
+        "top_matches": [
+          {
+            "fdcId": 2052376,
+            "description": "CRUSHED RED PEPPER, CRUSHED",
+            "dataType": "Branded",
+            "score": 552.2836
+          },
+          {
+            "fdcId": 2709977,
+            "description": "Peppers, red, cooked",
+            "dataType": "Survey (FNDDS)",
+            "score": 522.6354
+          },
+          {
+            "fdcId": 2454832,
+            "description": "RED CRUSHED PEPPER, RED",
+            "dataType": "Branded",
+            "score": 509.46744
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "button mushroom": {
+      "_key": "button mushroom",
+      "product_name": "button mushrooms",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "button mushrooms",
+        "top_matches": [
+          {
+            "fdcId": 2433408,
+            "description": "BUTTON MUSHROOMS",
+            "dataType": "Branded",
+            "score": 1745.1394
+          },
+          {
+            "fdcId": 2303450,
+            "description": "BUTTON MUSHROOMS",
+            "dataType": "Branded",
+            "score": 1745.1394
+          },
+          {
+            "fdcId": 1999629,
+            "description": "Mushrooms, white button",
+            "dataType": "Foundation",
+            "score": 864.98157
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "rigatoni": {
+      "_key": "rigatoni",
+      "product_name": "rigatoni",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "rigatoni",
+        "top_matches": [
+          {
+            "fdcId": 1957408,
+            "description": "RIGATONI",
+            "dataType": "Branded",
+            "score": 1256.9628
+          },
+          {
+            "fdcId": 2062461,
+            "description": "RIGATONI",
+            "dataType": "Branded",
+            "score": 1256.9628
+          },
+          {
+            "fdcId": 1850759,
+            "description": "RIGATONI",
+            "dataType": "Branded",
+            "score": 1256.9628
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "low moisture mozzarella": {
+      "_key": "low moisture mozzarella",
+      "product_name": "low-moisture mozzarella",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "low-moisture mozzarella",
+        "top_matches": [
+          {
+            "fdcId": 329370,
+            "description": "Cheese, mozzarella, low moisture, part-skim",
+            "dataType": "Foundation",
+            "score": 802.2414
+          },
+          {
+            "fdcId": 171244,
+            "description": "Cheese, mozzarella, low moisture, part-skim",
+            "dataType": "SR Legacy",
+            "score": 802.2414
+          },
+          {
+            "fdcId": 170846,
+            "description": "Cheese, mozzarella, whole milk, low moisture",
+            "dataType": "SR Legacy",
+            "score": 802.2414
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "parmesan cheese": {
+      "_key": "parmesan cheese",
+      "product_name": "Parmesan",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 3.5,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.22,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T22:14:55.987Z"
+      },
+      "fdc_search": {
+        "query": "Parmesan",
+        "top_matches": [
+          {
+            "fdcId": 171247,
+            "description": "Cheese, parmesan, grated",
+            "dataType": "SR Legacy",
+            "score": 325.41614
+          },
+          {
+            "fdcId": 325036,
+            "description": "Cheese, parmesan, grated",
+            "dataType": "Foundation",
+            "score": 325.41614
+          },
+          {
+            "fdcId": 170848,
+            "description": "Cheese, parmesan, hard",
+            "dataType": "SR Legacy",
+            "score": 325.41614
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 28.35,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 100,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 5,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "pepperoni": {
+      "_key": "pepperoni",
+      "product_name": "pepperoni",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "pepperoni",
+        "top_matches": [
+          {
+            "fdcId": 2162793,
+            "description": "PEPPERONI",
+            "dataType": "Branded",
+            "score": 910.2348
+          },
+          {
+            "fdcId": 1856323,
+            "description": "PEPPERONI",
+            "dataType": "Branded",
+            "score": 910.2348
+          },
+          {
+            "fdcId": 2126741,
+            "description": "PEPPERONI",
+            "dataType": "Branded",
+            "score": 910.2348
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "sliced banana pepper": {
+      "_key": "sliced banana pepper",
+      "product_name": "sliced banana peppers",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "sliced banana peppers",
+        "top_matches": [
+          {
+            "fdcId": 2660594,
+            "description": "SLICED BANANA PEPPERS",
+            "dataType": "Branded",
+            "score": 1673.2051
+          },
+          {
+            "fdcId": 2709802,
+            "description": "Peppers, banana, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 572.703
+          },
+          {
+            "fdcId": 169394,
+            "description": "Pepper, banana, raw",
+            "dataType": "SR Legacy",
+            "score": 565.748
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "golden beet": {
+      "_key": "golden beet",
+      "product_name": "golden beets",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "golden beets",
+        "top_matches": [
+          {
+            "fdcId": 2027126,
+            "description": "GOLDEN BEETS",
+            "dataType": "Branded",
+            "score": 1675.6401
+          },
+          {
+            "fdcId": 2710071,
+            "description": "Beets, pickled",
+            "dataType": "Survey (FNDDS)",
+            "score": 464.45667
+          },
+          {
+            "fdcId": 2709682,
+            "description": "Beet juice",
+            "dataType": "Survey (FNDDS)",
+            "score": 440.55338
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "orecchiette": {
+      "_key": "orecchiette",
+      "product_name": "orecchiette",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "orecchiette",
+        "top_matches": [
+          {
+            "fdcId": 1927883,
+            "description": "ORECCHIETTE",
+            "dataType": "Branded",
+            "score": 1532.4609
+          },
+          {
+            "fdcId": 1940920,
+            "description": "ORECCHIETTE",
+            "dataType": "Branded",
+            "score": 1532.4609
+          },
+          {
+            "fdcId": 2668226,
+            "description": "ORECCHIETTE ITALIAN PASTA",
+            "dataType": "Branded",
+            "score": 191.52177
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "sage": {
+      "_key": "sage",
+      "product_name": "sage",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "sage",
+        "top_matches": [
+          {
+            "fdcId": 2128506,
+            "description": "SAGE",
+            "dataType": "Branded",
+            "score": 1417.8336
+          },
+          {
+            "fdcId": 384466,
+            "description": "SAGE",
+            "dataType": "Branded",
+            "score": 1417.8336
+          },
+          {
+            "fdcId": 170935,
+            "description": "Spices, sage, ground",
+            "dataType": "SR Legacy",
+            "score": 512.4636
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "hot italian sausage": {
+      "_key": "hot italian sausage",
+      "product_name": "hot Italian sausage",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "hot Italian sausage",
+        "top_matches": [
+          {
+            "fdcId": 2074328,
+            "description": "HOT ITALIAN SAUSAGE",
+            "dataType": "Branded",
+            "score": 1368.3805
+          },
+          {
+            "fdcId": 466506,
+            "description": "HOT ITALIAN SAUSAGE",
+            "dataType": "Branded",
+            "score": 1368.3805
+          },
+          {
+            "fdcId": 549737,
+            "description": "HOT ITALIAN SAUSAGE",
+            "dataType": "Branded",
+            "score": 1368.3805
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "butter": {
+      "_key": "butter",
+      "product_name": "unsalted butter",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 8,
+        "tbsp_to_oz": 0.5,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "unsalted butter",
+        "top_matches": [
+          {
+            "fdcId": 2056610,
+            "description": "UNSALTED BUTTER",
+            "dataType": "Branded",
+            "score": 1279.4177
+          },
+          {
+            "fdcId": 2429179,
+            "description": "UNSALTED BUTTER",
+            "dataType": "Branded",
+            "score": 1279.4177
+          },
+          {
+            "fdcId": 2640796,
+            "description": "UNSALTED BUTTER",
+            "dataType": "Branded",
+            "score": 1279.4177
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "lemon": {
+      "_key": "lemon",
+      "product_name": "lemon",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": null,
+        "each_to_oz": 4.4,
+        "tbsp_to_oz": null,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T22:14:57.425Z"
+      },
+      "fdc_search": {
+        "query": "lemon",
+        "top_matches": [
+          {
+            "fdcId": 2038425,
+            "description": "LEMON",
+            "dataType": "Branded",
+            "score": 1177.2865
+          },
+          {
+            "fdcId": 2709168,
+            "description": "Lemon, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 291.16376
+          },
+          {
+            "fdcId": 2708000,
+            "description": "Pie, lemon",
+            "dataType": "Survey (FNDDS)",
+            "score": 291.16376
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "smoked paprika": {
+      "_key": "smoked paprika",
+      "product_name": "smoked paprika",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4.16,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.26,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-31T15:30:44.262Z"
+      },
+      "fdc_search": {
+        "query": "smoked paprika",
+        "top_matches": [
+          {
+            "fdcId": 1651011,
+            "description": "SMOKED PAPRIKA",
+            "dataType": "Branded",
+            "score": 1557.8225
+          },
+          {
+            "fdcId": 1887980,
+            "description": "SMOKED PAPRIKA",
+            "dataType": "Branded",
+            "score": 1557.8225
+          },
+          {
+            "fdcId": 1586827,
+            "description": "SMOKED PAPRIKA",
+            "dataType": "Branded",
+            "score": 1557.8225
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "plain whole milk greek yogurt": {
+      "_key": "plain whole milk greek yogurt",
+      "product_name": "plain whole-milk Greek yogurt",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "plain whole-milk Greek yogurt",
+        "top_matches": [
+          {
+            "fdcId": 2259794,
+            "description": "Yogurt, Greek, plain, whole milk",
+            "dataType": "Foundation",
+            "score": 1169.6857
+          },
+          {
+            "fdcId": 171304,
+            "description": "Yogurt, Greek, plain, whole milk",
+            "dataType": "SR Legacy",
+            "score": 1169.6857
+          },
+          {
+            "fdcId": 2705422,
+            "description": "Yogurt, Greek, whole milk, plain",
+            "dataType": "Survey (FNDDS)",
+            "score": 1169.6857
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "RACC",
+            "gramWeight": 170,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "white rice": {
+      "_key": "white rice",
+      "product_name": "rice",
+      "category": "pantry",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 7,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "rice",
+        "top_matches": [
+          {
+            "fdcId": 356554,
+            "description": "RICE",
+            "dataType": "Branded",
+            "score": 1000.5791
+          },
+          {
+            "fdcId": 2077766,
+            "description": "RICE",
+            "dataType": "Branded",
+            "score": 1000.5791
+          },
+          {
+            "fdcId": 356582,
+            "description": "RICE",
+            "dataType": "Branded",
+            "score": 1000.5791
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ground turkey": {
+      "_key": "ground turkey",
+      "product_name": "ground turkey",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground turkey",
+        "top_matches": [
+          {
+            "fdcId": 1941808,
+            "description": "GROUND TURKEY",
+            "dataType": "Branded",
+            "score": 1211.699
+          },
+          {
+            "fdcId": 2288245,
+            "description": "GROUND TURKEY",
+            "dataType": "Branded",
+            "score": 1211.699
+          },
+          {
+            "fdcId": 2488871,
+            "description": "GROUND TURKEY",
+            "dataType": "Branded",
+            "score": 1211.699
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "bananas": {
+      "_key": "bananas",
+      "product_name": "bananas",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 8,
+        "each_to_oz": 4,
+        "tbsp_to_oz": 0.5,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:18:54.809Z"
+      },
+      "fdc_search": {
+        "query": "bananas",
+        "top_matches": [
+          {
+            "fdcId": 173945,
+            "description": "Bananas, dehydrated, or banana powder",
+            "dataType": "SR Legacy",
+            "score": 375.8591
+          },
+          {
+            "fdcId": 2709225,
+            "description": "Banana, baked",
+            "dataType": "Survey (FNDDS)",
+            "score": 350.61945
+          },
+          {
+            "fdcId": 2709224,
+            "description": "Banana, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 350.61945
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 6.2,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 100,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "whole milk": {
+      "_key": "whole milk",
+      "product_name": "whole milk",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "whole milk",
+        "top_matches": [
+          {
+            "fdcId": 2616918,
+            "description": "WHOLE MILK",
+            "dataType": "Branded",
+            "score": 838.4378
+          },
+          {
+            "fdcId": 2617014,
+            "description": "WHOLE MILK",
+            "dataType": "Branded",
+            "score": 838.4378
+          },
+          {
+            "fdcId": 2288031,
+            "description": "WHOLE MILK",
+            "dataType": "Branded",
+            "score": 838.4378
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "creole butter": {
+      "_key": "creole butter",
+      "product_name": "Creole butter",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "Creole butter",
+        "top_matches": [
+          {
+            "fdcId": 2675087,
+            "description": "CREOLE BUTTER",
+            "dataType": "Branded",
+            "score": 1627.3687
+          },
+          {
+            "fdcId": 2706856,
+            "description": "Shrimp creole, no rice",
+            "dataType": "Survey (FNDDS)",
+            "score": 486.62204
+          },
+          {
+            "fdcId": 2706713,
+            "description": "Shrimp creole, with rice",
+            "dataType": "Survey (FNDDS)",
+            "score": 486.62204
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "prime rib": {
+      "_key": "prime rib",
+      "product_name": "prime rib",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "prime rib",
+        "top_matches": [
+          {
+            "fdcId": 2413850,
+            "description": "PRIME RIB RUB, PRIME RIB",
+            "dataType": "Branded",
+            "score": 590.5443
+          },
+          {
+            "fdcId": 2303757,
+            "description": "PRIME RIB RUB, PRIME RIB",
+            "dataType": "Branded",
+            "score": 590.5443
+          },
+          {
+            "fdcId": 2375358,
+            "description": "PRIME RIB RUB, PRIME RIB",
+            "dataType": "Branded",
+            "score": 590.5443
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "dan o’s preem o": {
+      "_key": "dan o’s preem o",
+      "product_name": "Dan-O’s Preem-O",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "Dan-O’s Preem-O",
+        "top_matches": [
+          {
+            "fdcId": 2708446,
+            "description": "Cereal, O's, flavored",
+            "dataType": "Survey (FNDDS)",
+            "score": 851.43384
+          },
+          {
+            "fdcId": 2708468,
+            "description": "Cereal, O's, multigrain",
+            "dataType": "Survey (FNDDS)",
+            "score": 851.43384
+          },
+          {
+            "fdcId": 2708475,
+            "description": "Cereal, O's, NFS",
+            "dataType": "Survey (FNDDS)",
+            "score": 851.43384
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 40,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 40,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 30,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "mayonnaise": {
+      "_key": "mayonnaise",
+      "product_name": "mayonnaise",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "liquid",
+        "cup_to_oz": 8,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.5,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-31T15:50:39.354Z"
+      },
+      "fdc_search": {
+        "query": "mayonnaise",
+        "top_matches": [
+          {
+            "fdcId": 2403612,
+            "description": "MAYONNAISE",
+            "dataType": "Branded",
+            "score": 987.565
+          },
+          {
+            "fdcId": 1805129,
+            "description": "MAYONNAISE",
+            "dataType": "Branded",
+            "score": 987.565
+          },
+          {
+            "fdcId": 2408293,
+            "description": "MAYONNAISE",
+            "dataType": "Branded",
+            "score": 987.565
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "stone ground mustard": {
+      "_key": "stone ground mustard",
+      "product_name": "stone-ground mustard",
+      "category": "condiments",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "stone-ground mustard",
+        "top_matches": [
+          {
+            "fdcId": 2502473,
+            "description": "STONE GROUND MUSTARD, STONE GROUND",
+            "dataType": "Branded",
+            "score": 789.73737
+          },
+          {
+            "fdcId": 2152716,
+            "description": "STONE GROUND MUSTARD, STONE GROUND",
+            "dataType": "Branded",
+            "score": 789.73737
+          },
+          {
+            "fdcId": 2303057,
+            "description": "STONE GROUND MUSTARD, STONE GROUND",
+            "dataType": "Branded",
+            "score": 789.73737
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "twine": {
+      "_key": "twine",
+      "product_name": "twine",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "twine",
+        "top_matches": [
+          {
+            "fdcId": 2079443,
+            "description": "TWININGS OF LONDON, SWEETENED ICE TEA, SWEETENED BLACK TEA",
+            "dataType": "Branded",
+            "score": 149.54831
+          },
+          {
+            "fdcId": 2680334,
+            "description": "BLACK TEA, CHAI LATTE",
+            "dataType": "Branded",
+            "score": -403.0722
+          },
+          {
+            "fdcId": 2155250,
+            "description": "BLUEBERRY & APPLE FLAVOURED COLD WATER ENHANCER, BLUEBERRY & APPLE",
+            "dataType": "Branded",
+            "score": -403.0722
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "paper towel": {
+      "_key": "paper towel",
+      "product_name": "paper towels",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "paper towels",
+        "top_matches": [
+          {
+            "fdcId": 2708166,
+            "description": "Rice paper",
+            "dataType": "Survey (FNDDS)",
+            "score": 556.626
+          },
+          {
+            "fdcId": 2708704,
+            "description": "Roll with meat and/or shrimp, vegetables and rice paper, not fried",
+            "dataType": "Survey (FNDDS)",
+            "score": 366.20227
+          },
+          {
+            "fdcId": 2455388,
+            "description": "RICE PAPER.",
+            "dataType": "Branded",
+            "score": 123.450165
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 15,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 20,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 18,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 5,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "bell pepper": {
+      "_key": "bell pepper",
+      "product_name": "bell peppers",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "each_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "each_to_oz": 6,
+        "source": "ITEM_WEIGHT_OZ",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "bell peppers",
+        "top_matches": [
+          {
+            "fdcId": 2079108,
+            "description": "BELL PEPPERS",
+            "dataType": "Branded",
+            "score": 1565.8783
+          },
+          {
+            "fdcId": 2258588,
+            "description": "Peppers, bell, green, raw",
+            "dataType": "Foundation",
+            "score": 602.5173
+          },
+          {
+            "fdcId": 2258591,
+            "description": "Peppers, bell, orange, raw",
+            "dataType": "Foundation",
+            "score": 602.5173
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "thyme": {
+      "_key": "thyme",
+      "product_name": "thyme",
+      "category": "spices",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "thyme",
+        "top_matches": [
+          {
+            "fdcId": 2105354,
+            "description": "THYME",
+            "dataType": "Branded",
+            "score": 1318.8883
+          },
+          {
+            "fdcId": 2670766,
+            "description": "THYME",
+            "dataType": "Branded",
+            "score": 1318.8883
+          },
+          {
+            "fdcId": 2128473,
+            "description": "THYME",
+            "dataType": "Branded",
+            "score": 1318.8883
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "dry white wine": {
+      "_key": "dry white wine",
+      "product_name": "dry white wine",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "dry white wine",
+        "top_matches": [
+          {
+            "fdcId": 2710689,
+            "description": "Wine, white",
+            "dataType": "Survey (FNDDS)",
+            "score": 689.21814
+          },
+          {
+            "fdcId": 175112,
+            "description": "Alcoholic beverage, wine, dessert, dry",
+            "dataType": "SR Legacy",
+            "score": 637.55023
+          },
+          {
+            "fdcId": 174837,
+            "description": "Alcoholic beverage, wine, table, white",
+            "dataType": "SR Legacy",
+            "score": 536.5716
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 180,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 180,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 375,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 30,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "lumache pasta": {
+      "_key": "lumache pasta",
+      "product_name": "lumache pasta",
+      "category": "pantry",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "lumache pasta",
+        "top_matches": [
+          {
+            "fdcId": 2390831,
+            "description": "ORGANIC PASTA, LUMACHE RIGATE N54",
+            "dataType": "Branded",
+            "score": 504.07153
+          },
+          {
+            "fdcId": 2708357,
+            "description": "Pasta, cooked",
+            "dataType": "Survey (FNDDS)",
+            "score": 304.434
+          },
+          {
+            "fdcId": 2708930,
+            "description": "Flavored pasta",
+            "dataType": "Survey (FNDDS)",
+            "score": 303.11453
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "dijon mustard": {
+      "_key": "dijon mustard",
+      "product_name": "Dijon mustard",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "liquid",
+        "cup_to_oz": 8,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.5,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-31T15:50:39.354Z"
+      },
+      "fdc_search": {
+        "query": "Dijon mustard",
+        "top_matches": [
+          {
+            "fdcId": 2076169,
+            "description": "DIJON MUSTARD",
+            "dataType": "Branded",
+            "score": 1438.7
+          },
+          {
+            "fdcId": 2099042,
+            "description": "DIJON MUSTARD",
+            "dataType": "Branded",
+            "score": 1438.7
+          },
+          {
+            "fdcId": 2029577,
+            "description": "DIJON MUSTARD",
+            "dataType": "Branded",
+            "score": 1438.7
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "worcestershire sauce": {
+      "_key": "worcestershire sauce",
+      "product_name": "Worcestershire sauce",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "Worcestershire sauce",
+        "top_matches": [
+          {
+            "fdcId": 2707447,
+            "description": "Worcestershire sauce",
+            "dataType": "Survey (FNDDS)",
+            "score": 1803.4116
+          },
+          {
+            "fdcId": 1791149,
+            "description": "WORCESTERSHIRE SAUCE",
+            "dataType": "Branded",
+            "score": 1387.671
+          },
+          {
+            "fdcId": 2093545,
+            "description": "WORCESTERSHIRE SAUCE",
+            "dataType": "Branded",
+            "score": 1387.671
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 16,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 5,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "gruyère cheese": {
+      "_key": "gruyère cheese",
+      "product_name": "Gruyère cheese",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "Gruyère cheese",
+        "top_matches": [
+          {
+            "fdcId": 2705770,
+            "description": "Cheese, processed cheese food",
+            "dataType": "Survey (FNDDS)",
+            "score": 212.80208
+          },
+          {
+            "fdcId": 2705775,
+            "description": "Cheese spread, cream cheese",
+            "dataType": "Survey (FNDDS)",
+            "score": 212.38126
+          },
+          {
+            "fdcId": 2705774,
+            "description": "Cheese spread, Swiss cheese base",
+            "dataType": "Survey (FNDDS)",
+            "score": 201.90085
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 16,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 21,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 21,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "chives": {
+      "_key": "chives",
+      "product_name": "chives",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "chives",
+        "top_matches": [
+          {
+            "fdcId": 2673992,
+            "description": "CHIVES",
+            "dataType": "Branded",
+            "score": 1311.3484
+          },
+          {
+            "fdcId": 579074,
+            "description": "CHIVES",
+            "dataType": "Branded",
+            "score": 1311.3484
+          },
+          {
+            "fdcId": 2670783,
+            "description": "CHIVES",
+            "dataType": "Branded",
+            "score": 1311.3484
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "lamb shoulder": {
+      "_key": "lamb shoulder",
+      "product_name": "lamb shoulder",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "lamb shoulder",
+        "top_matches": [
+          {
+            "fdcId": 175262,
+            "description": "Lamb, New Zealand, imported, square-cut shoulder, separable lean and fat, raw",
+            "dataType": "SR Legacy",
+            "score": 547.9219
+          },
+          {
+            "fdcId": 175264,
+            "description": "Lamb, New Zealand, imported, square-cut shoulder, separable lean only, raw",
+            "dataType": "SR Legacy",
+            "score": 547.9219
+          },
+          {
+            "fdcId": 174464,
+            "description": "Lamb, New Zealand, imported, netted shoulder, rolled, boneless, separable lean and fat, raw",
+            "dataType": "SR Legacy",
+            "score": 521.31506
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 113,
+            "amount": 4
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 115,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "green onion": {
+      "_key": "green onion",
+      "product_name": "green onion",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": null,
+        "each_to_oz": 0.5,
+        "tbsp_to_oz": 0.11,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:18:32.869Z"
+      },
+      "fdc_search": {
+        "query": "green onion",
+        "top_matches": [
+          {
+            "fdcId": 2709794,
+            "description": "Onions, green, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 553.3523
+          },
+          {
+            "fdcId": 2709953,
+            "description": "Onions, green, cooked",
+            "dataType": "Survey (FNDDS)",
+            "score": 552.31067
+          },
+          {
+            "fdcId": 170006,
+            "description": "Onions, young green, tops only",
+            "dataType": "SR Legacy",
+            "score": 465.424
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 100,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 15,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 15,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "cilantro": {
+      "_key": "cilantro",
+      "product_name": "cilantro",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 1,
+        "each_to_oz": 1,
+        "tbsp_to_oz": null,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T21:25:00.769Z"
+      },
+      "fdc_search": {
+        "query": "cilantro",
+        "top_matches": [
+          {
+            "fdcId": 399147,
+            "description": "CILANTRO",
+            "dataType": "Branded",
+            "score": 1202.3942
+          },
+          {
+            "fdcId": 2670765,
+            "description": "CILANTRO",
+            "dataType": "Branded",
+            "score": 1202.3942
+          },
+          {
+            "fdcId": 1967455,
+            "description": "CILANTRO",
+            "dataType": "Branded",
+            "score": 1202.3942
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "coriander": {
+      "_key": "coriander",
+      "product_name": "coriander",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 3.84,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.24,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-30T05:52:32.595Z"
+      },
+      "fdc_search": {
+        "query": "coriander",
+        "top_matches": [
+          {
+            "fdcId": 170922,
+            "description": "Spices, coriander seed",
+            "dataType": "SR Legacy",
+            "score": 562.52106
+          },
+          {
+            "fdcId": 169997,
+            "description": "Coriander (cilantro) leaves, raw",
+            "dataType": "SR Legacy",
+            "score": 517.7986
+          },
+          {
+            "fdcId": 170921,
+            "description": "Spices, coriander leaf, dried",
+            "dataType": "SR Legacy",
+            "score": 517.7986
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 5,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 1.8,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "chickpea": {
+      "_key": "chickpea",
+      "product_name": "chickpea",
+      "category": "other",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "chickpea",
+        "top_matches": [
+          {
+            "fdcId": 1865046,
+            "description": "CHICKPEA",
+            "dataType": "Branded",
+            "score": 1355.2358
+          },
+          {
+            "fdcId": 2707414,
+            "description": "Chickpeas, NFS",
+            "dataType": "Survey (FNDDS)",
+            "score": 455.4768
+          },
+          {
+            "fdcId": 174288,
+            "description": "Chickpea flour (besan)",
+            "dataType": "SR Legacy",
+            "score": 416.14752
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "eggplant": {
+      "_key": "eggplant",
+      "product_name": "eggplant",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "eggplant",
+        "top_matches": [
+          {
+            "fdcId": 2710049,
+            "description": "Eggplant dip",
+            "dataType": "Survey (FNDDS)",
+            "score": 524.7371
+          },
+          {
+            "fdcId": 169892,
+            "description": "Eggplant, pickled",
+            "dataType": "SR Legacy",
+            "score": 524.7371
+          },
+          {
+            "fdcId": 2710081,
+            "description": "Eggplant, pickled",
+            "dataType": "Survey (FNDDS)",
+            "score": 524.7371
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 15,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 60,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 70,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "zucchini": {
+      "_key": "zucchini",
+      "product_name": "zucchini",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "each_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "each_to_oz": 7,
+        "source": "ITEM_WEIGHT_OZ",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "zucchini",
+        "top_matches": [
+          {
+            "fdcId": 2428955,
+            "description": "ZUCCHINI",
+            "dataType": "Branded",
+            "score": 1391.0261
+          },
+          {
+            "fdcId": 2707851,
+            "description": "Bread, zucchini",
+            "dataType": "Survey (FNDDS)",
+            "score": 488.52435
+          },
+          {
+            "fdcId": 2707844,
+            "description": "Muffin, zucchini",
+            "dataType": "Survey (FNDDS)",
+            "score": 488.52435
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "arugula": {
+      "_key": "arugula",
+      "product_name": "arugula",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 0.7,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "arugula",
+        "top_matches": [
+          {
+            "fdcId": 2630019,
+            "description": "ARUGULA",
+            "dataType": "Branded",
+            "score": 1389.2761
+          },
+          {
+            "fdcId": 2071611,
+            "description": "ARUGULA",
+            "dataType": "Branded",
+            "score": 1389.2761
+          },
+          {
+            "fdcId": 2503225,
+            "description": "ARUGULA",
+            "dataType": "Branded",
+            "score": 1389.2761
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "shrimp": {
+      "_key": "shrimp",
+      "product_name": "shrimp",
+      "category": "seafood",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "shrimp",
+        "top_matches": [
+          {
+            "fdcId": 1899566,
+            "description": "SHRIMP",
+            "dataType": "Branded",
+            "score": 907.05
+          },
+          {
+            "fdcId": 2442026,
+            "description": "SHRIMP",
+            "dataType": "Branded",
+            "score": 907.05
+          },
+          {
+            "fdcId": 1905004,
+            "description": "SHRIMP",
+            "dataType": "Branded",
+            "score": 906.0164
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "cornstarch": {
+      "_key": "cornstarch",
+      "product_name": "cornstarch",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4.6,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.29,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-30T05:52:32.595Z"
+      },
+      "fdc_search": {
+        "query": "cornstarch",
+        "top_matches": [
+          {
+            "fdcId": 169698,
+            "description": "Cornstarch",
+            "dataType": "SR Legacy",
+            "score": 1995.2151
+          },
+          {
+            "fdcId": 2671891,
+            "description": "CORNSTARCH",
+            "dataType": "Branded",
+            "score": 1579.4745
+          },
+          {
+            "fdcId": 2251989,
+            "description": "CORNSTARCH",
+            "dataType": "Branded",
+            "score": 1579.4745
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 128,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "powdered sugar": {
+      "_key": "powdered sugar",
+      "product_name": "powdered sugar",
+      "category": "pantry",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "powdered sugar",
+        "top_matches": [
+          {
+            "fdcId": 2097157,
+            "description": "POWDERED SUGAR",
+            "dataType": "Branded",
+            "score": 1185.5814
+          },
+          {
+            "fdcId": 2447668,
+            "description": "POWDERED SUGAR",
+            "dataType": "Branded",
+            "score": 1185.5814
+          },
+          {
+            "fdcId": 2067061,
+            "description": "POWDERED SUGAR",
+            "dataType": "Branded",
+            "score": 1185.5814
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "baking soda": {
+      "_key": "baking soda",
+      "product_name": "baking soda",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 7.3,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.45,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-30T05:52:32.595Z"
+      },
+      "fdc_search": {
+        "query": "baking soda",
+        "top_matches": [
+          {
+            "fdcId": 2131001,
+            "description": "BAKING SODA",
+            "dataType": "Branded",
+            "score": 1183.162
+          },
+          {
+            "fdcId": 2008204,
+            "description": "BAKING SODA",
+            "dataType": "Branded",
+            "score": 1183.162
+          },
+          {
+            "fdcId": 2373253,
+            "description": "BAKING SODA",
+            "dataType": "Branded",
+            "score": 1183.162
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "all purpose flour": {
+      "_key": "all purpose flour",
+      "product_name": "all-purpose flour",
+      "category": "pantry",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4.5,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.28,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:20:00.492Z"
+      },
+      "fdc_search": {
+        "query": "all-purpose flour",
+        "top_matches": [
+          {
+            "fdcId": 2490378,
+            "description": "ALL-PURPOSE FLOUR",
+            "dataType": "Branded",
+            "score": 1643.4534
+          },
+          {
+            "fdcId": 2098756,
+            "description": "ALL-PURPOSE FLOUR",
+            "dataType": "Branded",
+            "score": 1643.4534
+          },
+          {
+            "fdcId": 2473292,
+            "description": "ALL-PURPOSE FLOUR",
+            "dataType": "Branded",
+            "score": 1643.4534
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "heavy cream": {
+      "_key": "heavy cream",
+      "product_name": "heavy cream",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "heavy cream",
+        "top_matches": [
+          {
+            "fdcId": 2456541,
+            "description": "HEAVY CREAM",
+            "dataType": "Branded",
+            "score": 1226.2634
+          },
+          {
+            "fdcId": 2384647,
+            "description": "HEAVY CREAM",
+            "dataType": "Branded",
+            "score": 1226.2634
+          },
+          {
+            "fdcId": 2621971,
+            "description": "HEAVY CREAM",
+            "dataType": "Branded",
+            "score": 1226.2634
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "half and half": {
+      "_key": "half and half",
+      "product_name": "half and half",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "half and half",
+        "top_matches": [
+          {
+            "fdcId": 2678989,
+            "description": "HALF AND HALF",
+            "dataType": "Branded",
+            "score": 1682.2445
+          },
+          {
+            "fdcId": 2466362,
+            "description": "HALF AND HALF",
+            "dataType": "Branded",
+            "score": 1682.2445
+          },
+          {
+            "fdcId": 2501155,
+            "description": "HALF AND HALF",
+            "dataType": "Branded",
+            "score": 1682.2445
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "sour cream": {
+      "_key": "sour cream",
+      "product_name": "sour cream",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "sour cream",
+        "top_matches": [
+          {
+            "fdcId": 2075636,
+            "description": "SOUR CREAM",
+            "dataType": "Branded",
+            "score": 933.06226
+          },
+          {
+            "fdcId": 1941058,
+            "description": "SOUR CREAM",
+            "dataType": "Branded",
+            "score": 933.06226
+          },
+          {
+            "fdcId": 1941059,
+            "description": "SOUR CREAM",
+            "dataType": "Branded",
+            "score": 933.06226
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "canola oil": {
+      "_key": "canola oil",
+      "product_name": "canola oil",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "canola oil",
+        "top_matches": [
+          {
+            "fdcId": 2710188,
+            "description": "Canola oil",
+            "dataType": "Survey (FNDDS)",
+            "score": 1605.7294
+          },
+          {
+            "fdcId": 1855266,
+            "description": "CANOLA OIL",
+            "dataType": "Branded",
+            "score": 1189.9886
+          },
+          {
+            "fdcId": 2243590,
+            "description": "CANOLA OIL",
+            "dataType": "Branded",
+            "score": 1189.9886
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 14,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 224,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 14,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "vegetable oil": {
+      "_key": "vegetable oil",
+      "product_name": "vegetable oil",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "vegetable oil",
+        "top_matches": [
+          {
+            "fdcId": 2099815,
+            "description": "VEGETABLE OIL",
+            "dataType": "Branded",
+            "score": 1007.57166
+          },
+          {
+            "fdcId": 2055160,
+            "description": "VEGETABLE OIL",
+            "dataType": "Branded",
+            "score": 1007.57166
+          },
+          {
+            "fdcId": 1856156,
+            "description": "VEGETABLE OIL",
+            "dataType": "Branded",
+            "score": 1007.57166
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ketchup": {
+      "_key": "ketchup",
+      "product_name": "ketchup",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "liquid",
+        "cup_to_oz": 8,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.5,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:20:00.494Z"
+      },
+      "fdc_search": {
+        "query": "ketchup",
+        "top_matches": [
+          {
+            "fdcId": 2709733,
+            "description": "Ketchup",
+            "dataType": "Survey (FNDDS)",
+            "score": 1407.8447
+          },
+          {
+            "fdcId": 1896270,
+            "description": "KETCHUP",
+            "dataType": "Branded",
+            "score": 993.2284
+          },
+          {
+            "fdcId": 2076489,
+            "description": "KETCHUP",
+            "dataType": "Branded",
+            "score": 992.10406
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 17,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 17,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 10,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 17,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 272,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 28,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 34,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "ground beef": {
+      "_key": "ground beef",
+      "product_name": "ground beef",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground beef",
+        "top_matches": [
+          {
+            "fdcId": 1942314,
+            "description": "GROUND BEEF",
+            "dataType": "Branded",
+            "score": 1082.9382
+          },
+          {
+            "fdcId": 2058842,
+            "description": "GROUND BEEF",
+            "dataType": "Branded",
+            "score": 1082.9382
+          },
+          {
+            "fdcId": 1548111,
+            "description": "GROUND BEEF",
+            "dataType": "Branded",
+            "score": 1082.9382
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ground pork": {
+      "_key": "ground pork",
+      "product_name": "ground pork",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground pork",
+        "top_matches": [
+          {
+            "fdcId": 1887701,
+            "description": "GROUND PORK",
+            "dataType": "Branded",
+            "score": 1283.0385
+          },
+          {
+            "fdcId": 2295415,
+            "description": "GROUND PORK",
+            "dataType": "Branded",
+            "score": 1283.0385
+          },
+          {
+            "fdcId": 2080328,
+            "description": "GROUND PORK",
+            "dataType": "Branded",
+            "score": 1283.0385
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ground chicken": {
+      "_key": "ground chicken",
+      "product_name": "ground chicken",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "ground chicken",
+        "top_matches": [
+          {
+            "fdcId": 1995775,
+            "description": "GROUND CHICKEN",
+            "dataType": "Branded",
+            "score": 1200.8453
+          },
+          {
+            "fdcId": 1992233,
+            "description": "GROUND CHICKEN",
+            "dataType": "Branded",
+            "score": 1200.8453
+          },
+          {
+            "fdcId": 2286449,
+            "description": "GROUND CHICKEN",
+            "dataType": "Branded",
+            "score": 1200.8453
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "chicken breast": {
+      "_key": "chicken breast",
+      "product_name": "chicken breast",
+      "category": "meat",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "each_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "each_to_oz": 8,
+        "source": "ITEM_WEIGHT_OZ",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "chicken breast",
+        "top_matches": [
+          {
+            "fdcId": 2187885,
+            "description": "CHICKEN BREAST",
+            "dataType": "Branded",
+            "score": 1237.137
+          },
+          {
+            "fdcId": 2092152,
+            "description": "CHICKEN BREAST",
+            "dataType": "Branded",
+            "score": 1230.7471
+          },
+          {
+            "fdcId": 2055943,
+            "description": "CHICKEN BREAST",
+            "dataType": "Branded",
+            "score": 1230.7471
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "chicken thigh": {
+      "_key": "chicken thigh",
+      "product_name": "chicken thigh",
+      "category": "meat",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "chicken thigh",
+        "top_matches": [
+          {
+            "fdcId": 1899680,
+            "description": "CHICKEN THIGH",
+            "dataType": "Branded",
+            "score": 1618.0453
+          },
+          {
+            "fdcId": 2706035,
+            "description": "Chicken thigh, rotisserie, skin eaten",
+            "dataType": "Survey (FNDDS)",
+            "score": 598.7655
+          },
+          {
+            "fdcId": 2706036,
+            "description": "Chicken thigh, rotisserie, skin not eaten",
+            "dataType": "Survey (FNDDS)",
+            "score": 598.7655
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "roma tomato": {
+      "_key": "roma tomato",
+      "product_name": "roma tomato",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "roma tomato",
+        "top_matches": [
+          {
+            "fdcId": 1999634,
+            "description": "Tomato, roma",
+            "dataType": "Foundation",
+            "score": 878.4457
+          },
+          {
+            "fdcId": 2655117,
+            "description": "ROMA TOMATO KETCHUP, ROMA TOMATO",
+            "dataType": "Branded",
+            "score": 505.16287
+          },
+          {
+            "fdcId": 2430273,
+            "description": "ROMA TOMATOES PASTE, ROMA TOMATOES",
+            "dataType": "Branded",
+            "score": 505.16287
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "RACC",
+            "gramWeight": 85,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "cherry tomato": {
+      "_key": "cherry tomato",
+      "product_name": "cherry tomato",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 6,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "cherry tomato",
+        "top_matches": [
+          {
+            "fdcId": 2709231,
+            "description": "Cherries, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 307.06967
+          },
+          {
+            "fdcId": 2709719,
+            "description": "Tomatoes, raw",
+            "dataType": "Survey (FNDDS)",
+            "score": 287.86908
+          },
+          {
+            "fdcId": 2709232,
+            "description": "Cherries, canned",
+            "dataType": "Survey (FNDDS)",
+            "score": 286.97144
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 7,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 150,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 75,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "diced tomatoes": {
+      "_key": "diced tomatoes",
+      "product_name": "diced tomatoes",
+      "category": "canned",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "diced tomatoes",
+        "top_matches": [
+          {
+            "fdcId": 2100087,
+            "description": "DICED TOMATOES",
+            "dataType": "Branded",
+            "score": 1016.61664
+          },
+          {
+            "fdcId": 2128161,
+            "description": "DICED TOMATOES",
+            "dataType": "Branded",
+            "score": 1016.61664
+          },
+          {
+            "fdcId": 2433256,
+            "description": "DICED TOMATOES",
+            "dataType": "Branded",
+            "score": 1016.61664
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "crushed tomatoes": {
+      "_key": "crushed tomatoes",
+      "product_name": "crushed tomatoes",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "crushed tomatoes",
+        "top_matches": [
+          {
+            "fdcId": 2433085,
+            "description": "CRUSHED TOMATOES",
+            "dataType": "Branded",
+            "score": 1149.6677
+          },
+          {
+            "fdcId": 1935808,
+            "description": "CRUSHED TOMATOES",
+            "dataType": "Branded",
+            "score": 1149.6677
+          },
+          {
+            "fdcId": 2029062,
+            "description": "CRUSHED TOMATOES",
+            "dataType": "Branded",
+            "score": 1149.6677
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "tomato sauce": {
+      "_key": "tomato sauce",
+      "product_name": "tomato sauce",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "tomato sauce",
+        "top_matches": [
+          {
+            "fdcId": 2432524,
+            "description": "TOMATO SAUCE",
+            "dataType": "Branded",
+            "score": 906.39435
+          },
+          {
+            "fdcId": 2099019,
+            "description": "TOMATO SAUCE",
+            "dataType": "Branded",
+            "score": 906.39435
+          },
+          {
+            "fdcId": 356527,
+            "description": "TOMATO SAUCE",
+            "dataType": "Branded",
+            "score": 906.39435
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "coconut milk": {
+      "_key": "coconut milk",
+      "product_name": "coconut milk",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "coconut milk",
+        "top_matches": [
+          {
+            "fdcId": 2705413,
+            "description": "Coconut milk",
+            "dataType": "Survey (FNDDS)",
+            "score": 1444.5817
+          },
+          {
+            "fdcId": 2433316,
+            "description": "COCONUT MILK",
+            "dataType": "Branded",
+            "score": 1028.841
+          },
+          {
+            "fdcId": 1913492,
+            "description": "COCONUT MILK",
+            "dataType": "Branded",
+            "score": 1028.841
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 244,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 2.5,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 244,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 30.5,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 61,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "lite coconut milk": {
+      "_key": "lite coconut milk",
+      "product_name": "lite coconut milk",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "lite coconut milk",
+        "top_matches": [
+          {
+            "fdcId": 2433461,
+            "description": "LITE COCONUT MILK",
+            "dataType": "Branded",
+            "score": 1626.7273
+          },
+          {
+            "fdcId": 2597160,
+            "description": "LITE COCONUT MILK",
+            "dataType": "Branded",
+            "score": 1626.7273
+          },
+          {
+            "fdcId": 2410315,
+            "description": "LITE COCONUT MILK",
+            "dataType": "Branded",
+            "score": 1626.7273
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "soy sauce": {
+      "_key": "soy sauce",
+      "product_name": "soy sauce",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "soy sauce",
+        "top_matches": [
+          {
+            "fdcId": 2707442,
+            "description": "Soy sauce",
+            "dataType": "Survey (FNDDS)",
+            "score": 1584.5071
+          },
+          {
+            "fdcId": 1883847,
+            "description": "SOY SAUCE",
+            "dataType": "Branded",
+            "score": 1168.7664
+          },
+          {
+            "fdcId": 2288941,
+            "description": "SOY SAUCE",
+            "dataType": "Branded",
+            "score": 1168.7664
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 2,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 9,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 16,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 16,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "fish sauce": {
+      "_key": "fish sauce",
+      "product_name": "fish sauce",
+      "category": "seafood",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "fish sauce",
+        "top_matches": [
+          {
+            "fdcId": 2706457,
+            "description": "Fish sauce",
+            "dataType": "Survey (FNDDS)",
+            "score": 1766.4335
+          },
+          {
+            "fdcId": 2066343,
+            "description": "FISH SAUCE",
+            "dataType": "Branded",
+            "score": 1343.7198
+          },
+          {
+            "fdcId": 1908663,
+            "description": "FISH SAUCE",
+            "dataType": "Branded",
+            "score": 1343.7198
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 16,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 5,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "sesame oil": {
+      "_key": "sesame oil",
+      "product_name": "sesame oil",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "sesame oil",
+        "top_matches": [
+          {
+            "fdcId": 2710190,
+            "description": "Sesame oil",
+            "dataType": "Survey (FNDDS)",
+            "score": 1758.5055
+          },
+          {
+            "fdcId": 2498419,
+            "description": "SESAME OIL",
+            "dataType": "Branded",
+            "score": 1342.7649
+          },
+          {
+            "fdcId": 603361,
+            "description": "SESAME OIL",
+            "dataType": "Branded",
+            "score": 1342.7649
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 224,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 14,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 14,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "rice vinegar": {
+      "_key": "rice vinegar",
+      "product_name": "rice vinegar",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "rice vinegar",
+        "top_matches": [
+          {
+            "fdcId": 2288128,
+            "description": "RICE VINEGAR",
+            "dataType": "Branded",
+            "score": 1251.7689
+          },
+          {
+            "fdcId": 2083928,
+            "description": "RICE VINEGAR",
+            "dataType": "Branded",
+            "score": 1251.7689
+          },
+          {
+            "fdcId": 2158088,
+            "description": "RICE VINEGAR",
+            "dataType": "Branded",
+            "score": 1251.7689
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "red wine vinegar": {
+      "_key": "red wine vinegar",
+      "product_name": "red wine vinegar",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "red wine vinegar",
+        "top_matches": [
+          {
+            "fdcId": 2076859,
+            "description": "RED WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1525.9198
+          },
+          {
+            "fdcId": 2456392,
+            "description": "RED WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1525.9198
+          },
+          {
+            "fdcId": 2616487,
+            "description": "RED WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1525.9198
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "white wine vinegar": {
+      "_key": "white wine vinegar",
+      "product_name": "white wine vinegar",
+      "category": "condiments",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.128Z"
+      },
+      "fdc_search": {
+        "query": "white wine vinegar",
+        "top_matches": [
+          {
+            "fdcId": 2242219,
+            "description": "WHITE WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1549.7278
+          },
+          {
+            "fdcId": 581461,
+            "description": "WHITE WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1549.7278
+          },
+          {
+            "fdcId": 2065017,
+            "description": "WHITE WINE VINEGAR",
+            "dataType": "Branded",
+            "score": 1549.7278
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "mozzarella cheese": {
+      "_key": "mozzarella cheese",
+      "product_name": "mozzarella cheese",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "mozzarella cheese",
+        "top_matches": [
+          {
+            "fdcId": 380742,
+            "description": "MOZZARELLA CHEESE",
+            "dataType": "Branded",
+            "score": 1029.2534
+          },
+          {
+            "fdcId": 2101148,
+            "description": "MOZZARELLA CHEESE",
+            "dataType": "Branded",
+            "score": 1029.2534
+          },
+          {
+            "fdcId": 2101336,
+            "description": "MOZZARELLA CHEESE",
+            "dataType": "Branded",
+            "score": 1029.2534
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "cheddar cheese": {
+      "_key": "cheddar cheese",
+      "product_name": "cheddar cheese",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "cheddar cheese",
+        "top_matches": [
+          {
+            "fdcId": 2057648,
+            "description": "CHEDDAR CHEESE",
+            "dataType": "Branded",
+            "score": 1005.28424
+          },
+          {
+            "fdcId": 2116771,
+            "description": "CHEDDAR CHEESE",
+            "dataType": "Branded",
+            "score": 1005.28424
+          },
+          {
+            "fdcId": 2021456,
+            "description": "CHEDDAR CHEESE",
+            "dataType": "Branded",
+            "score": 1005.28424
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "cream cheese": {
+      "_key": "cream cheese",
+      "product_name": "cream cheese",
+      "category": "dairy",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "tbsp_to_oz",
+        "target_unit"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 8,
+        "tbsp_to_oz": null,
+        "target_unit": "oz",
+        "source": "PRODUCT_CONVERSIONS",
+        "learned_at": "2026-03-30T17:20:19.124Z"
+      },
+      "fdc_search": {
+        "query": "cream cheese",
+        "top_matches": [
+          {
+            "fdcId": 2432038,
+            "description": "CREAM CHEESE",
+            "dataType": "Branded",
+            "score": 928.5904
+          },
+          {
+            "fdcId": 2126583,
+            "description": "CREAM CHEESE",
+            "dataType": "Branded",
+            "score": 928.5904
+          },
+          {
+            "fdcId": 2301650,
+            "description": "CREAM CHEESE",
+            "dataType": "Branded",
+            "score": 928.5904
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "greek yogurt": {
+      "_key": "greek yogurt",
+      "product_name": "greek yogurt",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "greek yogurt",
+        "top_matches": [
+          {
+            "fdcId": 2035482,
+            "description": "GREEK YOGURT",
+            "dataType": "Branded",
+            "score": 1272.3358
+          },
+          {
+            "fdcId": 373595,
+            "description": "GREEK YOGURT",
+            "dataType": "Branded",
+            "score": 1270.2881
+          },
+          {
+            "fdcId": 2038865,
+            "description": "GREEK YOGURT",
+            "dataType": "Branded",
+            "score": 1270.2881
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "yogurt": {
+      "_key": "yogurt",
+      "product_name": "yogurt",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "yogurt",
+        "top_matches": [
+          {
+            "fdcId": 2554062,
+            "description": "YOGURT",
+            "dataType": "Branded",
+            "score": 1111.7516
+          },
+          {
+            "fdcId": 463067,
+            "description": "YOGURT",
+            "dataType": "Branded",
+            "score": 1111.7516
+          },
+          {
+            "fdcId": 167722,
+            "description": "Tofu yogurt",
+            "dataType": "SR Legacy",
+            "score": 278.2906
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "egg": {
+      "_key": "egg",
+      "product_name": "eggs",
+      "category": "dairy",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "eggs",
+        "top_matches": [
+          {
+            "fdcId": 2498468,
+            "description": "EGGS",
+            "dataType": "Branded",
+            "score": 982.0273
+          },
+          {
+            "fdcId": 577532,
+            "description": "EGGS",
+            "dataType": "Branded",
+            "score": 982.0273
+          },
+          {
+            "fdcId": 578455,
+            "description": "EGGS",
+            "dataType": "Branded",
+            "score": 982.0273
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "lemon juice": {
+      "_key": "lemon juice",
+      "product_name": "lemon juice",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "lemon juice",
+        "top_matches": [
+          {
+            "fdcId": 2438529,
+            "description": "LEMON JUICE",
+            "dataType": "Branded",
+            "score": 1297.4452
+          },
+          {
+            "fdcId": 1932420,
+            "description": "LEMON JUICE",
+            "dataType": "Branded",
+            "score": 1297.4452
+          },
+          {
+            "fdcId": 2113661,
+            "description": "LEMON JUICE",
+            "dataType": "Branded",
+            "score": 1297.4452
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "lime juice": {
+      "_key": "lime juice",
+      "product_name": "lime juice",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "lime juice",
+        "top_matches": [
+          {
+            "fdcId": 2416356,
+            "description": "LIME JUICE",
+            "dataType": "Branded",
+            "score": 1438.8853
+          },
+          {
+            "fdcId": 168156,
+            "description": "Lime juice, raw",
+            "dataType": "SR Legacy",
+            "score": 537.5313
+          },
+          {
+            "fdcId": 2709185,
+            "description": "Lime juice, 100%, canned or bottled",
+            "dataType": "Survey (FNDDS)",
+            "score": 476.47455
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "orange juice": {
+      "_key": "orange juice",
+      "product_name": "orange juice",
+      "category": "other",
+      "has_conversion_data": true,
+      "conversion_fields": [],
+      "conversion_data": {
+        "type": "liquid",
+        "source": "LIQUID_PRODUCTS",
+        "learned_at": "2026-03-30T17:20:19.127Z"
+      },
+      "fdc_search": {
+        "query": "orange juice",
+        "top_matches": [
+          {
+            "fdcId": 2098640,
+            "description": "ORANGE JUICE",
+            "dataType": "Branded",
+            "score": 1102.5002
+          },
+          {
+            "fdcId": 2073232,
+            "description": "ORANGE JUICE",
+            "dataType": "Branded",
+            "score": 1102.5002
+          },
+          {
+            "fdcId": 2104399,
+            "description": "ORANGE JUICE",
+            "dataType": "Branded",
+            "score": 1102.5002
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "ginger": {
+      "_key": "ginger",
+      "product_name": "ginger",
+      "category": "produce",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4,
+        "each_to_oz": 2,
+        "tbsp_to_oz": 0.5,
+        "source": "GPT-4o",
+        "learned_at": "2026-04-02T20:18:54.809Z"
+      },
+      "fdc_search": {
+        "query": "ginger",
+        "top_matches": [
+          {
+            "fdcId": 2127806,
+            "description": "GINGER",
+            "dataType": "Branded",
+            "score": 1152.3931
+          },
+          {
+            "fdcId": 2294466,
+            "description": "GINGER",
+            "dataType": "Branded",
+            "score": 1152.3931
+          },
+          {
+            "fdcId": 1937534,
+            "description": "GINGER",
+            "dataType": "Branded",
+            "score": 1152.3931
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "jalapeno pepper": {
+      "_key": "jalapeno pepper",
+      "product_name": "jalapeno pepper",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "jalapeno pepper",
+        "top_matches": [
+          {
+            "fdcId": 2710096,
+            "description": "Peppers, jalapenos",
+            "dataType": "Survey (FNDDS)",
+            "score": 622.5356
+          },
+          {
+            "fdcId": 2710045,
+            "description": "Stuffed jalapeno pepper",
+            "dataType": "Survey (FNDDS)",
+            "score": 580.93506
+          },
+          {
+            "fdcId": 168576,
+            "description": "Peppers, jalapeno, raw",
+            "dataType": "SR Legacy",
+            "score": 568.7495
+          }
+        ],
+        "match_quality": "miss"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 10,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 150,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 15,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 30,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 2,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "serrano pepper": {
+      "_key": "serrano pepper",
+      "product_name": "serrano pepper",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "serrano pepper",
+        "top_matches": [
+          {
+            "fdcId": 169395,
+            "description": "Peppers, serrano, raw",
+            "dataType": "SR Legacy",
+            "score": 787.3442
+          },
+          {
+            "fdcId": 2747663,
+            "description": "Peppers, serrano, seeded, raw",
+            "dataType": "Foundation",
+            "score": 724.7156
+          },
+          {
+            "fdcId": 2543559,
+            "description": "SERRANO PEPPER SAUCE, SERRANO PEPPER",
+            "dataType": "Branded",
+            "score": 487.75278
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 105,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 6.1,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": null
+    },
+    "poblano pepper": {
+      "_key": "poblano pepper",
+      "product_name": "poblano pepper",
+      "category": "produce",
+      "has_conversion_data": false,
+      "conversion_fields": [],
+      "conversion_data": null,
+      "fdc_search": {
+        "query": "poblano pepper",
+        "top_matches": [
+          {
+            "fdcId": 2747662,
+            "description": "Peppers, poblano, seeded, raw",
+            "dataType": "Foundation",
+            "score": 686.1949
+          },
+          {
+            "fdcId": 2462046,
+            "description": "CHICKEN & POBLANO PEPPER SOUP, CHICKEN & POBLANO PEPPER",
+            "dataType": "Branded",
+            "score": 362.51907
+          },
+          {
+            "fdcId": 2290219,
+            "description": "HUMMUS, POBLANO PEPPER",
+            "dataType": "Branded",
+            "score": 329.7494
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "red pepper flakes": {
+      "_key": "red pepper flakes",
+      "product_name": "red pepper flakes",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 1.76,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.22,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-31T15:50:39.354Z"
+      },
+      "fdc_search": {
+        "query": "red pepper flakes",
+        "top_matches": [
+          {
+            "fdcId": 2709977,
+            "description": "Peppers, red, cooked",
+            "dataType": "Survey (FNDDS)",
+            "score": 522.6354
+          },
+          {
+            "fdcId": 2258590,
+            "description": "Peppers, bell, red, raw",
+            "dataType": "Foundation",
+            "score": 474.24683
+          },
+          {
+            "fdcId": 170108,
+            "description": "Peppers, sweet, red, raw",
+            "dataType": "SR Legacy",
+            "score": 474.24683
+          }
+        ],
+        "match_quality": "close"
+      },
+      "fdc_portions": {
+        "has_portions": true,
+        "portions": [
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 78,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 30,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 120,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 155,
+            "amount": 1
+          },
+          {
+            "measureUnit": "undetermined",
+            "gramWeight": 10,
+            "amount": 1
+          }
+        ]
+      },
+      "cross_reference": {
+        "status": "no_overlap",
+        "comparisons": []
+      }
+    },
+    "chili powder": {
+      "_key": "chili powder",
+      "product_name": "chili powder",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 4.8,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.3,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-30T05:52:32.595Z"
+      },
+      "fdc_search": {
+        "query": "chili powder",
+        "top_matches": [
+          {
+            "fdcId": 2158030,
+            "description": "CHILI POWDER",
+            "dataType": "Branded",
+            "score": 1141.9685
+          },
+          {
+            "fdcId": 2633551,
+            "description": "CHILI POWDER",
+            "dataType": "Branded",
+            "score": 1141.9685
+          },
+          {
+            "fdcId": 2136788,
+            "description": "CHILI POWDER",
+            "dataType": "Branded",
+            "score": 1141.9685
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    },
+    "cayenne pepper": {
+      "_key": "cayenne pepper",
+      "product_name": "cayenne pepper",
+      "category": "spices",
+      "has_conversion_data": true,
+      "conversion_fields": [
+        "cup_to_oz",
+        "each_to_oz",
+        "tbsp_to_oz"
+      ],
+      "conversion_data": {
+        "type": "solid",
+        "cup_to_oz": 3.84,
+        "each_to_oz": null,
+        "tbsp_to_oz": 0.24,
+        "source": "GPT-4o",
+        "learned_at": "2026-03-30T05:52:32.596Z"
+      },
+      "fdc_search": {
+        "query": "cayenne pepper",
+        "top_matches": [
+          {
+            "fdcId": 1888487,
+            "description": "CAYENNE PEPPER",
+            "dataType": "Branded",
+            "score": 1481.2814
+          },
+          {
+            "fdcId": 2094044,
+            "description": "CAYENNE PEPPER",
+            "dataType": "Branded",
+            "score": 1481.2814
+          },
+          {
+            "fdcId": 2213158,
+            "description": "CAYENNE PEPPER",
+            "dataType": "Branded",
+            "score": 1481.2814
+          }
+        ],
+        "match_quality": "exact"
+      },
+      "fdc_portions": {
+        "has_portions": false,
+        "portions": []
+      },
+      "cross_reference": null
+    }
+  }
+}

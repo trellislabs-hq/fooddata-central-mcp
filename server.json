@@ -1,7 +1,7 @@
 {
   "name": "fooddata-central-mcp",
-  "version": "1.1.0",
-  "description": "MCP server wrapping the USDA FoodData Central API — search and retrieve food nutrition data",
+  "version": "1.1.1",
+  "description": "MCP server wrapping the USDA FoodData Central API \u2014 search and retrieve food nutrition data",
   "repository": "https://github.com/trellislabs-hq/fooddata-central-mcp",
   "homepage": "https://github.com/trellislabs-hq/fooddata-central-mcp",
   "author": "Trellis Labs",

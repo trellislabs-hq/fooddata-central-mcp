@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.1] — 2026-07-03
+
+### Fixed
+
+- **`find_food` data-type preference now survives FDC's relevance ranking.**
+  The combined-type search ranks purely by text relevance, so a Survey (FNDDS)
+  entry could outrank the canonical Foundation entry for the same food
+  (observed live: "cheddar cheese" returned Survey 2705709 above Foundation
+  328637). Results are now stable-sorted Foundation → SR Legacy → Survey →
+  Branded before selection, with relevance breaking ties only within a tier.
+- Server handshake (`serverInfo.version`) now reports the real package version
+  (was hardcoded to 1.0.0).
+
 ## [1.1.0] — 2026-07-03
 
 ### Added

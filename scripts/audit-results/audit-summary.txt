@@ -1,0 +1,72 @@
+PIPELINE AUDIT REPORT — 2026-04-14
+==================================================
+
+DICTIONARY OVERVIEW
+  Total entries: 100
+  With conversion_data: 54 (54%)
+  Without conversion_data: 46 (46%)
+
+FDC MATCHING
+  Exact match: 85 (85%)
+  Close match: 8 (8%)
+  Miss: 7 (7%)
+  No result: 0 (0%)
+
+  By data type of best match:
+    Branded: 71 (71%)
+    Survey (FNDDS): 17 (17%)
+    SR Legacy: 7 (7%)
+    Foundation: 5 (5%)
+
+FOOD PORTION COVERAGE
+  Entries with FDC match + FoodPortion data: 27 (27%)
+  Entries with FDC match but NO FoodPortion: 72 (72%)
+  Entries with no FDC match: 7 (7%)
+
+CROSS-REFERENCE (entries with both conversion_data AND FoodPortion)
+  Agree (within 15%): 0
+  Diverge (>15% delta): 0
+  No overlapping measures: 17
+
+RUN METADATA
+  Dictionary path: /Users/thomasstewart/Projects/recipe-app/data/ingredient-dictionary.base.json
+  API calls made: 95
+  Duration: 5.8 minutes
+
+TOP PRIORITY GAPS (miss, no result, or no FoodPortion data)
+  Key                                 Product Name                        Gap
+  ------------------------------------------------------------------------------------------
+  garlic                              garlic                              no FoodPortion data
+  ground lamb                         ground lamb                         no FoodPortion data
+  diamond crystal kosher salt         Diamond Crystal kosher salt         no FoodPortion data
+  cumin                               ground cumin                        no FoodPortion data
+  sugar                               sugar                               no FoodPortion data
+  persian cucumber                    Persian cucumbers                   no FoodPortion data
+  parsley                             parsley                             no FoodPortion data
+  pitas                               pitas                               FDC miss
+  double concentrated tomato paste    double-concentrated tomato paste    no FoodPortion data
+  extra virgin olive oil              extra-virgin olive oil              no FoodPortion data
+  black pepper                        black pepper                        no FoodPortion data
+  crushed red pepper flakes           crushed red pepper flakes           no FoodPortion data
+  button mushroom                     button mushrooms                    no FoodPortion data
+  rigatoni                            rigatoni                            no FoodPortion data
+  low moisture mozzarella             low-moisture mozzarella             no FoodPortion data
+  pepperoni                           pepperoni                           no FoodPortion data
+  sliced banana pepper                sliced banana peppers               no FoodPortion data
+  golden beet                         golden beets                        no FoodPortion data
+  orecchiette                         orecchiette                         no FoodPortion data
+  sage                                sage                                no FoodPortion data
+  hot italian sausage                 hot Italian sausage                 no FoodPortion data
+  butter                              unsalted butter                     no FoodPortion data
+  lemon                               lemon                               no FoodPortion data
+  smoked paprika                      smoked paprika                      no FoodPortion data
+  white rice                          rice                                no FoodPortion data
+  ground turkey                       ground turkey                       no FoodPortion data
+  whole milk                          whole milk                          no FoodPortion data
+  creole butter                       Creole butter                       no FoodPortion data
+  prime rib                           prime rib                           no FoodPortion data
+  dan o’s preem o                     Dan-O’s Preem-O                     FDC miss
+
+DIVERGENT CONVERSIONS (recipe-app vs FDC disagree > 15%)
+  Key                                 Max Delta    Details
+  ------------------------------------------------------------------------------------------
