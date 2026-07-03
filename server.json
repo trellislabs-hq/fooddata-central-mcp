@@ -1,39 +1,29 @@
 {
-  "name": "fooddata-central-mcp",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.trellislabs-hq/fooddata-central-mcp",
+  "description": "USDA FoodData Central: food search, nutrition data, and a quality-first find_food tool",
   "version": "1.1.1",
-  "description": "MCP server wrapping the USDA FoodData Central API \u2014 search and retrieve food nutrition data",
-  "repository": "https://github.com/trellislabs-hq/fooddata-central-mcp",
-  "homepage": "https://github.com/trellislabs-hq/fooddata-central-mcp",
-  "author": "Trellis Labs",
-  "license": "MIT",
-  "runtime": "node",
-  "command": "fooddata-central-mcp",
-  "env": {
-    "FDC_API_KEY": {
-      "description": "USDA FoodData Central API key. Get a free key at https://fdc.nal.usda.gov/api-guide. Use DEMO_KEY for testing (30 req/hr limit).",
-      "required": true
-    }
+  "repository": {
+    "url": "https://github.com/trellislabs-hq/fooddata-central-mcp",
+    "source": "github"
   },
-  "tools": [
+  "packages": [
     {
-      "name": "search_foods",
-      "description": "Search the USDA FoodData Central database by keyword or food name"
-    },
-    {
-      "name": "get_food",
-      "description": "Get full nutrient details for a single food by FDC ID"
-    },
-    {
-      "name": "get_foods",
-      "description": "Batch lookup of up to 20 foods by FDC ID"
-    },
-    {
-      "name": "list_foods",
-      "description": "Paginated browse of the FoodData Central catalog"
-    },
-    {
-      "name": "find_food",
-      "description": "Find the best canonical match for a food name. Returns the top match with a key-nutrient summary plus up to 3 alternates, preferring Foundation and SR Legacy data over branded noise."
+      "registryType": "npm",
+      "identifier": "@trellis-labs/fooddata-central-mcp",
+      "version": "1.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "FDC_API_KEY",
+          "description": "USDA FoodData Central API key. Get a free key at https://fdc.nal.usda.gov/api-guide. DEMO_KEY works for testing (30 req/hr limit).",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ]
     }
   ]
 }
