@@ -25,6 +25,14 @@
   ],
   "author": "Trellis Labs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trellislabs-hq/fooddata-central-mcp.git"
+  },
+  "homepage": "https://github.com/trellislabs-hq/fooddata-central-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/trellislabs-hq/fooddata-central-mcp/issues"
+  },
   "files": [
     "dist/",
     "server.json",
