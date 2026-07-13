@@ -164,6 +164,21 @@ export class FdcClient {
   }
 
   /**
+   * Redact the API key from any externally sourced text (response bodies,
+   * status text, network-layer error messages) before it can reach an error
+   * message an MCP user sees. Upstream bodies are hostile input for secrecy
+   * purposes — a proxy or the API itself echoing credentials must never
+   * propagate them. Also bounds length so a huge body can't flood the error.
+   */
+  private sanitize(text: string): string {
+    let out = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+    if (this.apiKey) {
+      out = out.split(this.apiKey).join("[redacted]");
+    }
+    return out;
+  }
+
+  /**
    * Build a URL from the given path and additional query parameters. The
    * API key is NEVER included here — it is sent via the X-Api-Key header
    * (see fetchWithTimeout) so it never appears in a request URL, and by
@@ -209,7 +224,10 @@ export class FdcClient {
           `FDC API request timed out after ${this.timeoutMs / 1000}s.`
         );
       }
-      throw err;
+      // Network-layer errors are externally sourced text (proxies can echo
+      // request headers) — sanitize before the message can reach an MCP user.
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      throw new FdcError(0, "Network error", `FDC API request failed: ${this.sanitize(rawMessage)}`);
     } finally {
       clearTimeout(timer);
     }
@@ -238,7 +256,10 @@ export class FdcClient {
     }
 
     const isRateLimit = response.status === 429;
-    const bodyText = await response.text().catch(() => "");
+    // Body and status text are externally sourced — sanitize (redact the API
+    // key, bound length) before they can appear in an error an MCP user sees.
+    const bodyText = this.sanitize(await response.text().catch(() => ""));
+    const statusText = this.sanitize(response.statusText);
 
     let message: string;
     if (isRateLimit) {
@@ -249,10 +270,10 @@ export class FdcClient {
     } else if (response.status === 400) {
       message = `Bad request (HTTP 400): ${bodyText || "Check your query parameters."}`;
     } else {
-      message = `FDC API error ${response.status} ${response.statusText}: ${bodyText}`;
+      message = `FDC API error ${response.status} ${statusText}: ${bodyText}`;
     }
 
-    throw new FdcError(response.status, response.statusText, message, isRateLimit);
+    throw new FdcError(response.status, statusText, message, isRateLimit);
   }
 
   /**

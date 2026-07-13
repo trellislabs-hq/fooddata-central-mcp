@@ -56,6 +56,30 @@ describe("buildGetFoodsResult — {} zero-resolve pathology", () => {
   });
 });
 
+describe("buildGetFoodsResult — transport contract on reconciliation batches", () => {
+  test("both the primary batch and the confirmation re-batch use header-only key transport", async () => {
+    const FAKE = "totally-fake-recon-key-42";
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    restoreFetch = installFetchMock((url, init) => {
+      captured.push({ url, init });
+      // Primary omits id 2; re-batch recovers nothing.
+      return captured.length === 1 ? jsonResponse([food(1)]) : jsonResponse([]);
+    });
+
+    const client = new FdcClient(FAKE);
+    await buildGetFoodsResult(client, { fdcIds: [1, 2] });
+
+    assert.equal(captured.length, 2, "expected primary + one confirmation re-batch");
+    for (const req of captured) {
+      assert.doesNotMatch(req.url, new RegExp(FAKE), `URL leaked the key: ${req.url}`);
+      assert.doesNotMatch(req.url, /api_key=/, `URL uses api_key param: ${req.url}`);
+      const headers = new Headers(req.init?.headers);
+      assert.equal(headers.get("X-Api-Key"), FAKE, `missing X-Api-Key on ${req.url}`);
+      assert.equal(headers.get("Content-Type"), "application/json");
+    }
+  });
+});
+
 describe("buildGetFoodsResult — silent omission reconciliation", () => {
   test("recovers an omitted id via confirmation re-batch; merge order is primary then recovered", async () => {
     let callCount = 0;

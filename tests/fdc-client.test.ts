@@ -148,67 +148,122 @@ describe("FdcClient — error mapping", () => {
 });
 
 describe("FdcClient — header-only API key transport", () => {
-  test("never appends the API key to the request URL, across every endpoint", async () => {
-    const capturedUrls: string[] = [];
-    restoreFetch = installFetchMock((url) => {
-      capturedUrls.push(url);
-      return jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] });
-    });
-
-    const client = new FdcClient(FAKE_KEY);
-    await client.searchFoods({ query: "cheddar" }).catch(() => {});
-    restoreFetch();
-
-    restoreFetch = installFetchMock((url) => {
-      capturedUrls.push(url);
-      return jsonResponse({ fdcId: 1, description: "test" });
-    });
-    await client.getFood({ fdcId: 1 }).catch(() => {});
-    restoreFetch();
-
-    restoreFetch = installFetchMock((url) => {
-      capturedUrls.push(url);
-      return jsonResponse([]);
-    });
-    await client.getFoods({ fdcIds: [1] }).catch(() => {});
-    restoreFetch();
-
-    restoreFetch = installFetchMock((url) => {
-      capturedUrls.push(url);
-      return jsonResponse([]);
-    });
-    await client.listFoods().catch(() => {});
-
-    assert.ok(capturedUrls.length > 0, "expected at least one captured URL");
-    for (const url of capturedUrls) {
-      assert.doesNotMatch(url, new RegExp(FAKE_KEY), `URL leaked the API key: ${url}`);
-      assert.doesNotMatch(url, /api_key=/, `URL still uses the api_key query param: ${url}`);
+  /** Assert one captured request obeys the transport contract. */
+  function assertCleanRequest(url: string, init: RequestInit | undefined, expectPost: boolean) {
+    assert.doesNotMatch(url, new RegExp(FAKE_KEY), `URL leaked the API key: ${url}`);
+    assert.doesNotMatch(url, /api_key=/, `URL still uses the api_key query param: ${url}`);
+    const headers = new Headers(init?.headers);
+    assert.equal(headers.get("X-Api-Key"), FAKE_KEY, `missing X-Api-Key header on ${url}`);
+    if (expectPost) {
+      assert.equal(init?.method, "POST");
+      assert.equal(headers.get("Content-Type"), "application/json", `POST lost Content-Type on ${url}`);
     }
-  });
+  }
 
-  test("sends the API key via the X-Api-Key header on every request", async () => {
-    const capturedHeaders: Headers[] = [];
-    restoreFetch = installFetchMock((url, init) => {
-      capturedHeaders.push(new Headers(init?.headers));
-      return jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] });
-    });
-
+  test("request-path matrix: every path (incl. abridged fallback and 429 retry) uses header-only transport with expected call counts", async () => {
     const client = new FdcClient(FAKE_KEY);
+    let captured: Array<{ url: string; init?: RequestInit }> = [];
+    const capture = (handler: (url: string) => Response) =>
+      installFetchMock((url, init) => {
+        captured.push({ url, init });
+        return handler(url);
+      });
+
+    // searchFoods — single POST
+    captured = [];
+    restoreFetch = capture(() => jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] }));
     await client.searchFoods({ query: "cheddar" });
+    restoreFetch();
+    assert.equal(captured.length, 1);
+    assertCleanRequest(captured[0].url, captured[0].init, true);
 
-    assert.equal(capturedHeaders.length, 1);
-    assert.equal(capturedHeaders[0].get("X-Api-Key"), FAKE_KEY);
+    // getFood — single GET, full-format success (no fallback fired)
+    captured = [];
+    restoreFetch = capture(() => jsonResponse({ fdcId: 1, description: "test" }));
+    await client.getFood({ fdcId: 1 });
+    restoreFetch();
+    assert.equal(captured.length, 1);
+    assertCleanRequest(captured[0].url, captured[0].init, false);
+
+    // getFood — 404 on full triggers exactly ONE abridged-fallback retry; both clean
+    captured = [];
+    restoreFetch = capture((url) =>
+      url.includes("format=abridged")
+        ? jsonResponse({ fdcId: 746767, description: "fallback food" })
+        : emptyResponse(404)
+    );
+    await client.getFood({ fdcId: 746767, format: "full" });
+    restoreFetch();
+    assert.equal(captured.length, 2, "expected full attempt + one abridged fallback");
+    for (const req of captured) assertCleanRequest(req.url, req.init, false);
+
+    // getFoods — single POST batch
+    captured = [];
+    restoreFetch = capture(() => jsonResponse([]));
+    await client.getFoods({ fdcIds: [1, 2] });
+    restoreFetch();
+    assert.equal(captured.length, 1);
+    assertCleanRequest(captured[0].url, captured[0].init, true);
+
+    // listFoods — single GET
+    captured = [];
+    restoreFetch = capture(() => jsonResponse([]));
+    await client.listFoods();
+    restoreFetch();
+    assert.equal(captured.length, 1);
+    assertCleanRequest(captured[0].url, captured[0].init, false);
+
+    // 429 retry — exactly two attempts, BOTH clean
+    captured = [];
+    let attempt = 0;
+    restoreFetch = capture(() => {
+      attempt++;
+      return attempt === 1
+        ? emptyResponse(429, { "Retry-After": "0" })
+        : jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] });
+    });
+    await client.searchFoods({ query: "retry me" });
+    restoreFetch();
+    assert.equal(captured.length, 2, "expected the original attempt + one 429 retry");
+    for (const req of captured) assertCleanRequest(req.url, req.init, true);
   });
 
-  test("never includes the API key in a thrown error message", async () => {
-    restoreFetch = installFetchMock(() => new Response("upstream failure", { status: 500 }));
+  test("redacts the API key from hostile 400/500 response bodies before it reaches an error message", async () => {
     const client = new FdcClient(FAKE_KEY);
+
+    for (const status of [400, 500]) {
+      restoreFetch = installFetchMock(
+        () => new Response(`upstream echoed ${FAKE_KEY} in the body`, { status })
+      );
+      await assert.rejects(
+        () => client.searchFoods({ query: "test" }),
+        (err: unknown) => {
+          assert.ok(err instanceof FdcError);
+          assert.doesNotMatch(err.message, new RegExp(FAKE_KEY), `HTTP ${status} body leaked the key`);
+          assert.match(err.message, /\[redacted\]/, `HTTP ${status} body was not visibly redacted`);
+          return true;
+        }
+      );
+      restoreFetch();
+    }
+    restoreFetch = () => {};
+  });
+
+  test("redacts the API key from network-layer fetch errors", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    const original = global.fetch;
+    global.fetch = (() =>
+      Promise.reject(new Error(`proxy rejected credential ${FAKE_KEY}`))) as typeof fetch;
+    restoreFetch = () => {
+      global.fetch = original;
+    };
 
     await assert.rejects(
       () => client.searchFoods({ query: "test" }),
       (err: unknown) => {
         assert.ok(err instanceof FdcError);
         assert.doesNotMatch(err.message, new RegExp(FAKE_KEY));
+        assert.match(err.message, /\[redacted\]/);
         return true;
       }
     );
