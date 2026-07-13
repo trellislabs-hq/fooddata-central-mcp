@@ -2,6 +2,43 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.0] — 2026-07-12
+
+### Security
+
+- **API key transport moved to the `X-Api-Key` header, off the URL
+  entirely.** Every FDC request previously appended `api_key=...` as a URL
+  query parameter — a shape that leaks into access logs, proxies, and
+  browser/tool history. All five endpoint methods now send the key via the
+  `X-Api-Key` header only; it never appears in a request URL or in a thrown
+  error message.
+
+### Fixed
+
+- **`get_foods` no longer crashes when FDC returns zero matches.** FDC's
+  batch endpoint (`POST /foods`) returns a literal `{}` — not `[]` — when
+  NONE of the requested IDs resolve to a food. Previously this silently
+  passed the length guard (`{}.length` is `undefined`, which is falsy but
+  the array-shape check didn't catch it) and then threw `foods.map is not a
+  function`, surfacing as a confusing MCP error. `FdcClient.getFoods` now
+  normalizes `{}` to `[]`, and any other non-array response shape (null,
+  string, number, boolean, non-empty object) throws a new, dedicated
+  `FdcResponseShapeError` describing the expected-vs-received shape (never
+  echoing response body contents or the API key).
+- **`get_foods` now recovers FDC IDs that are silently omitted from mixed
+  batches.** Live-corpus testing (1,604 refs) observed FDC's batch endpoint
+  dropping ~7% of requested IDs from otherwise-successful responses, with no
+  error or indication — the food is simply missing from the array. `get_foods`
+  now diffs the requested IDs against what FDC actually returned and, if
+  anything is missing, issues exactly ONE confirmation re-batch for only the
+  missing IDs (same `format`/`nutrients` as the primary call), merging any
+  recovered foods into the result. IDs still missing after the confirmation
+  re-batch are reported by name/count in the tool response text. Duplicate
+  requested IDs are deduplicated (first-seen order) before either batch call,
+  and "N of M" reporting is over unique requested IDs. This reconciliation
+  logic is extracted into `src/get-foods.ts` (`buildGetFoodsResult`) for unit
+  testability, independent of the MCP server's stdio transport.
+
 ## [1.1.1] — 2026-07-03
 
 ### Fixed

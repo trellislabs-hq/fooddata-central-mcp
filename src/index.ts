@@ -17,6 +17,8 @@
  *   - ./format.ts (output formatters — extracted here from a prior version
  *     of this file; text output for the four original tools is unchanged)
  *   - ./find-food.ts (find_food's search/dedup/formatting pipeline)
+ *   - ./get-foods.ts (get_foods reconciliation core — extracted for
+ *     testability; batch omission/zero-resolve reconciliation lives there)
  *
  * State: Stateless — each tool call is an independent HTTP request to FDC.
  *   API key is read once at startup and fails fast if missing.
@@ -28,6 +30,7 @@ import { z } from "zod";
 import { FdcClient, FdcError, type FdcListParams } from "./fdc-client.js";
 import { formatFoodSummary, formatFoodDetail, formatError } from "./format.js";
 import { findFood } from "./find-food.js";
+import { buildGetFoodsResult } from "./get-foods.js";
 
 // ─── Environment Validation ──────────────────────────────────────────────────
 
@@ -62,7 +65,7 @@ function validateQuery(query: string): string | null {
 
 const server = new McpServer({
   name: "fooddata-central-mcp",
-  version: "1.1.1",
+  version: "1.2.0",
 });
 
 // ─── Tool: search_foods ───────────────────────────────────────────────────────
@@ -258,40 +261,11 @@ server.registerTool(
     annotations: { readOnlyHint: true },
   },
   async ({ fdcIds, format, nutrients }) => {
-    try {
-      const foods = await client.getFoods({
-        fdcIds,
-        format: (format ?? "full") as "abridged" | "full",
-        nutrients,
-      });
-
-      if (!foods || foods.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "No foods found for the provided FDC IDs.",
-            },
-          ],
-        };
-      }
-
-      const output = foods.map(formatFoodDetail).join("\n\n");
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Batch results for ${foods.length} food(s):\n\n${output}`,
-          },
-        ],
-      };
-    } catch (err) {
-      return {
-        content: [{ type: "text", text: formatError(err) }],
-        isError: true,
-      };
-    }
+    return buildGetFoodsResult(client, {
+      fdcIds,
+      format: (format ?? "full") as "abridged" | "full",
+      nutrients,
+    });
   }
 );
 

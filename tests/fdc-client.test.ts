@@ -10,8 +10,13 @@
 
 import { test, describe, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { FdcClient, FdcError } from "../src/fdc-client.js";
+import { FdcClient, FdcError, FdcResponseShapeError } from "../src/fdc-client.js";
 import { loadFixture, jsonResponse, emptyResponse, installFetchMock } from "./helpers/mock-fetch.js";
+
+// Distinct, obviously-fake key used throughout — never a real credential —
+// so tests can grep for it in URLs/messages without any risk of matching
+// real secret material.
+const FAKE_KEY = "totally-fake-test-key-999";
 
 let restoreFetch: (() => void) | null = null;
 
@@ -136,6 +141,148 @@ describe("FdcClient — error mapping", () => {
       (err: unknown) => {
         assert.ok(err instanceof FdcError);
         assert.equal(err.statusCode, 500);
+        return true;
+      }
+    );
+  });
+});
+
+describe("FdcClient — header-only API key transport", () => {
+  test("never appends the API key to the request URL, across every endpoint", async () => {
+    const capturedUrls: string[] = [];
+    restoreFetch = installFetchMock((url) => {
+      capturedUrls.push(url);
+      return jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] });
+    });
+
+    const client = new FdcClient(FAKE_KEY);
+    await client.searchFoods({ query: "cheddar" }).catch(() => {});
+    restoreFetch();
+
+    restoreFetch = installFetchMock((url) => {
+      capturedUrls.push(url);
+      return jsonResponse({ fdcId: 1, description: "test" });
+    });
+    await client.getFood({ fdcId: 1 }).catch(() => {});
+    restoreFetch();
+
+    restoreFetch = installFetchMock((url) => {
+      capturedUrls.push(url);
+      return jsonResponse([]);
+    });
+    await client.getFoods({ fdcIds: [1] }).catch(() => {});
+    restoreFetch();
+
+    restoreFetch = installFetchMock((url) => {
+      capturedUrls.push(url);
+      return jsonResponse([]);
+    });
+    await client.listFoods().catch(() => {});
+
+    assert.ok(capturedUrls.length > 0, "expected at least one captured URL");
+    for (const url of capturedUrls) {
+      assert.doesNotMatch(url, new RegExp(FAKE_KEY), `URL leaked the API key: ${url}`);
+      assert.doesNotMatch(url, /api_key=/, `URL still uses the api_key query param: ${url}`);
+    }
+  });
+
+  test("sends the API key via the X-Api-Key header on every request", async () => {
+    const capturedHeaders: Headers[] = [];
+    restoreFetch = installFetchMock((url, init) => {
+      capturedHeaders.push(new Headers(init?.headers));
+      return jsonResponse({ totalHits: 0, currentPage: 1, totalPages: 0, foods: [] });
+    });
+
+    const client = new FdcClient(FAKE_KEY);
+    await client.searchFoods({ query: "cheddar" });
+
+    assert.equal(capturedHeaders.length, 1);
+    assert.equal(capturedHeaders[0].get("X-Api-Key"), FAKE_KEY);
+  });
+
+  test("never includes the API key in a thrown error message", async () => {
+    restoreFetch = installFetchMock(() => new Response("upstream failure", { status: 500 }));
+    const client = new FdcClient(FAKE_KEY);
+
+    await assert.rejects(
+      () => client.searchFoods({ query: "test" }),
+      (err: unknown) => {
+        assert.ok(err instanceof FdcError);
+        assert.doesNotMatch(err.message, new RegExp(FAKE_KEY));
+        return true;
+      }
+    );
+  });
+});
+
+describe("FdcClient.getFoods — response shape validation", () => {
+  test("coerces a zero-key {} response (FDC's zero-resolve pathology) to []", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse({}));
+    const client = new FdcClient("DEMO_KEY");
+    const foods = await client.getFoods({ fdcIds: [1, 2, 3] });
+    assert.deepEqual(foods, []);
+  });
+
+  test("passes through a normal array response unchanged", async () => {
+    const body = [
+      { fdcId: 1, description: "Food One" },
+      { fdcId: 2, description: "Food Two" },
+    ];
+    restoreFetch = installFetchMock(() => jsonResponse(body));
+    const client = new FdcClient("DEMO_KEY");
+    const foods = await client.getFoods({ fdcIds: [1, 2] });
+    assert.deepEqual(foods, body);
+  });
+
+  test("throws FdcResponseShapeError for a null body", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse(null));
+    const client = new FdcClient("DEMO_KEY");
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => {
+        assert.ok(err instanceof FdcResponseShapeError);
+        assert.match(err.message, /expected an array/i);
+        return true;
+      }
+    );
+  });
+
+  test("throws FdcResponseShapeError for a string body", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse("unexpected"));
+    const client = new FdcClient("DEMO_KEY");
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => err instanceof FdcResponseShapeError
+    );
+  });
+
+  test("throws FdcResponseShapeError for a number body", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse(42));
+    const client = new FdcClient("DEMO_KEY");
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => err instanceof FdcResponseShapeError
+    );
+  });
+
+  test("throws FdcResponseShapeError for a boolean body", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse(true));
+    const client = new FdcClient("DEMO_KEY");
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => err instanceof FdcResponseShapeError
+    );
+  });
+
+  test("throws FdcResponseShapeError for a non-empty object body", async () => {
+    restoreFetch = installFetchMock(() => jsonResponse({ error: "not an array" }));
+    const client = new FdcClient("DEMO_KEY");
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => {
+        assert.ok(err instanceof FdcResponseShapeError);
+        // Message must describe shape only — never echo body contents.
+        assert.doesNotMatch(err.message, /not an array/);
         return true;
       }
     );
