@@ -205,10 +205,18 @@ describe("FdcClient — header-only API key transport", () => {
     assert.equal(captured.length, 1);
     assertCleanRequest(captured[0].url, captured[0].init, true);
 
-    // listFoods — single GET
+    // listFoods — single POST (JSON body, same as the batch endpoints)
     captured = [];
     restoreFetch = capture(() => jsonResponse([]));
     await client.listFoods();
+    restoreFetch();
+    assert.equal(captured.length, 1);
+    assertCleanRequest(captured[0].url, captured[0].init, true);
+
+    // getFood with nutrients filter — repeated query params, still clean
+    captured = [];
+    restoreFetch = capture(() => jsonResponse({ fdcId: 1, description: "test" }));
+    await client.getFood({ fdcId: 1, nutrients: [203, 204] });
     restoreFetch();
     assert.equal(captured.length, 1);
     assertCleanRequest(captured[0].url, captured[0].init, false);
@@ -247,6 +255,61 @@ describe("FdcClient — header-only API key transport", () => {
       restoreFetch();
     }
     restoreFetch = () => {};
+  });
+
+  test("redacts a key that straddles the truncation boundary (redact-before-truncate)", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    // 295 chars of padding push the key across the 300-char truncation point —
+    // truncate-first would leak the key's prefix.
+    restoreFetch = installFetchMock(
+      () => new Response("x".repeat(295) + FAKE_KEY, { status: 500 })
+    );
+    await assert.rejects(
+      () => client.searchFoods({ query: "test" }),
+      (err: unknown) => {
+        assert.ok(err instanceof FdcError);
+        assert.doesNotMatch(err.message, new RegExp(FAKE_KEY));
+        assert.equal(err.message.includes(FAKE_KEY.slice(0, 8)), false, "leaked a key prefix across the truncation boundary");
+        return true;
+      }
+    );
+  });
+
+  test("redacts the key from malformed 2xx JSON parser errors", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    // A 200 body that is not JSON — the parser error quotes the body text.
+    restoreFetch = installFetchMock(() => new Response(FAKE_KEY, { status: 200 }));
+    await assert.rejects(
+      () => client.searchFoods({ query: "test" }),
+      (err: unknown) => {
+        assert.ok(err instanceof FdcError);
+        assert.doesNotMatch(err.message, new RegExp(FAKE_KEY));
+        assert.match(err.message, /malformed JSON/);
+        return true;
+      }
+    );
+  });
+
+  test("deep-redacts the key from hostile SUCCESSFUL response data before formatters see it", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    restoreFetch = installFetchMock(() =>
+      jsonResponse({
+        fdcId: 1,
+        description: `Cheddar ${FAKE_KEY} echo`,
+        brandOwner: FAKE_KEY,
+        foodNutrients: [{ nutrientName: `protein ${FAKE_KEY}`, value: 1 }],
+      })
+    );
+    const { food } = (await client.getFood({ fdcId: 1 })) as unknown as {
+      food: {
+        description: string;
+        brandOwner: string;
+        foodNutrients: Array<{ nutrientName: string }>;
+      };
+    };
+    assert.equal(food.description, "Cheddar [redacted] echo");
+    assert.equal(food.brandOwner, "[redacted]");
+    assert.equal(food.foodNutrients[0].nutrientName, "protein [redacted]");
   });
 
   test("redacts the API key from network-layer fetch errors", async () => {

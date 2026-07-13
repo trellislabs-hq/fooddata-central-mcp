@@ -164,18 +164,49 @@ export class FdcClient {
   }
 
   /**
+   * Replace every occurrence of the API key in a string. Redaction-only —
+   * no truncation — so callers can compose it safely.
+   */
+  private redactKey(text: string): string {
+    if (!this.apiKey) return text;
+    return text.split(this.apiKey).join("[redacted]");
+  }
+
+  /**
    * Redact the API key from any externally sourced text (response bodies,
    * status text, network-layer error messages) before it can reach an error
    * message an MCP user sees. Upstream bodies are hostile input for secrecy
    * purposes — a proxy or the API itself echoing credentials must never
-   * propagate them. Also bounds length so a huge body can't flood the error.
+   * propagate them. Redaction happens BEFORE truncation: truncating first
+   * could split a key occurrence across the boundary and leak its prefix.
+   * The length bound keeps a huge body from flooding the error.
    */
   private sanitize(text: string): string {
-    let out = text.length > 300 ? `${text.slice(0, 300)}…` : text;
-    if (this.apiKey) {
-      out = out.split(this.apiKey).join("[redacted]");
+    const redacted = this.redactKey(text);
+    return redacted.length > 300 ? `${redacted.slice(0, 300)}…` : redacted;
+  }
+
+  /**
+   * Recursively redact the API key from every string in a parsed response.
+   * Successful FDC payloads are still externally sourced — a hostile or
+   * compromised upstream echoing the credential inside food data (description,
+   * brand, nutrient names, …) must never reach an MCP user via the formatters.
+   * Applied once at the handleResponse seam so every tool (and any future
+   * formatter) is covered. JSON.parse output is acyclic, so plain recursion
+   * is safe.
+   */
+  private deepRedact(value: unknown): unknown {
+    if (!this.apiKey) return value;
+    if (typeof value === "string") return this.redactKey(value);
+    if (Array.isArray(value)) return value.map((v) => this.deepRedact(v));
+    if (value !== null && typeof value === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value)) {
+        out[k] = this.deepRedact(v);
+      }
+      return out;
     }
-    return out;
+    return value;
   }
 
   /**
@@ -252,7 +283,21 @@ export class FdcClient {
    */
   private async handleResponse<T>(response: Response): Promise<T> {
     if (response.ok) {
-      return response.json() as Promise<T>;
+      let parsed: unknown;
+      try {
+        parsed = await response.json();
+      } catch (err) {
+        // A malformed 2xx body is external text — the parser error quotes it
+        // (e.g. `Unexpected token 's', "secret…" is not valid JSON`), so it
+        // must be sanitized like any other upstream-sourced message.
+        const raw = err instanceof Error ? err.message : String(err);
+        throw new FdcError(
+          response.status,
+          "Invalid JSON",
+          `FDC API returned a malformed JSON body: ${this.sanitize(raw)}`
+        );
+      }
+      return this.deepRedact(parsed) as T;
     }
 
     const isRateLimit = response.status === 429;
