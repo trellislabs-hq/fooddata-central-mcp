@@ -202,7 +202,15 @@ export class FdcClient {
     if (value !== null && typeof value === "object") {
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(value)) {
-        out[k] = this.deepRedact(v);
+        // defineProperty (not out[k]=) so a hostile "__proto__" member becomes
+        // an ordinary own property instead of mutating the prototype; the
+        // member NAME is redacted too — JSON can carry the key anywhere.
+        Object.defineProperty(out, this.redactKey(k), {
+          value: this.deepRedact(v),
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
       }
       return out;
     }
@@ -286,15 +294,15 @@ export class FdcClient {
       let parsed: unknown;
       try {
         parsed = await response.json();
-      } catch (err) {
-        // A malformed 2xx body is external text — the parser error quotes it
-        // (e.g. `Unexpected token 's', "secret…" is not valid JSON`), so it
-        // must be sanitized like any other upstream-sourced message.
-        const raw = err instanceof Error ? err.message : String(err);
+      } catch {
+        // A malformed 2xx body is external text, and the parser error quotes a
+        // TRUNCATED excerpt of it (e.g. `Unexpected token 'o', "totally-fak"...`)
+        // — truncation can split the key so redaction cannot match. The only
+        // safe message is a static one that carries zero upstream text.
         throw new FdcError(
           response.status,
           "Invalid JSON",
-          `FDC API returned a malformed JSON body: ${this.sanitize(raw)}`
+          "FDC API returned a malformed JSON body (not valid JSON)."
         );
       }
       return this.deepRedact(parsed) as T;

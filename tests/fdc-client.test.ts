@@ -275,19 +275,49 @@ describe("FdcClient — header-only API key transport", () => {
     );
   });
 
-  test("redacts the key from malformed 2xx JSON parser errors", async () => {
+  test("malformed 2xx JSON produces a STATIC error — no upstream text, no key fragment", async () => {
     const client = new FdcClient(FAKE_KEY);
-    // A 200 body that is not JSON — the parser error quotes the body text.
+    // A 200 body that is not JSON. V8's parser error quotes a TRUNCATED
+    // excerpt of the body, which can split the key and defeat exact-match
+    // redaction — so the error must carry zero upstream text at all.
     restoreFetch = installFetchMock(() => new Response(FAKE_KEY, { status: 200 }));
     await assert.rejects(
       () => client.searchFoods({ query: "test" }),
       (err: unknown) => {
         assert.ok(err instanceof FdcError);
         assert.doesNotMatch(err.message, new RegExp(FAKE_KEY));
-        assert.match(err.message, /malformed JSON/);
+        assert.equal(err.message.includes(FAKE_KEY.slice(0, 8)), false, "leaked a key prefix via the parser excerpt");
+        assert.equal(err.message, "FDC API returned a malformed JSON body (not valid JSON).");
         return true;
       }
     );
+  });
+
+  test("hostile __proto__ member in a 2xx body neither pollutes prototypes nor masquerades as the empty batch", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    restoreFetch = installFetchMock(() => jsonResponse({ ["__proto__"]: { marker: "hostile" } }));
+    // Rebuilt with defineProperty, the object keeps ONE own key ("__proto__"),
+    // so it is a non-empty non-array body -> shape error, never [] coercion.
+    await assert.rejects(
+      () => client.getFoods({ fdcIds: [1] }),
+      (err: unknown) => {
+        assert.ok(err instanceof Error && err.name === "FdcResponseShapeError");
+        assert.equal(({} as Record<string, unknown>).marker, undefined, "prototype was polluted");
+        return true;
+      }
+    );
+  });
+
+  test("redacts the key when it appears in an object member NAME", async () => {
+    const client = new FdcClient(FAKE_KEY);
+    restoreFetch = installFetchMock(() =>
+      jsonResponse({ fdcId: 1, description: "ok", [`${FAKE_KEY}-note`]: "x" })
+    );
+    const { food } = (await client.getFood({ fdcId: 1 })) as unknown as {
+      food: Record<string, unknown>;
+    };
+    assert.equal(Object.keys(food).some((k) => k.includes(FAKE_KEY)), false);
+    assert.equal(food["[redacted]-note"], "x");
   });
 
   test("deep-redacts the key from hostile SUCCESSFUL response data before formatters see it", async () => {
