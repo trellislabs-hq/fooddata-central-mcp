@@ -36,6 +36,15 @@ describe("normalize()", () => {
     assert.equal(normalize("hummus"), "hummus");
     assert.equal(normalize("couscous"), "couscous");
   });
+
+  test("does NOT strip plural when the stem would drop below 3 chars (jump-1760 honorific guard)", () => {
+    // Unguarded, "mrs." became "mr." and "Mrs. Dash seasoning" searched as
+    // "mr. dash seasoning" — exact-matching "MR. GOODBAR". Same guard class
+    // as relevance.ts wordInSet.
+    assert.equal(normalize("Mrs. Dash seasoning"), "mrs. dash seasoning");
+    // Real short plurals with 3-char stems still strip.
+    assert.equal(normalize("ribs"), "rib");
+  });
 });
 
 describe("dictionaryLookup() cascade (synthetic)", () => {

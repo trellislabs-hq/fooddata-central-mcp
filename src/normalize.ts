@@ -54,8 +54,14 @@ export function normalize(name: string): string {
     // Normalize hyphens to spaces (fire-roasted -> fire roasted)
     .replace(/-/g, " ")
     // Strip trailing 's' for basic plurals (breasts -> breast, cashews -> cashew)
-    // Only after consonants, not after vowels/s (hummus, couscous, tomatoes stay)
-    .replace(/([bcdfghjklmnpqrtvwxyz])s\b/g, "$1")
+    // Only after consonants, not after vowels/s (hummus, couscous, tomatoes stay),
+    // and only when the resulting stem keeps >=3 chars — the same honorific
+    // guard as relevance.ts's wordInSet (jump-1760): the unguarded rule turned
+    // "mrs." into "mr.", making "Mrs. Dash seasoning" search as "mr. dash
+    // seasoning" and exact-match "MR. GOODBAR". Real food plurals all have
+    // stems >=3 ("ribs" -> "rib" still strips). Divergence from the recipe-app
+    // port source (aggregate.js normalize) — flagged for backport there.
+    .replace(/\b([a-z]{2,}[bcdfghjklmnpqrtvwxyz])s\b/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
 }
