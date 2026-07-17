@@ -56,7 +56,7 @@ import { installFetchMock, jsonResponse, loadFixture as loadRealApiFixture } fro
 import { DEFAULT_FIXTURE_PATH, loadFixture, validateFixtureSchema, type EvalFixture } from "./lib/fixture.js";
 import { scoreCase } from "./lib/scoring.js";
 import { projectFoods } from "./lib/projection.js";
-import { buildCacheKey, checkCacheSizeBudget, loadCache, writeCache, type CacheFile } from "./lib/cache.js";
+import { buildCacheKey, CACHE_HARD_BYTES, CACHE_WARN_BYTES, checkCacheSizeBudget, loadCache, writeCache, type CacheFile } from "./lib/cache.js";
 import { CacheMissError, makeRecordingSearchFn, makeReplaySearchFn } from "./lib/search-fn.js";
 import { runEval } from "./run.js";
 
@@ -648,10 +648,12 @@ describe("live request path (real FdcClient, mocked fetch)", () => {
 
 describe("cache size budget", () => {
   test("warn/exceeded thresholds", () => {
+    // Assert against the exported constants so this test tracks budget
+    // changes instead of hardcoding stale byte values.
     assert.deepEqual(checkCacheSizeBudget(1024), { bytes: 1024, warn: false, exceeded: false });
-    assert.equal(checkCacheSizeBudget(1.6 * 1024 * 1024).warn, true);
-    assert.equal(checkCacheSizeBudget(1.6 * 1024 * 1024).exceeded, false);
-    assert.equal(checkCacheSizeBudget(2.1 * 1024 * 1024).exceeded, true);
-    assert.equal(checkCacheSizeBudget(2 * 1024 * 1024).exceeded, false, "exactly 2MB is within budget (>2MB exceeds)");
+    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).warn, true);
+    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).exceeded, false);
+    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES + 1).exceeded, true);
+    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES).exceeded, false, "exactly the hard budget is within (only >hard exceeds)");
   });
 });

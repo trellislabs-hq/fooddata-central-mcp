@@ -39,9 +39,16 @@ export interface CacheEntry {
 
 export type CacheFile = Record<string, CacheEntry>;
 
-/** Hard/warn thresholds for the total committed eval/cache/ directory size. */
-export const CACHE_WARN_BYTES = 1.5 * 1024 * 1024;
-export const CACHE_HARD_BYTES = 2 * 1024 * 1024;
+/**
+ * Hard/warn thresholds for the total committed eval/cache/ directory size.
+ * The first full live run measured 2.57MB for the 96-case corpus (each case
+ * fans out to multiple candidate-query + Branded-fallback searches), so the
+ * original 2MB estimate was short. eval/ is repo-only weight — package.json
+ * "files" ships only dist/, server.json, and README.md — so 4MB is the
+ * budget, sized to hold the current corpus plus fixture growth.
+ */
+export const CACHE_WARN_BYTES = 3 * 1024 * 1024;
+export const CACHE_HARD_BYTES = 4 * 1024 * 1024;
 
 /**
  * Stable cache key for a searchFoods() call: sha256 hex of a canonical
