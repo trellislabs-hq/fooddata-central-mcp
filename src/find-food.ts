@@ -51,7 +51,11 @@ export interface FindFoodOptions {
 export interface FindFoodResult {
   /** Rendered tool output text (what the MCP tool call returns). */
   text: string;
-  /** Best match, if any were found (undefined only for the no-results case). */
+  /**
+   * Best match, if any cleared the relevance floor. Undefined in two cases:
+   * FDC returned nothing at all, or everything returned rated below the
+   * floor (the honest no-confident-match case).
+   */
   best?: FdcFood;
   /** Up to 3 alternates alongside the best match. */
   alternates: FdcFood[];
@@ -63,9 +67,11 @@ export interface FindFoodResult {
    * Relevance-floor rating of `best` against `matchedQuery` — 'exact' when
    * every significant query word is covered, 'close' when the food family
    * is right but a modifier doesn't match. Undefined only when `best` is
-   * undefined (nothing cleared the floor).
+   * undefined (nothing cleared the floor). Narrowed to the passing grades —
+   * 'miss' is impossible here by construction (miss-rated foods never
+   * become `best`).
    */
-  matchQuality?: MatchQuality;
+  matchQuality?: Exclude<MatchQuality, "miss">;
 }
 
 /**
@@ -265,8 +271,9 @@ export async function findFood(
   // last-resort query — opt-in appends never change matchedQuery, and
   // Foundation/SR Legacy/Survey always outrank Branded in
   // sortByDataTypePreference), so it is guaranteed to have survived the
-  // floor as 'exact' or 'close', never 'miss'.
-  const matchQuality = rateMatchQuality(matchedQuery, best.description);
+  // floor as 'exact' or 'close', never 'miss' — the assertion narrows the
+  // re-rating to the public field's passing-grade type on that invariant.
+  const matchQuality = rateMatchQuality(matchedQuery, best.description) as Exclude<MatchQuality, "miss">;
 
   const lines: string[] = [];
   lines.push(`Best match for "${name}":`);
