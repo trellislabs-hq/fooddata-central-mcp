@@ -65,7 +65,7 @@ function validateQuery(query: string): string | null {
 
 const server = new McpServer({
   name: "fooddata-central-mcp",
-  version: "1.2.1",
+  version: "1.3.0",
 });
 
 // ─── Tool: search_foods ───────────────────────────────────────────────────────
@@ -377,7 +377,10 @@ server.registerTool(
     description:
       "Find the best canonical match for a food name. Returns the top match with a " +
       "key-nutrient summary plus up to 3 alternates, preferring Foundation and SR Legacy " +
-      "data over branded noise.",
+      "data over branded noise. Applies a relevance floor to every candidate — if nothing " +
+      "FDC returns actually resembles the requested name, find_food honestly reports no " +
+      "confident match instead of returning a nearest-neighbor guess, and lists a few " +
+      "below-floor candidates for reference.",
     inputSchema: {
       name: z
         .string()

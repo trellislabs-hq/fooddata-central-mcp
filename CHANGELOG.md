@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.0] — 2026-07-17
+
+### Changed
+
+- **`find_food` now applies a relevance floor and can honestly report "no
+  confident match."** FDC's search always returns a nearest neighbor, even
+  for names it has nothing good for — a baseline eval run against 31
+  ratified-unmatchable household food names measured **0% negative-honesty**
+  and confident wrong matches for all of them (e.g. "old bay seasoning" →
+  SCALLOPS, "Mrs. Dash" → MR. GOODBAR chocolate bar, "whole grain mustard" →
+  BUCKWHEAT), because every search batch was taken unconditionally. Every
+  search batch is now rated against the query that produced it
+  (`src/relevance.ts`, a text-overlap exact/close/miss heuristic ported from
+  recipe-app's FDC-match-quality module) and miss-rated foods are dropped
+  before they can become `best` or appear in `alternates`. **This is a
+  behavior change, not an accuracy claim**: `find_food` can now REFUSE to
+  answer when nothing clears the floor, returning `best: undefined` and up
+  to 3 below-floor "closest candidates" in the response text for reference
+  (never in `alternates`, so nothing downstream mistakes them for an
+  endorsed match). When the preferred-type cascade comes up empty, the
+  existing Branded last-resort fallback still fires and is now also
+  floor-filtered — a floor-passing Branded product (e.g. the actual "Old
+  Bay Seasoning" listing) still resolves. A close-but-not-exact match now
+  carries a one-line approximation note. New additive `matchQuality`
+  field (`'exact' | 'close'`, undefined when `best` is undefined) on the
+  `FindFoodResult` type. No claim is made here about the resulting
+  accuracy numbers — those come from a live eval re-run, separately.
+
 ## [1.2.1] — 2026-07-16
 
 ### Documentation

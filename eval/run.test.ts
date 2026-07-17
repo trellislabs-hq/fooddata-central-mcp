@@ -455,11 +455,23 @@ describe("multi-call searchFoods cache wiring (replay)", () => {
 
       // No alias for "widgetfood" -> exactly one preferred-type call (empty)
       // + one Branded fallback call (last resort) — both cached.
+      //
+      // jump-1760 EDIT: the description is "Widgetfood Snack" (was "Widget
+      // Food Snack") so it clears the relevance floor for the single-token
+      // query "widgetfood" — "Widget Food Snack" tokenizes to
+      // {widget,food,snack}, none of which is the fused token "widgetfood",
+      // so it would rate 'miss' and get floor-filtered, and this scenario
+      // would fall through to the OTHER honest path (best undefined, no
+      // Branded rescue at all) instead of the usedBranded=true rescue path
+      // this test is actually named for. The assertion (status === "honest")
+      // happens to hold either way (scoreCase treats both as honest), but
+      // leaving it broken would silently stop this test from exercising the
+      // Branded-fallback-scores-honest mechanism it documents.
       const cache: Record<string, unknown> = {};
       cache[cacheKeyFor("widgetfood", PREFERRED_DATA_TYPES)] = { totalHits: 0, foods: [] };
       cache[cacheKeyFor("widgetfood", "Branded")] = {
         totalHits: 1,
-        foods: [{ fdcId: 8001, description: "Widget Food Snack", dataType: "Branded" }],
+        foods: [{ fdcId: 8001, description: "Widgetfood Snack", dataType: "Branded" }],
       };
       writeFileSync(cachePath, JSON.stringify(cache));
 
@@ -556,17 +568,31 @@ describe("scored-only denominators and coverage", () => {
       };
       writeFileSync(fixturePath, JSON.stringify(fixture));
 
+      // jump-1760 EDIT: every case name here is a single fused token
+      // ("hitone", not "hit one"), so a natural-language description like
+      // "Hit One" tokenizes to {hit,one} and shares no token with the
+      // query — it would rate 'miss' and get floor-filtered, which (for
+      // EVERY one of hitone/hittwo/missone/wrongone) empties the preferred
+      // batch and triggers findFood's automatic Branded fallback. None of
+      // those cases has a cached Branded entry, so each would throw
+      // CacheMissError and get reclassified "uncached" instead of its
+      // intended hit/miss/confident_wrong status, corrupting every count
+      // and hand-computed percentage below. Descriptions are changed to
+      // contain the literal query token (single word, comma-free) so this
+      // test keeps exercising SCORING semantics rather than becoming an
+      // accidental floor test — the fdcId values (what scoreCase actually
+      // compares) are unchanged.
       const cache: Record<string, unknown> = {};
-      cache[preferredKey("hitone")] = { totalHits: 1, foods: [{ fdcId: 1, description: "Hit One", dataType: "Foundation" }] };
-      cache[preferredKey("hittwo")] = { totalHits: 1, foods: [{ fdcId: 2, description: "Hit Two", dataType: "Foundation" }] };
-      cache[preferredKey("missone")] = { totalHits: 1, foods: [{ fdcId: 12345, description: "Something Else", dataType: "Foundation" }] };
+      cache[preferredKey("hitone")] = { totalHits: 1, foods: [{ fdcId: 1, description: "Hitone", dataType: "Foundation" }] };
+      cache[preferredKey("hittwo")] = { totalHits: 1, foods: [{ fdcId: 2, description: "Hittwo", dataType: "Foundation" }] };
+      cache[preferredKey("missone")] = { totalHits: 1, foods: [{ fdcId: 12345, description: "Missone Snack", dataType: "Foundation" }] };
       // "uncachedpos": no entry at all.
       cache[preferredKey("errorpos")] = { totalHits: 0 }; // malformed -> error, not uncached
       // "honestone": preferred empty -> Branded fallback hit -> usedBranded=true -> honest.
       cache[preferredKey("honestone")] = { totalHits: 0, foods: [] };
-      cache[brandedKey("honestone")] = { totalHits: 1, foods: [{ fdcId: 50, description: "Honest Branded Food", dataType: "Branded" }] };
+      cache[brandedKey("honestone")] = { totalHits: 1, foods: [{ fdcId: 50, description: "Honestone Snack", dataType: "Branded" }] };
       // "wrongone": preferred hit directly -> usedBranded=false, best defined -> confident_wrong.
-      cache[preferredKey("wrongone")] = { totalHits: 1, foods: [{ fdcId: 60, description: "Wrong Food", dataType: "Foundation" }] };
+      cache[preferredKey("wrongone")] = { totalHits: 1, foods: [{ fdcId: 60, description: "Wrongone Snack", dataType: "Foundation" }] };
       // "uncachedneg": no entry at all.
       writeFileSync(cachePath, JSON.stringify(cache));
 
