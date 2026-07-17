@@ -137,15 +137,31 @@ up.
 
 On our curated household-food identity set (drawn from our recipe-pipeline
 curation — it deliberately over-samples known-hard names, and is not an
-independently sampled benchmark), `find_food` resolves N% top-1 and M%
-within the exposed top-4, with a P% honest-miss rate on 25+ names known to
-have no correct match in preferred data types.
+independently sampled benchmark), `find_food` currently resolves **10.8%
+top-1** and **26.2%** within the exposed top-4, with a **9.7% honest-miss
+rate** on 31 names known to have no correct match in preferred data types
+(measured 2026-07-17, v1.3.0).
+
+**Known limitation — read this before trusting a confident match on niche
+names.** USDA's search always returns a *nearest neighbor*, even for foods
+FDC has nothing for. v1.3.0 added a relevance floor so `find_food` can
+refuse ("no confident match") instead of endorsing a wrong food, and on
+this challenge set the floor rejected wrong answers without costing a
+single correct one. But most remaining wrong matches share a real word
+with the query (e.g. "gluten free flour" → a gluten-free *pasta*;
+"candied ginger" → *raw* ginger), which the current heuristic still
+accepts as related. For compound or niche names — seasoning blends, brand
+names, "X of choice" — treat a confident match skeptically and check the
+alternates; the floor is being tightened iteratively against this same
+public eval set.
 
 Method: scored against the tool's structured `best`/`alternates` output (no
 text parsing) over 96 household ingredient names — 65 with a known-correct
-FDC ID, 31 with no correct match in Foundation/SR Legacy/Survey (FNDDS),
-where an honest miss is the right answer. See [`eval/`](./eval) for the
-runnable harness, scoring rules, and dataset provenance.
+FDC ID (top-1 is strict: only the exact ratified FDC ID counts, so a
+reasonable-but-different variety scores as a miss), 31 with no correct
+match in Foundation/SR Legacy/Survey (FNDDS), where an honest miss is the
+right answer. See [`eval/`](./eval) for the runnable harness, scoring
+rules, and dataset provenance.
 
 ## Privacy & data flow
 
