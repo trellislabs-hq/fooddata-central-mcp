@@ -13,6 +13,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "node --import tsx --test tests/**/*.test.ts",
+    "test:eval": "node --import tsx --test eval/run.test.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
