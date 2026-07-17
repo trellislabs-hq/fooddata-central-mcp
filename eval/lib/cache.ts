@@ -32,6 +32,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_CACHE_PATH = path.join(__dirname, "..", "cache", "search-cache.json");
 
 export interface CacheEntry {
+  /** The real FDC totalHits for this query — find-food.ts doesn't read it today, but a faithful replay shouldn't fabricate it. */
+  totalHits: number;
   foods: ProjectedFood[];
 }
 
@@ -59,18 +61,19 @@ export function buildCacheKey(params: FdcSearchParams): string {
 
 /** Project a real FdcSearchResult down to the cache entry shape. */
 export function toCacheEntry(result: FdcSearchResult): CacheEntry {
-  return { foods: projectFoods(result.foods ?? []) };
+  return { totalHits: result.totalHits, foods: projectFoods(result.foods ?? []) };
 }
 
 /**
- * Reconstruct a full FdcSearchResult from a cache entry. totalHits/
- * currentPage/totalPages are synthesized (find-food.ts never reads them —
- * only `.foods` and `.foods.length`) so they carry no information beyond
- * foods.length.
+ * Reconstruct a full FdcSearchResult from a cache entry. totalHits is the
+ * REAL value recorded from the live response (find-food.ts doesn't read it
+ * today, but a faithful replay shouldn't fabricate it from foods.length —
+ * FDC caps foods at pageSize=10 while totalHits can be in the thousands).
+ * currentPage/totalPages ARE synthesized — find-food.ts never reads either.
  */
 export function fromCacheEntry(entry: CacheEntry): FdcSearchResult {
   return {
-    totalHits: entry.foods.length,
+    totalHits: entry.totalHits,
     currentPage: 1,
     totalPages: entry.foods.length > 0 ? 1 : 0,
     foods: entry.foods,

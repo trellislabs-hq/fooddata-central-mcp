@@ -144,7 +144,13 @@ async function runReplay(cases: EvalCase[], cachePath: string): Promise<RunOutco
   }
 
   const aggregate = computeAggregate(rows, "cached");
-  const coverage = rows.length > 0 ? (rows.length - aggregate.counts.uncached) / rows.length : 0;
+  // Coverage = the fraction of cases that actually got SCORED from cache.
+  // Both uncached (no cache entry) AND error (e.g. a malformed cache entry)
+  // cases failed to produce a scored result — either one left uncounted
+  // here would let a thin-or-broken cache masquerade as full coverage and
+  // exit 0 (the exact bug this replaced: an all-errors replay used to
+  // report 100% coverage since only `uncached` was subtracted).
+  const coverage = rows.length > 0 ? aggregate.scored.total / rows.length : 0;
   const exitCode = coverage < 0.9 ? 1 : 0;
 
   return { rows, aggregate, exitCode };
@@ -202,10 +208,17 @@ function printReport(runId: string, live: boolean, rows: CaseResult[], aggregate
   const lines: string[] = [];
   lines.push(`find_food eval — run ${runId} (${live ? "live" : "cached replay"})`);
   lines.push(`Cases: ${aggregate.totals.total} (${aggregate.totals.positive} positive, ${aggregate.totals.negative} negative)`);
+  lines.push(
+    `Scored: ${aggregate.scored.total} (${aggregate.scored.positive} positive, ${aggregate.scored.negative} negative) — ` +
+      `unscored: ${aggregate.counts.uncached} uncached, ${aggregate.counts.error} errored ` +
+      `(positive: ${aggregate.unscored.positive.uncached} uncached/${aggregate.unscored.positive.error} error; ` +
+      `negative: ${aggregate.unscored.negative.uncached} uncached/${aggregate.unscored.negative.error} error)`
+  );
   lines.push("");
-  lines.push(`top-1:              ${pct(aggregate.top1Pct)} (${aggregate.counts.hit}/${aggregate.totals.positive})`);
-  lines.push(`top-4 (exposed):    ${pct(aggregate.top4Pct)} (${aggregate.counts.hit + aggregate.counts.near}/${aggregate.totals.positive})`);
-  lines.push(`negative-honesty:   ${pct(aggregate.negativeHonestyPct)} (${aggregate.counts.honest}/${aggregate.totals.negative})`);
+  lines.push(`(percentages below are over SCORED cases only — uncached/errored cases are excluded from every denominator)`);
+  lines.push(`top-1:              ${pct(aggregate.top1Pct)} (${aggregate.counts.hit}/${aggregate.scored.positive})`);
+  lines.push(`top-4 (exposed):    ${pct(aggregate.top4Pct)} (${aggregate.counts.hit + aggregate.counts.near}/${aggregate.scored.positive})`);
+  lines.push(`negative-honesty:   ${pct(aggregate.negativeHonestyPct)} (${aggregate.counts.honest}/${aggregate.scored.negative})`);
   lines.push("");
   lines.push(
     aggregate.latency === "cached"

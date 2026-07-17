@@ -26,9 +26,15 @@
  *
  * Major Sections:
  *   - CaseResult / AggregateReport types
+ *   - SCORED_STATUSES — which statuses count as "scored" (accuracy
+ *     denominators EXCLUDE uncached/error cases — see computeAggregate())
  *   - scoreCase() — scores one successfully-completed findFood() call
  *   - percentile() — nearest-rank percentile helper for latency stats
- *   - computeAggregate() — rolls case rows + optional latencies into a report
+ *   - computeAggregate() — rolls case rows + optional latencies into a
+ *     report; top1Pct/top4Pct/negativeHonestyPct are computed over SCORED
+ *     cases only (uncached/error cases carry no accuracy signal and would
+ *     otherwise silently distort the percentages on a thin/broken cache —
+ *     see AggregateReport.scored / .unscored for the excluded counts)
  *
  * Dependencies: ../../src/find-food.js (FindFoodResult type),
  *   ../../src/fdc-client.js (FdcFood type), ./fixture.js (EvalCase types)
@@ -97,8 +103,26 @@ export interface LatencyStats {
   max: number;
 }
 
+/**
+ * A case is "scored" iff findFood() actually completed and scoreCase() ran
+ * on its result — i.e. status is one of the five scoring outcomes, not
+ * uncached/error. uncached/error cases carry no signal about find_food's
+ * accuracy (a missing cache entry or a network blip says nothing about
+ * whether the pipeline would have found the right food) — including them in
+ * an accuracy denominator would silently understate accuracy on thin runs
+ * and, worse, let a broken/near-empty cache masquerade as a real result.
+ */
+const SCORED_STATUSES: ReadonlySet<CaseStatus> = new Set(["hit", "near", "miss", "honest", "confident_wrong"]);
+
 export interface AggregateReport {
   totals: { positive: number; negative: number; total: number };
+  /** Cases that actually completed scoring (excludes uncached/error) — the denominators for top1Pct/top4Pct/negativeHonestyPct. */
+  scored: { positive: number; negative: number; total: number };
+  /** Cases that did NOT complete scoring, broken out by kind and reason. */
+  unscored: {
+    positive: { uncached: number; error: number };
+    negative: { uncached: number; error: number };
+  };
   counts: Record<CaseStatus, number>;
   top1Pct: number;
   top4Pct: number;
@@ -114,10 +138,12 @@ export interface AggregateReport {
 }
 
 const METHOD_NOTE =
-  "top1Pct = hits/positives; top4Pct = (hits+near)/positives measures the EXPOSED, " +
-  "post-dedup top-4 (best + up to 3 alternates) as rendered by find_food — not raw-candidate " +
-  "recall, since dedupeByDescription (src/find-food.ts) can drop a same-description candidate " +
-  "before it reaches the alternates list; negativeHonestyPct = honest/negatives.";
+  "top1Pct = hits/scored-positives; top4Pct = (hits+near)/scored-positives measures the " +
+  "EXPOSED, post-dedup top-4 (best + up to 3 alternates) as rendered by find_food — not " +
+  "raw-candidate recall, since dedupeByDescription (src/find-food.ts) can drop a " +
+  "same-description candidate before it reaches the alternates list; negativeHonestyPct = " +
+  "honest/scored-negatives. 'Scored' EXCLUDES uncached and errored cases from every " +
+  "denominator — see the report's scored/unscored breakdown for how many cases that was.";
 
 export function computeAggregate(rows: CaseResult[], latencies: number[] | "cached"): AggregateReport {
   const counts: Record<CaseStatus, number> = {
@@ -131,12 +157,17 @@ export function computeAggregate(rows: CaseResult[], latencies: number[] | "cach
   };
   for (const row of rows) counts[row.status]++;
 
-  const positive = rows.filter((r) => r.kind === "positive").length;
-  const negative = rows.filter((r) => r.kind === "negative").length;
+  const positiveRows = rows.filter((r) => r.kind === "positive");
+  const negativeRows = rows.filter((r) => r.kind === "negative");
+  const scoredPositiveRows = positiveRows.filter((r) => SCORED_STATUSES.has(r.status));
+  const scoredNegativeRows = negativeRows.filter((r) => SCORED_STATUSES.has(r.status));
 
-  const top1Pct = positive > 0 ? (counts.hit / positive) * 100 : 0;
-  const top4Pct = positive > 0 ? ((counts.hit + counts.near) / positive) * 100 : 0;
-  const negativeHonestyPct = negative > 0 ? (counts.honest / negative) * 100 : 0;
+  const scoredPositive = scoredPositiveRows.length;
+  const scoredNegative = scoredNegativeRows.length;
+
+  const top1Pct = scoredPositive > 0 ? (counts.hit / scoredPositive) * 100 : 0;
+  const top4Pct = scoredPositive > 0 ? ((counts.hit + counts.near) / scoredPositive) * 100 : 0;
+  const negativeHonestyPct = scoredNegative > 0 ? (counts.honest / scoredNegative) * 100 : 0;
 
   const latency: LatencyStats | "cached" =
     latencies === "cached"
@@ -144,7 +175,18 @@ export function computeAggregate(rows: CaseResult[], latencies: number[] | "cach
       : { p50: percentile(latencies, 50), p95: percentile(latencies, 95), max: latencies.length > 0 ? Math.max(...latencies) : 0 };
 
   return {
-    totals: { positive, negative, total: rows.length },
+    totals: { positive: positiveRows.length, negative: negativeRows.length, total: rows.length },
+    scored: { positive: scoredPositive, negative: scoredNegative, total: scoredPositive + scoredNegative },
+    unscored: {
+      positive: {
+        uncached: positiveRows.filter((r) => r.status === "uncached").length,
+        error: positiveRows.filter((r) => r.status === "error").length,
+      },
+      negative: {
+        uncached: negativeRows.filter((r) => r.status === "uncached").length,
+        error: negativeRows.filter((r) => r.status === "error").length,
+      },
+    },
     counts,
     top1Pct,
     top4Pct,

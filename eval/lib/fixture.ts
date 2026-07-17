@@ -59,7 +59,8 @@ export interface EvalFixtureProvenance {
   fixtureId: string;
   sourcePath: string;
   sourceRepoCommit: string;
-  fixtureSha256: string;
+  /** sha256 of the SOURCE fdc-pins.json file this fixture was derived from — not a hash of this fixture file itself. */
+  sourcePinsSha256: string;
   derivedAt: string;
   derivationRule: string;
   counts: { positive: number; negative: number; total: number };

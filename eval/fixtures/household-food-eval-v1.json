@@ -3,8 +3,8 @@
     "fixtureId": "household-food-eval-v1",
     "sourcePath": "recipe-app/scripts/dict-pg/fdc-pins.json",
     "sourceRepoCommit": "0cc3bb795e1e50ebc4c82b969ca59fc7bf243e9d",
-    "fixtureSha256": "57354077ff9895547fe61c98824d72acd21586e797f8b3fc22ae13b04e3c4f09",
-    "derivedAt": "2026-07-17T03:45:05.537Z",
+    "sourcePinsSha256": "57354077ff9895547fe61c98824d72acd21586e797f8b3fc22ae13b04e3c4f09",
+    "derivedAt": "2026-07-17T04:02:17.096Z",
     "derivationRule": "One-time snapshot derived from recipe-app's Thomas-ratified FDC identity pin corpus (jump-1685/B-2 curation, consulted before the recipe-app matching cascade). Each pin key (household ingredient query, verbatim) becomes an eval case. Positive pins {fdc_id, description, data_type} become positive cases with fdc_id coerced from string to integer (the source stores fdc_id as a JSON string; FdcFood.fdcId is numeric). Negative pins {fdc_id: null} become negative cases asserting no confident preferred-data-type match exists. The '_doc' metadata key is excluded. Cases are sorted by name for a byte-stable fixture. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime.",
     "counts": {
       "positive": 65,
