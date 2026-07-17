@@ -1,0 +1,37 @@
+name: Publish to MCP Registry
+
+# Publishes server.json to the official MCP registry (registry.modelcontextprotocol.io).
+# Uses GitHub OIDC: because this workflow runs inside the trellislabs-hq org repo, the
+# OIDC token proves ownership of the io.github.trellislabs-hq/* namespace — no PAT, no
+# device-flow login, no GitHub App install required.
+#
+# npm publishing is handled separately (npm publish from a maintainer machine); this
+# workflow does NOT touch npm and needs no NPM_TOKEN.
+#
+# Trigger: manually via the Actions tab ("Run workflow"), or automatically on a v* tag.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for GitHub OIDC
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry (OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json
+        run: ./mcp-publisher publish
