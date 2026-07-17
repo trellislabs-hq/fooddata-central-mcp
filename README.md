@@ -133,6 +133,20 @@ Paginated browse of the full catalog by data type, without a search term.
 Useful for exploring what's available rather than looking something specific
 up.
 
+## Accuracy
+
+On our curated household-food identity set (drawn from our recipe-pipeline
+curation — it deliberately over-samples known-hard names, and is not an
+independently sampled benchmark), `find_food` resolves N% top-1 and M%
+within the exposed top-4, with a P% honest-miss rate on 25+ names known to
+have no correct match in preferred data types.
+
+Method: scored against the tool's structured `best`/`alternates` output (no
+text parsing) over 96 household ingredient names — 65 with a known-correct
+FDC ID, 31 with no correct match in Foundation/SR Legacy/Survey (FNDDS),
+where an honest miss is the right answer. See [`eval/`](./eval) for the
+runnable harness, scoring rules, and dataset provenance.
+
 ## Privacy & data flow
 
 Every tool call goes **directly from this server to `api.nal.usda.gov`**,

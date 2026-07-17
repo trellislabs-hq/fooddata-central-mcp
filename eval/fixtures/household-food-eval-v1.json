@@ -1,0 +1,823 @@
+{
+  "provenance": {
+    "fixtureId": "household-food-eval-v1",
+    "sourcePath": "recipe-app/scripts/dict-pg/fdc-pins.json",
+    "sourceRepoCommit": "0cc3bb795e1e50ebc4c82b969ca59fc7bf243e9d",
+    "fixtureSha256": "57354077ff9895547fe61c98824d72acd21586e797f8b3fc22ae13b04e3c4f09",
+    "derivedAt": "2026-07-17T03:45:05.537Z",
+    "derivationRule": "One-time snapshot derived from recipe-app's Thomas-ratified FDC identity pin corpus (jump-1685/B-2 curation, consulted before the recipe-app matching cascade). Each pin key (household ingredient query, verbatim) becomes an eval case. Positive pins {fdc_id, description, data_type} become positive cases with fdc_id coerced from string to integer (the source stores fdc_id as a JSON string; FdcFood.fdcId is numeric). Negative pins {fdc_id: null} become negative cases asserting no confident preferred-data-type match exists. The '_doc' metadata key is excluded. Cases are sorted by name for a byte-stable fixture. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime.",
+    "counts": {
+      "positive": 65,
+      "negative": 31,
+      "total": 96
+    },
+    "license": "FDC identifiers and food composition data are U.S. public domain (USDA FoodData Central, a U.S. Government work). The pin curation itself (which name maps to which FDC ID, and the reasons) was authored by this project's maintainers and is released under this repository's MIT license (see LICENSE)."
+  },
+  "cases": [
+    {
+      "name": "Blue Diamond Almonds",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170567,
+        "description": "Nuts, almonds",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: brand name — pools offer 'Almond butter' (tier artifact) or worse ('Blue or roquefort cheese dressing' pre-P1e). Same target as the 'almonds' pin."
+    },
+    {
+      "name": "Chang's Pad Thai dried rice sticks",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169742,
+        "description": "Rice noodles, dry",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: rice sticks ARE rice noodles, and the product is DRIED — the cooked entry's water-diluted per-100g macros would bake wrong (Codex critic). Every candidate pool hit is a prepared dish or unrelated."
+    },
+    {
+      "name": "Magic Green Sauce",
+      "kind": "negative",
+      "reason": "P1e: recipe-internal name for an herby sauce — 'SMUCKER'S MAGIC SHELL' covers the only non-neutral word 'magic'. Nothing correct to match."
+    },
+    {
+      "name": "Mrs. Dash seasoning",
+      "kind": "negative",
+      "reason": "P1e: brand name; plural-stripping conflates 'Mrs'->'MR. GOODBAR'. No generic salt-free seasoning blend in preferred types."
+    },
+    {
+      "name": "Oreos",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2707920,
+        "description": "Cookie, chocolate sandwich",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Cascade picked 'McDONALD'S, McFLURRY with OREO cookies'. The generic chocolate sandwich cookie is the Oreo-class food; SR Legacy's 'Cookies, chocolate sandwich, with creme filling' does not appear in any candidate pool."
+    },
+    {
+      "name": "Parmesan",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171247,
+        "description": "Cheese, parmesan, grated",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched FAT FREE parmesan topping — wrong-product nutrition. Live-verified 2026-07-12."
+    },
+    {
+      "name": "Thai green curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — capitalized spelling."
+    },
+    {
+      "name": "Thai red curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — no curry paste in FDC preferred types."
+    },
+    {
+      "name": "adobo seasoning",
+      "kind": "negative",
+      "reason": "P1e: pools carry adobo DISHES ('Adobo, with noodles/rice') — a seasoning blend enriched with stew macros is confident-wrong. No spice-blend entry exists."
+    },
+    {
+      "name": "almonds",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170567,
+        "description": "Nuts, almonds",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Cascade picked 'Almond butter, creamy' (Foundation outranks SR Legacy; the right food sits in the seg2 variety position of 'Nuts, almonds')."
+    },
+    {
+      "name": "anchovy paste",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174183,
+        "description": "Fish, anchovy, european, canned in oil, drained solids",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3d: cascade close-matched RAW anchovy; paste is mashed cured anchovies — canned-in-oil is the honest nutrition profile (3670mg Na vs raw). 2026-07-14."
+    },
+    {
+      "name": "arborio rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "See 'jasmine rice'. Arborio is short-grain — raw white long-grain macros are the closest honest entry and beat 'Crackers, rice' by miles."
+    },
+    {
+      "name": "basil leaves",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172232,
+        "description": "Basil, fresh",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: with 'leaves' neutral the pool goes identity-covered-null; the right food exists under other basil queries."
+    },
+    {
+      "name": "basmati rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "See 'jasmine rice' — same pool poisoning; basmati IS long-grain."
+    },
+    {
+      "name": "bay leaves",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170917,
+        "description": "Spices, bay leaf",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e full-replay read: the plural query picks Foundation 'Scallops, bay, Patagonian' — a dataType-rank tie-break artifact ranking cannot fix (the singular 'bay leaf' entity matches correctly)."
+    },
+    {
+      "name": "beansprout",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709768,
+        "description": "Bean sprouts, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P1e: the one-word spelling shares no text with FDC's 'Bean sprouts' (two words) — a legacy miss since the first corpus run. Same food the two-word 'bean sprouts' entity now matches."
+    },
+    {
+      "name": "beansprouts",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709768,
+        "description": "Bean sprouts, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Same as 'beansprout' — plural one-word spelling."
+    },
+    {
+      "name": "berries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709271,
+        "description": "Berries, NFS",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P3 divergence pin batch: matched GOJI berries dried. FNDDS not-further-specified mixed berries is the honest generic. Live-verified 2026-07-12."
+    },
+    {
+      "name": "bone broth",
+      "kind": "negative",
+      "reason": "P1e: FDC preferred types carry no bone broth; 'SILK Plus for Bone Health, soymilk' covers 'bone' and wins any text rule. The beef-broth soups are cubes/bouillon — wrong product. Honest miss until FDC adds it."
+    },
+    {
+      "name": "brown basmati rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512380,
+        "description": "Rice, brown, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "jump-1701 P3 ruling batch: cascade matched 'Rice FLOUR, brown' — milled flour, not grain. Basmati is a long-grain rice; Foundation brown long-grain raw is the correct whole-kernel food. Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 790508,
+        "description": "Butter, stick, salted",
+        "dataType": "Foundation"
+      },
+      "reason": "Cascade picked 'Almond butter, creamy' — a Foundation compound-seg1 cousin that FDC relevance ranks above the right Foundation stick butter in the same pool. Fixes 7 entities."
+    },
+    {
+      "name": "candied ginger",
+      "kind": "negative",
+      "reason": "jump-1701 P3 ruling batch: cascade matched raw 'Ginger root' — nutritionally a different food (candied is ~75% sugar). FDC's preferred data types contain NO crystallized/candied ginger (verified: Foundation/SR Legacy/Survey all lack it; only Branded entries exist, and Branded pins are rejected by design). Honest miss; conversions stay curated. Card had proposed the branded Ginger People entry before the Branded-pin exclusion surfaced. Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "chicken tenderloin",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2646170,
+        "description": "Chicken, breast, boneless, skinless, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "P1e: 'CRACKER BARREL, chicken tenderloin platter, fried' covers both query words (brand dish) and no raw chicken tenderloin entry exists in the pool. Tenderloin is breast muscle — the raw boneless skinless breast is the nutritional match."
+    },
+    {
+      "name": "chipotle chiles in adobo",
+      "kind": "negative",
+      "reason": "Same as 'chipotle peppers in adobo' — alternate spelling."
+    },
+    {
+      "name": "chipotle peppers in adobo",
+      "kind": "negative",
+      "reason": "P1e: no chipotle-in-adobo entry in preferred types; pools offer 'Pepper, banana, raw' and 'Adobo, with noodles' — both confident-wrong."
+    },
+    {
+      "name": "coconut aminos",
+      "kind": "negative",
+      "reason": "P1e: soy-sauce substitute; pools only offer 'Coconut milk' (wrong product) or 'Infant formula, amino acids'. No preferred-type entry."
+    },
+    {
+      "name": "coriander",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170922,
+        "description": "Spices, coriander seed",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched cilantro LEAVES; this entity's validated conversions are ground-SEED spice numbers (US usage: coriander=seed, cilantro=leaves — both entities exist). Live-verified 2026-07-12."
+    },
+    {
+      "name": "corn",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169998,
+        "description": "Corn, sweet, yellow, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched Corn GRAIN white (dry grain density 166g/cup). Recipe corn = sweet kernels. Live-verified 2026-07-12."
+    },
+    {
+      "name": "dairy free butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173583,
+        "description": "Margarine-like, vegetable oil spread, 60% fat, stick/tub/bottle, with salt",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3b: cascade close-matched sugar-free peanut butter COOKIES. Dairy-free butter (Earth Balance class, incl. the 'buttery spread' alias) IS a vegetable-oil spread. 2026-07-14."
+    },
+    {
+      "name": "dried parsley",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170930,
+        "description": "Spices, parsley, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched FREEZE-dried parsley (0.4g/tbsp vs regular dried ~1.4g). Live-verified 2026-07-12."
+    },
+    {
+      "name": "dried sage",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170935,
+        "description": "Spices, sage, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3b: cascade close-matched 'Sage Valley, Gluten Free Vanilla Sandwich COOKIES' — a brand-name trap. Ground sage is the spice-jar product. 2026-07-14."
+    },
+    {
+      "name": "dry vermouth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 175112,
+        "description": "Alcoholic beverage, wine, dessert, dry",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3b: cascade close-matched 'LENTILS, dry'. Vermouth is a dry aromatized/fortified wine — dessert-dry wine is the standard FDC proxy. 2026-07-14."
+    },
+    {
+      "name": "everything bagel seasoning",
+      "kind": "negative",
+      "reason": "jump-1701 P3d: NEGATIVE — cascade close-matched 'Bagels, EGG' (text trap). FDC preferred types have no everything-bagel blend (Branded only). 2026-07-14."
+    },
+    {
+      "name": "fire roasted tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170051,
+        "description": "Tomatoes, red, ripe, canned, packed in tomato juice",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e full-replay read: coverage rule picks a SUBWAY sandwich (covers roasted+tomato). Canned tomatoes are the purchased form."
+    },
+    {
+      "name": "freeze dried strawberries",
+      "kind": "negative",
+      "reason": "jump-1701 P3b: NEGATIVE — cascade close-matched 'CHIVES, freeze-dried'; FDC's preferred types have freeze-dried chives/parsley/shallots/peppers but NO freeze-dried fruit. Branded-only product; honest miss. 2026-07-14."
+    },
+    {
+      "name": "french lentils",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2644283,
+        "description": "Lentils, dry",
+        "dataType": "Foundation"
+      },
+      "reason": "P1e: 'SMART SOUP, French Lentil' covers both query words (brand-poisoned pool) and outranks the plain lentils under any coverage rule. French/puy lentils are lentils."
+    },
+    {
+      "name": "fresh kale",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 323505,
+        "description": "Kale, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "P1e Codex critic: coverage ranking prefers 'Kale, fresh, cooked, fat added' (covers fresh+kale, rates EXACT/1.0) — added-fat macros for a raw purchased green. The bought product is raw kale."
+    },
+    {
+      "name": "fresh mint leaves",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173475,
+        "description": "Spearmint, fresh",
+        "dataType": "SR Legacy"
+      },
+      "reason": "See 'mint leaves'."
+    },
+    {
+      "name": "frozen blueberries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173950,
+        "description": "Blueberries, frozen, unsweetened (Includes foods for USDA's Food Distribution Program)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched frozen SWEETENED. Live-verified 2026-07-12."
+    },
+    {
+      "name": "frozen peaches",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709253,
+        "description": "Peach, frozen",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P3 divergence pin batch: matched frozen SWEETENED sliced. Live-verified 2026-07-12."
+    },
+    {
+      "name": "frozen strawberries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709285,
+        "description": "Strawberries, frozen",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P3 divergence pin batch: matched frozen SWEETENED sliced. Grocery frozen strawberries are unsweetened whole. Live-verified 2026-07-12."
+    },
+    {
+      "name": "garam masala",
+      "kind": "negative",
+      "reason": "P1e: FDC preferred types carry no garam masala; the 3-item pool is 'SMART SOUP, Indian Bean Masala' (brand-poisoned) + unrelated dishes."
+    },
+    {
+      "name": "gluten free flour",
+      "kind": "negative",
+      "reason": "No gluten-free FLOUR exists in FDC's preferred data types — every pool hit is gluten-free PASTA/bread/rolls. The cascade re-matches 'Pasta, gluten-free, corn and rice flour, cooked' at exact (all three query words appear in the description), so only a forced miss is honest until FDC carries a real GF flour blend."
+    },
+    {
+      "name": "gluten-free flour",
+      "kind": "negative",
+      "reason": "Same as 'gluten free flour' — the hyphenated spelling normalizes to identical candidate queries."
+    },
+    {
+      "name": "green apple",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168203,
+        "description": "Apples, raw, granny smith, with skin (Includes foods for USDA's Food Distribution Program)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: close-matched Apple CANDIED (320g any-size each on a 170g fruit). SR granny smith over Foundation 1750342 for household-portion reliability. Live-verified 2026-07-12."
+    },
+    {
+      "name": "green chiles",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168577,
+        "description": "Peppers, chili, green, canned",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: the chile/chili spelling gap — FDC says 'chili', so 'chile' queries never cover the right food and 'Chiles rellenos' wins the head. Same target the 'green chili peppers' entity matches by text."
+    },
+    {
+      "name": "green chillies",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168577,
+        "description": "Peppers, chili, green, canned",
+        "dataType": "SR Legacy"
+      },
+      "reason": "See 'green chiles' — double-l spelling."
+    },
+    {
+      "name": "green curry paste",
+      "kind": "negative",
+      "reason": "P1e: FDC preferred types carry no curry paste — pools offer 'Beef curry'/'SMART SOUP, Thai Coconut Curry' (prepared dishes, wrong macros). Honest miss for the whole curry-paste family."
+    },
+    {
+      "name": "heirloom tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170457,
+        "description": "Tomatoes, red, ripe, raw, year round average",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3 ruling batch: cascade matched 'Tomato, roma' — wrong size class (roma ~62g vs heirloom 180g+), wrong gram_weights for purchase math. Year-round-average red ripe is the honest generic. Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "homemade green curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — no curry paste in FDC preferred types."
+    },
+    {
+      "name": "ice cubes",
+      "kind": "negative",
+      "reason": "P1e: it is water — 'Ice cream sandwich' covers 'ice' and wins any text rule. Not a food FDC models; arguably dictionary junk-key (hygiene lane)."
+    },
+    {
+      "name": "jalapeño",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168576,
+        "description": "Peppers, jalapeno, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: post-deaccent the bare query picks comma-less 'Stuffed jalapeno pepper' (tier-1 artifact) over the seg2 raw pepper. Purchased form is the raw whole pepper."
+    },
+    {
+      "name": "jasmine rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "P1e: the 'jasmine rice' pool is all dishes/crackers ('Dirty rice', 'Crackers, rice') accepted via the food-word 'rice' — an alias can never fire past an accepted pool (Codex critic). Raw long-grain white rice is the purchased-product match."
+    },
+    {
+      "name": "lamb stewing meat",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2727570,
+        "description": "Lamb, ground, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "P1e: 'Chicken, stewing, dark meat' covers stewing+meat and wins; FDC has no lamb stew-meat entry. Ground raw lamb is the closest same-animal raw macros."
+    },
+    {
+      "name": "lemongrass",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168573,
+        "description": "Lemon grass (citronella), raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "The 'lemongrass' pool contains only a branded soup; FDC names the real entry 'Lemon grass' (two words) so it never surfaces for the one-word query. The pinned food lives outside every candidate pool — nutrition backfills in P2."
+    },
+    {
+      "name": "lemongrass paste",
+      "kind": "negative",
+      "reason": "P1e: pools carry only 'SMART SOUP, Vietnamese Carrot Lemongrass' (brand-poisoned) and unrelated pastes. The bare 'lemongrass' entity is positively pinned; the paste form has no FDC entry."
+    },
+    {
+      "name": "lemons",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 167746,
+        "description": "Lemons, raw, without peel",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Cascade picked bottled REAL LEMON juice concentrate (FDC relevance artifact within SR Legacy)."
+    },
+    {
+      "name": "long grain and wild rice mix",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168964,
+        "description": "Rice mix, white and wild, flavored, unprepared",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3c: cascade close-matched plain brown long-grain rice; the product is the boxed flavored white+wild MIX (Uncle Ben's class) and SR has exactly that food. 2026-07-14."
+    },
+    {
+      "name": "low sodium beef broth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172889,
+        "description": "Soup, beef broth, less/reduced sodium, ready to serve",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3a sodium batch: covers the two pre-existing 'low sodium beef broth' shells after their product_name/mods upgrade (they were buying-as REGULAR beef broth — modifier silently lost). 2026-07-14."
+    },
+    {
+      "name": "low sodium chicken broth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171609,
+        "description": "Soup, chicken broth, low sodium, canned",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3a sodium batch: exact SR Legacy food exists (30mg Na) — covers the new entity AND the 'low sodium chicken stock' shell once its product_name is updated (pins key on product_name). 2026-07-14."
+    },
+    {
+      "name": "low sodium vegetable broth",
+      "kind": "negative",
+      "reason": "jump-1701 P3a sodium batch: NEGATIVE — FDC's preferred data types have no low-sodium vegetable broth (only Branded Pacific/Simple Truth; nearest non-branded are juices and condensed vegetable soup — wrong foods). The B-2 low-sodium-broth negative-pin precedent holds for vegetable. 2026-07-14."
+    },
+    {
+      "name": "marinara",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 332282,
+        "description": "Sauce, pasta, spaghetti/marinara, ready-to-serve",
+        "dataType": "Foundation"
+      },
+      "reason": "Cascade picked 'OLIVE GARDEN, cheese ravioli with marinara sauce'. This is the same Foundation sauce the 'marinara sauce' entities already match correctly."
+    },
+    {
+      "name": "milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2705385,
+        "description": "Milk, whole",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Cascade picked 'Milk dessert, frozen, milk-fat free, chocolate' (SR Legacy outranks Survey in the dataType sort; 'Milk, human' is the text-heuristic floor for the bare query). Household 'milk' = whole milk. Fixes 9 entities sharing this product_name."
+    },
+    {
+      "name": "mint leaves",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173475,
+        "description": "Spearmint, fresh",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: culinary mint is spearmint; the 'mint leaves' pool never surfaces it (was 'Drumstick leaves, raw')."
+    },
+    {
+      "name": "mixed berries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709272,
+        "description": "Berries, frozen",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P1e: 'Babyfood, banana with mixed berries, strained' covers both query words and outranks 'Berries, frozen' (which the sibling 'frozen berries' entity correctly matches)."
+    },
+    {
+      "name": "mixed spring greens",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709792,
+        "description": "Mixed salad greens, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "See 'spring greens'."
+    },
+    {
+      "name": "no salt added black beans",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 175238,
+        "description": "Beans, black, mature seeds, canned, low sodium",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3a sodium batch: cascade close-matched 'Beans, BAKED, canned, no salt added' — baked beans in sweet sauce, not plain black beans (7.8g sugar vs 0.2g). SR Legacy low-sodium plain black beans is the honest food. 2026-07-14."
+    },
+    {
+      "name": "nori",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168458,
+        "description": "Seaweed, laver, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "The 'nori' pool is empty and the 'seaweed sheets' alias pool ranks agar above laver on FDC relevance. Laver IS nori."
+    },
+    {
+      "name": "nutmeg",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171326,
+        "description": "Spices, nutmeg, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Cascade picked 'Oil, nutmeg butter' — relevance order within a 2-item pool."
+    },
+    {
+      "name": "oats",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173904,
+        "description": "Cereals, oats, regular and quick, not fortified, dry",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched Oat bran COOKED (219g/cup vs dry rolled oats ~85g). Dry oats is what recipes buy. Live-verified 2026-07-12."
+    },
+    {
+      "name": "old bay seasoning",
+      "kind": "negative",
+      "reason": "jump-1701 P3d: NEGATIVE — cascade close-matched 'Scallops, BAY, Patagonian' (text trap on 'bay'). OLD BAY exists only as Branded. Spice-jar quantities; honest miss. 2026-07-14."
+    },
+    {
+      "name": "organic milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2705385,
+        "description": "Milk, whole",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "jump-1701 P3b: cascade fell back to a Branded 'ORGANIC MILK'. Organic whole milk is nutritionally the same food as the base 'milk' pin — mirror it (same reasoning as organic sweet potatoes -> base root). 2026-07-14."
+    },
+    {
+      "name": "organic sweet potatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168482,
+        "description": "Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3 ruling batch: inherited the base entity's wrong LEAVES match via the cascade. Organic is the same food as the base root. Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "pineapple juice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709329,
+        "description": "Pineapple juice, 100%",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P1e: 'Orange Pineapple Juice Blend' ties on coverage and wins on pool order; the plain 100% juice is the product."
+    },
+    {
+      "name": "poppy seeds",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171330,
+        "description": "Spices, poppy seed",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: comma-less 'Poppy seed dressing' ties on coverage and wins tier 1; the spice entry sits at segment-2."
+    },
+    {
+      "name": "protein of choice",
+      "kind": "negative",
+      "reason": "P1e: recipe placeholder, not a product — 'HEALTHY CHOICE' brand soups cover 'choice' and win any text rule. Nothing correct to match."
+    },
+    {
+      "name": "red curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — no curry paste in FDC preferred types."
+    },
+    {
+      "name": "salmon fillets",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2706284,
+        "description": "Fish, salmon, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P1e: comma-less 'Lomi salmon' (Hawaiian salted-salmon dish) wins tier 1 over the seg2 'Fish, salmon, raw'. Generic raw salmon is the purchased product."
+    },
+    {
+      "name": "skinless boneless salmon fillet",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2706284,
+        "description": "Fish, salmon, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "See 'salmon fillets'."
+    },
+    {
+      "name": "snow peas",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170010,
+        "description": "Peas, edible-podded, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: FDC names snow peas 'edible-podded' — zero query-word overlap, so the entry is tier-3-dropped in its own pool while 'Snow crab'/'Blackeye pea' cover a word each. The right food is IN the pool; only a pin can select it."
+    },
+    {
+      "name": "spring greens",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709792,
+        "description": "Mixed salad greens, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "P1e Codex critic: picks 'Wheat, hard red spring' via the word 'spring' ('greens' is neutral). In this dictionary's grocery context spring greens = salad greens mix."
+    },
+    {
+      "name": "spring mix",
+      "kind": "negative",
+      "reason": "P1e: salad greens blend; pools cover 'spring' via 'Wheat, hard red spring' and 'mix' via rice mixes. FDC's 'Mixed salad greens, raw' never surfaces for this query."
+    },
+    {
+      "name": "sweet potatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168482,
+        "description": "Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3 hand-audit: cascade had matched 'Sweet potato LEAVES, raw' (169303) — the greens, not the root — and this wrong identity was LIVE in the deployed base for the base entity. Applies to every entity with this product_name (base + 'cubed sweet potatoes )' shell). Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "tandoori masala",
+      "kind": "negative",
+      "reason": "P1e: same pool poisoning as garam masala — SMART SOUP covers 'masala'."
+    },
+    {
+      "name": "thai green curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — no curry paste in FDC preferred types."
+    },
+    {
+      "name": "tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170457,
+        "description": "Tomatoes, red, ripe, raw, year round average",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3 hand-audit: base entity carried 'Tomato, roma' (1999634) — a specific small variety standing in for generic tomatoes. Applies to every entity with this product_name (base + 'medium sized/ripe/chopped tomatoes' shells — identity now consistent across all four). Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "vegan cream cheese",
+      "kind": "negative",
+      "reason": "jump-1701 P3b: NEGATIVE — cascade close-matched DAIRY 'Cream cheese, full fat, block'; categorically wrong for a vegan product, and FDC's preferred types have no plant-based cream cheese. Honest miss. 2026-07-14."
+    },
+    {
+      "name": "vegan fish sauce",
+      "kind": "negative",
+      "reason": "jump-1701 P3d: NEGATIVE — cascade matched regular fish sauce; categorically wrong for a vegan product (same precedent as vegan cream cheese). No plant-based fish sauce in preferred types. 2026-07-14."
+    },
+    {
+      "name": "vegetables of choice",
+      "kind": "negative",
+      "reason": "P1e: recipe placeholder — same HEALTHY CHOICE pool poisoning as 'protein of choice'."
+    },
+    {
+      "name": "walnuts",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170187,
+        "description": "Nuts, walnuts, english",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched Walnut OIL (Survey) — oil nutrition + 224g/cup oil density on a nut entity. SR chosen over Foundation halves for household portion richness. Live-verified 2026-07-12."
+    },
+    {
+      "name": "water",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173647,
+        "description": "Beverages, water, tap, drinking",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P3 divergence pin batch: matched Water convolvulus (water spinach!) via single-covered-word exact. Tap water = correct zero nutrition + 237g/cup. Live-verified 2026-07-12."
+    },
+    {
+      "name": "water chestnuts",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170067,
+        "description": "Waterchestnuts, chinese, canned, solids and liquids",
+        "dataType": "SR Legacy"
+      },
+      "reason": "P1e: FDC spells it as ONE word ('Waterchestnuts'), so two-word queries never cover it — the pick landed on 'Chestnuts' (a different plant). Canned is the grocery form."
+    },
+    {
+      "name": "wheat berries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169719,
+        "description": "Wheat, hard white",
+        "dataType": "SR Legacy"
+      },
+      "reason": "jump-1701 P3 ruling batch: cascade matched 'Berries, frozen' — FRUIT, the exact confusion the entity's never-alias-to-berries note warned about. Wheat berries are whole wheat kernels; hard white matches the ratified 'hard white wheat berries' alias. Thomas-ratified 2026-07-13."
+    },
+    {
+      "name": "white rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "P3 divergence pin batch: matched Rice FLOUR. Same target as the P1e jasmine/basmati/arborio pins — bare white rice was missed in that batch. Verified in P1e."
+    },
+    {
+      "name": "whole grain mustard",
+      "kind": "negative",
+      "reason": "jump-1701 P3c: NEGATIVE — cascade close-matched 'BUCKWHEAT, whole grain' (text trap). FDC's preferred types have no whole-grain/grainy mustard (Branded only). Honest miss; condiment used in tsp quantities. 2026-07-14."
+    },
+    {
+      "name": "yellow curry paste",
+      "kind": "negative",
+      "reason": "See 'green curry paste' — no curry paste in FDC preferred types."
+    }
+  ]
+}
