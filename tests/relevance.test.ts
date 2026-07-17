@@ -70,6 +70,22 @@ describe("wordInSet() — plural-tolerant set membership", () => {
   test("non-match returns false", () => {
     assert.ok(!wordInSet("cheese", new Set(["milk"])));
   });
+
+  test("jump-1760 F1 guard: a 2-char resulting STEM does not qualify — 'mrs' does not strip to match a set containing 'mr'", () => {
+    assert.ok(!wordInSet("mrs", new Set(["mr"])), "the honorific false-match this guard exists to kill");
+  });
+
+  test("jump-1760 F1 guard: a 2-char BASE word does not qualify for the additive (+s) direction either", () => {
+    assert.ok(!wordInSet("mr", new Set(["mrs"])));
+  });
+
+  test("jump-1760 F1 guard boundary: a 3-char resulting stem still qualifies ('peas' -> 'pea')", () => {
+    assert.ok(wordInSet("peas", new Set(["pea"])), "real food plurals at the 3-char boundary must still match");
+  });
+
+  test("jump-1760 F1 guard boundary: a 3-char base word still qualifies for the additive direction ('pea' + 's')", () => {
+    assert.ok(wordInSet("pea", new Set(["peas"])));
+  });
 });
 
 describe("isNeutralQueryWord() / NEUTRAL_QUERY_WORDS", () => {
@@ -154,6 +170,20 @@ describe("rateMatchQuality() — MISS: segment-1/2 identity gate", () => {
 
   test("'mrs dash' vs an unrelated candy bar misses (the 'Mrs. Dash' -> MR. GOODBAR baseline failure)", () => {
     assert.equal(rateMatchQuality("mrs dash", "Candy bar, milk chocolate"), "miss");
+  });
+});
+
+describe("rateMatchQuality() — MISS: jump-1760 F1 honorific false-match guard", () => {
+  test("'mrs dash seasoning' vs 'Candies, MR. GOODBAR Chocolate Bar' rates MISS (the exact motivating confident-wrong case — before the F1 guard, 'mrs' stripped to 'mr' and matched the description's segment-2 'mr' token, rating this CLOSE)", () => {
+    assert.equal(rateMatchQuality("mrs dash seasoning", "Candies, MR. GOODBAR Chocolate Bar"), "miss");
+  });
+
+  test("real food plurals are unaffected by the guard — 'peas' vs 'Peas, green, raw' still rates exact/close as before", () => {
+    assert.notEqual(rateMatchQuality("peas", "Peas, green, raw"), "miss");
+  });
+
+  test("real food plurals still tolerate a singular/plural mismatch at the 3-char stem boundary ('pea' <-> 'peas')", () => {
+    assert.equal(rateMatchQuality("green pea", "Peas, green, raw"), "exact");
   });
 });
 

@@ -71,12 +71,30 @@ export function getSignificantWords(words: string[]): string[] {
  * Plural-tolerant set membership: 'tortillas' matches a set containing
  * 'tortilla' and vice versa. A plural-only difference is never a different
  * food.
+ *
+ * PORT-HARDENING GUARD (jump-1760 F1 — divergence from the port source;
+ * flag for backporting to recipe-app's fdc-match-quality.js, do not edit
+ * that repo from here): naive ±s/es tolerance lets honorifics collide with
+ * real plurals. 'mrs' strips to 'mr' (2 chars) and false-matched
+ * "MR. GOODBAR"'s segment-2 token 'mr', rating "Mrs. Dash seasoning"
+ * CLOSE against an unrelated candy bar — the exact motivating
+ * confident-wrong case the floor exists to catch. The dictionary corpus
+ * (recipe-app) never exercised this bug class because grocery product
+ * names don't contain 2-letter honorific fragments the way FDC Branded
+ * marketing copy does ("MR. GOODBAR", "DR PEPPER", etc.).
+ *
+ * Fix: plural tolerance now requires the RESULTING STEM to be >=3
+ * characters in BOTH directions — stripping a trailing 's'/'es' only
+ * counts if what's left is >=3 chars, and appending 's'/'es' only counts
+ * if the base word itself is >=3 chars. Every real food plural survives
+ * this ('peas' -> 'pea' = 3 chars; 'tomatoes' -> 'tomato' = 6 chars);
+ * 2-letter stems/bases ('mrs' -> 'mr', 'mr' + 's') do not.
  */
 export function wordInSet(word: string, set: Set<string>): boolean {
   if (set.has(word)) return true;
-  if (set.has(word + "s") || set.has(word + "es")) return true;
-  if (word.endsWith("es") && set.has(word.slice(0, -2))) return true;
-  if (word.endsWith("s") && set.has(word.slice(0, -1))) return true;
+  if (word.length >= 3 && (set.has(word + "s") || set.has(word + "es"))) return true;
+  if (word.endsWith("es") && word.length - 2 >= 3 && set.has(word.slice(0, -2))) return true;
+  if (word.endsWith("s") && word.length - 1 >= 3 && set.has(word.slice(0, -1))) return true;
   return false;
 }
 

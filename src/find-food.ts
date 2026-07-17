@@ -229,17 +229,33 @@ export async function findFood(
   }
 
   if (foods.length === 0) {
+    // jump-1760 F2: by construction, every path that reaches this block has
+    // ALREADY searched Branded. The outer guard above
+    // (`if (foods.length === 0 || includeBranded)`) is entered via its
+    // FIRST disjunct whenever foods.length is 0 — which it always is here,
+    // since foods can only become non-empty inside that block via a
+    // successful rescue, and we're in the branch where that never
+    // happened. So the Branded for-loop runs for every candidate query
+    // REGARDLESS of `includeBranded`'s value: opt-in mode only changes
+    // behavior once the preferred-type search already succeeded (the
+    // append branch), which never applies here. Suggesting
+    // `includeBranded: true` from this block would therefore recommend an
+    // action that's already been taken automatically — never useful
+    // advice — so neither message below offers it; both truthfully say
+    // Branded was checked too, and point only at search_foods.
+
     // Preferred-type first, then Branded — matches the priority the floor
     // itself applies (preferred data types before Branded last resort).
     const closest = [...closestPreferred, ...closestBranded].slice(0, 3);
 
     if (closest.length === 0) {
       // Nothing was found at all (raw-empty on every candidate query, every
-      // data type) — distinct from "found things, none confident enough".
+      // data type, INCLUDING Branded) — distinct from "found things, none
+      // confident enough".
       return {
         text:
-          `No foods found matching "${name}". Try search_foods for a broader search, ` +
-          `or find_food with includeBranded: true to search manufacturer data.`,
+          `No foods found matching "${name}" in FDC's preferred data types or Branded data. ` +
+          `Try search_foods for a broader search.`,
         alternates: [],
         usedBranded: false,
         matchedQuery,
@@ -247,12 +263,12 @@ export async function findFood(
     }
 
     const lines: string[] = [
-      `No confident match for "${name}" in FDC's preferred data types.`,
+      `No confident match for "${name}" in FDC's preferred data types or Branded data.`,
       "",
       "Closest candidates (below the confidence floor — likely NOT what you asked for):",
       ...closest.map(formatFoodSummary),
       "",
-      `Try search_foods for a broader search, or find_food with includeBranded: true to search manufacturer data.`,
+      `Try search_foods for a broader search.`,
     ];
 
     return {

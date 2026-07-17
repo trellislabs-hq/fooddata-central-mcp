@@ -202,12 +202,17 @@ describe("findFood() — relevance floor: honest no-confident-match (SYNTHETIC)"
     assert.deepEqual(result.alternates, []);
     assert.equal(result.usedBranded, false);
     assert.equal(result.matchQuality, undefined);
-    assert.match(result.text, /No confident match for "old bay seasoning" in FDC's preferred data types\./);
+    // jump-1760 F2: Branded was ALREADY searched and floor-filtered by the
+    // time this message renders (the automatic-last-resort loop is
+    // unconditional once foods.length===0), so the message says so and
+    // must never suggest includeBranded:true — that's already-tried advice.
+    assert.match(result.text, /No confident match for "old bay seasoning" in FDC's preferred data types or Branded data\./);
     assert.match(result.text, /Closest candidates \(below the confidence floor/);
     // Preferred-type candidate first, then Branded.
     assert.ok(result.text.includes("Scallops, raw"));
     assert.ok(result.text.includes("Chocolate Chip Cookies"));
     assert.match(result.text, /Try search_foods for a broader search/);
+    assert.doesNotMatch(result.text, /includeBranded/, "Branded was already searched — recommending includeBranded:true here would be useless advice");
   });
 
   test("truly nothing found anywhere (raw-empty every query) keeps the ORIGINAL no-foods-found message, not the honest-no-match variant (SYNTHETIC)", async () => {
@@ -219,6 +224,11 @@ describe("findFood() — relevance floor: honest no-confident-match (SYNTHETIC)"
     assert.equal(result.best, undefined);
     assert.doesNotMatch(result.text, /No confident match for/);
     assert.match(result.text, /No foods found matching/);
+    // jump-1760 F2: this branch ALSO already searched Branded (same
+    // unconditional loop, it just found zero raw results) — truthful
+    // wording says so and drops the includeBranded suggestion here too.
+    assert.match(result.text, /No foods found matching "totally nonexistent food xyz" in FDC's preferred data types or Branded data\./);
+    assert.doesNotMatch(result.text, /includeBranded/);
   });
 });
 
