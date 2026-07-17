@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.1] — 2026-07-16
+
+### Documentation
+
+- Added a "Data accuracy & scope" section to the README: not
+  nutrition/medical advice; Branded data is manufacturer-self-reported and
+  varies across samples and FDC releases; freshness/availability follow
+  USDA's release cycle and API, with best-effort support and no SLA.
+
 ## [1.2.0] — 2026-07-12
 
 ### Security

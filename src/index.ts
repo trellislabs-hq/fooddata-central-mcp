@@ -65,7 +65,7 @@ function validateQuery(query: string): string | null {
 
 const server = new McpServer({
   name: "fooddata-central-mcp",
-  version: "1.2.0",
+  version: "1.2.1",
 });
 
 // ─── Tool: search_foods ───────────────────────────────────────────────────────

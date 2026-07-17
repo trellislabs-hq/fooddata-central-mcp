@@ -140,6 +140,22 @@ using the API key you provided. There is no intermediary service, no
 telemetry, and no analytics in this package — your queries and your key
 never pass through anything but your machine and USDA's API.
 
+## Data accuracy & scope
+
+- **Not nutrition or medical advice.** This server returns reference data
+  from USDA FoodData Central. It's a lookup tool, not a substitute for
+  professional dietary, medical, or allergen guidance — verify anything
+  health-critical against the product label or a qualified professional.
+- **Data quality varies by data type.** Foundation and SR Legacy records are
+  USDA lab-analyzed reference values. Branded records are
+  manufacturer-self-reported nutrition-label data — values can differ across
+  product samples, reformulations, and FDC data releases, and upstream errors
+  are passed through as-is.
+- **Freshness and availability follow USDA.** Data currency tracks USDA's
+  release cycle, and availability tracks the FDC API itself. The software is
+  provided as-is under the [MIT license](#license), with best-effort
+  support (below) and no SLA.
+
 ## Support
 
 This is a best-effort, bootstrapped open source project. Bug reports and
