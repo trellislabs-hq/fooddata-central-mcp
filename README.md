@@ -147,8 +147,9 @@ names.** USDA's search always returns a *nearest neighbor*, even for foods
 FDC has nothing for. v1.3.0 added a relevance floor so `find_food` can
 refuse ("no confident match") instead of endorsing a wrong food; the
 round-2 floor (head-in-gate + vegan/candied categorical guards) tripled
-the honest-miss rate without losing a single correct answer (one
-deliberate trade documented in `eval/round2-delta.md`). Wrong matches that
+the honest-miss rate with zero top-1 answers lost — the cost was one
+top-4 alternate on one name (a deliberate, documented trade — see
+`eval/round2-delta.md`). Wrong matches that
 remain are mostly compound-name and form traps ("old bay seasoning" → bay
 *scallops*; "green curry paste" → a beef curry *dish*), which the current
 heuristic still accepts as related. For compound or niche names —

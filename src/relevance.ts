@@ -14,9 +14,10 @@
  *   - NEUTRAL_QUERY_WORDS / isNeutralQueryWord() — form/shape/category words
  *     that can never BY THEMSELVES establish food identity
  *   - rateMatchQuality() — EXACT / CLOSE / MISS heuristic vs a description
- *   - passesHeadInGate() (round-2 Rule-1) — the query's IDENTITY HEAD (first
- *     significant token + last non-neutral token) must both land in
- *     description segment 1/2, not merely any shared word there
+ *   - passesHeadInGate() (round-2 Rule-1) — the query's IDENTITY HEAD (the
+ *     LAST non-neutral token; CoS-revised from the falsified two-token
+ *     design) must land in description segment 1/2, not merely any shared
+ *     word there
  *   - VEGAN_FAMILY_MARKERS / ANIMAL_BASE_TERMS / CANDIED_FAMILY_MARKERS /
  *     passesCategoricalGuards() (round-2 Rule-2) — reject vegan/plant-based
  *     queries landing on an animal-derived description, and
@@ -352,17 +353,37 @@ export function passesCategoricalGuards(query: string, description: string | und
   if (!description) return true; // no description: round-1's own miss-on-no-description already governs
 
   const queryWords = normalizeWords(query);
-  const descWords = new Set(normalizeWords(description));
+  const descWords = normalizeWords(description);
+  const descWordSet = new Set(descWords);
 
+  // Self-declaration exemptions (jump-1773 Codex code-review Significants —
+  // without these, correctly-labeled Branded matches become false refusals):
+  //
+  // VEGAN family: an animal noun is exempt ONLY when BOTH hold — the
+  // description SELF-DECLARES the family marker AND the noun is one the
+  // query itself contains (the product name being veganized). "VEGAN CREAM
+  // CHEESE" passes for 'vegan cream cheese' (self-declares; reuses the
+  // query's own nouns); plain "Cheese, cream" still rejects (no marker —
+  // the guard's core catch); "Spread, vegan, ... contains milk solids"
+  // still rejects for 'vegan butter' (self-declares, but 'milk' is not a
+  // query noun).
   if (queryHasMarker(queryWords, VEGAN_FAMILY_MARKERS)) {
+    const descSelfDeclares = queryHasMarker(descWords, VEGAN_FAMILY_MARKERS);
+    const querySet = new Set(queryWords);
     for (const term of ANIMAL_BASE_TERMS) {
-      if (descWords.has(term)) return false;
+      if (descWordSet.has(term)) {
+        if (descSelfDeclares && querySet.has(term)) continue;
+        return false;
+      }
     }
   }
 
-  if (queryHasMarker(queryWords, CANDIED_FAMILY_MARKERS)) {
+  // CANDIED family: a description that itself says candied/crystallized
+  // asserts the candied form — 'fresh'/'raw' in it is provenance wording
+  // ("Candied ginger, made from fresh ginger"), not a plain-form landing.
+  if (queryHasMarker(queryWords, CANDIED_FAMILY_MARKERS) && !queryHasMarker(descWords, CANDIED_FAMILY_MARKERS)) {
     for (const term of CANDIED_CONTRADICTION_TERMS) {
-      if (descWords.has(term)) return false;
+      if (descWordSet.has(term)) return false;
     }
   }
 

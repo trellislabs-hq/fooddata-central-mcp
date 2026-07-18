@@ -331,6 +331,12 @@ describe("passesCategoricalGuards() — vegan-family guard", () => {
   test("no vegan marker in the query: an animal-term description passes through untouched (guard doesn't fire)", () => {
     assert.equal(passesCategoricalGuards("cream cheese", "Cheese, cream"), true);
   });
+
+  test("SELF-DECLARATION exemption (Codex code-review catch): a description that itself says vegan/plant-based is NOT a dairy contradiction even when it reuses the animal noun — 'VEGAN CREAM CHEESE' must not be refused", () => {
+    assert.equal(passesCategoricalGuards("vegan cream cheese", "VEGAN CREAM CHEESE"), true);
+    assert.equal(passesCategoricalGuards("plant based chicken", "PLANT BASED CHICKEN"), true);
+    assert.equal(passesCategoricalGuards("dairy free milk", "DAIRY FREE MILK"), true);
+  });
 });
 
 describe("passesCategoricalGuards() — candied-family guard", () => {
@@ -344,6 +350,10 @@ describe("passesCategoricalGuards() — candied-family guard", () => {
 
   test("a candied-marker query against a genuinely candied description passes", () => {
     assert.equal(passesCategoricalGuards("candied ginger", "Ginger, candied"), true);
+  });
+
+  test("SELF-DECLARATION exemption (Codex code-review catch): a candied description mentioning 'fresh' as provenance is NOT a plain-form contradiction — 'Candied ginger, made from fresh ginger' must not be refused", () => {
+    assert.equal(passesCategoricalGuards("candied ginger", "Candied ginger, made from fresh ginger"), true);
   });
 
   test("no candied marker in the query: a raw/fresh description passes through untouched (guard doesn't fire)", () => {
