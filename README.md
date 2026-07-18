@@ -80,11 +80,13 @@ explicitly ask for it (`includeBranded: true`).
 
 ## Tools
 
-### `find_food`
+### `find_food` *(beta — see [Reliability](#reliability-tool-by-tool))*
 
 Find the best canonical match for a food name. This is the tool to reach for
 first when you just want "the" answer for a food, not a list to sift
-through.
+through. Identity resolution is genuinely hard and this resolver is under
+active, publicly-measured development — read the Reliability section before
+trusting confident matches on niche names.
 
 - **Input:** `name` (string, required), `includeBranded` (boolean, optional,
   default `false`)
@@ -133,37 +135,59 @@ Paginated browse of the full catalog by data type, without a search term.
 Useful for exploring what's available rather than looking something specific
 up.
 
-## Accuracy
+## Reliability, tool by tool
 
-On our curated household-food identity set (drawn from our recipe-pipeline
-curation — it deliberately over-samples known-hard names, and is not an
-independently sampled benchmark), `find_food` currently resolves **12.3%
-top-1** and **24.6%** within the exposed top-4, with a **29.0% honest-miss
-rate** on 31 names known to have no correct match in preferred data types
-(measured 2026-07-18, round-2 floor).
+**The data-access tools — `search_foods`, `get_food`, `get_foods`,
+`list_foods` — are thin, deterministic wrappers over the USDA API.** They
+return exactly what FoodData Central returns, with typed schemas, key
+protection, and pagination handled for you. If you know what you're looking
+for (or you're browsing), these are dependable today and carry no matching
+heuristics at all.
 
-**Known limitation — read this before trusting a confident match on niche
-names.** USDA's search always returns a *nearest neighbor*, even for foods
-FDC has nothing for. v1.3.0 added a relevance floor so `find_food` can
-refuse ("no confident match") instead of endorsing a wrong food; the
-round-2 floor (head-in-gate + vegan/candied categorical guards) tripled
-the honest-miss rate with zero top-1 answers lost — the cost was one
-top-4 alternate on one name (a deliberate, documented trade — see
-`eval/round2-delta.md`). Wrong matches that
-remain are mostly compound-name and form traps ("old bay seasoning" → bay
-*scallops*; "green curry paste" → a beef curry *dish*), which the current
-heuristic still accepts as related. For compound or niche names —
+**`find_food` is different — treat it as a beta resolver.** It tries to
+answer a genuinely hard question: *which single FDC entry IS this household
+food name?* USDA's own search can't answer that — it always returns a
+nearest neighbor, even for foods FDC has nothing for (ask it for "old bay
+seasoning" and raw USDA relevance will hand you bay *scallops* with a
+straight face). `find_food` layers identity heuristics and an honesty floor
+on top, and we measure it in public rather than pretending the problem is
+solved.
+
+### The benchmark (and how to read it honestly)
+
+We test against 96 household food names drawn from our own recipe-pipeline
+curation. **This is an adversarial challenge set, not a representative
+sample** — it deliberately over-samples the hardest names we have ever
+seen, because those are the ones worth measuring. Two separate questions,
+two separate numbers (measured 2026-07-18, round-2 floor):
+
+- **When no correct answer exists, do we say so?** 31 of the names are
+  human-verified to have *no* correct match in FDC's preferred data types.
+  The only right answer is a refusal. Raw FDC behavior scores **0%** here —
+  it always bluffs. `find_food` currently refuses **29.0%** of the time
+  (up from 0% pre-floor and 9.7% after round 1), and every refusal is
+  genuine — none are rescued by lower-quality data behind your back.
+- **When a correct answer exists, do we return exactly it?** On the other
+  65 names, **12.3%** of top-1 results and **24.6%** of exposed top-4
+  results match the *byte-exact human-ratified FDC ID*. This scoring is
+  deliberately merciless: returning "Cheese, parmesan, grated" when the
+  ratified pin is a different parmesan entry counts as a miss. Many misses
+  are reasonable-variety disagreements; some are genuinely wrong foods —
+  the eval output distinguishes them, and we don't average the two
+  questions into one comfortable number.
+
+**Practical guidance:** for common, plainly-named foods a confident
+`find_food` match is usually what you want. For compound or niche names —
 seasoning blends, brand names, "X of choice" — treat a confident match
-skeptically and check the alternates; the floor is being tightened
-iteratively against this same public eval set.
+skeptically and check the alternates. When it refuses, believe it: the
+refusal is the feature.
 
-Method: scored against the tool's structured `best`/`alternates` output (no
-text parsing) over 96 household ingredient names — 65 with a known-correct
-FDC ID (top-1 is strict: only the exact ratified FDC ID counts, so a
-reasonable-but-different variety scores as a miss), 31 with no correct
-match in Foundation/SR Legacy/Survey (FNDDS), where an honest miss is the
-right answer. See [`eval/`](./eval) for the runnable harness, scoring
-rules, and dataset provenance.
+Each release only ever tightens the floor: round 2 tripled the honest-miss
+rate with zero top-1 answers lost (cost: one top-4 alternate on one name —
+a deliberate, documented trade; see [`eval/round2-delta.md`](./eval/round2-delta.md)).
+The full harness, scoring rules, per-name results, and dataset provenance
+are public in [`eval/`](./eval) — run the replay yourself; it's
+deterministic and needs no API key.
 
 ## Privacy & data flow
 
