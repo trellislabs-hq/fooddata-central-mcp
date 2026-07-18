@@ -19,6 +19,12 @@ import {
   wordInSet,
   isNeutralQueryWord,
   STOP_WORDS,
+  passesHeadInGate,
+  passesCategoricalGuards,
+  VEGAN_FAMILY_MARKERS,
+  ANIMAL_BASE_TERMS,
+  CANDIED_FAMILY_MARKERS,
+  CANDIED_CONTRADICTION_TERMS,
 } from "../src/relevance.js";
 
 describe("normalizeWords()", () => {
@@ -191,5 +197,182 @@ describe("rateMatchQuality() — MISS: no description", () => {
   test("undefined/empty description is always a miss", () => {
     assert.equal(rateMatchQuality("anything", undefined), "miss");
     assert.equal(rateMatchQuality("anything", ""), "miss");
+  });
+});
+
+// ─── jump-1773 round-2 Rule-1: passesHeadInGate() ──────────────────────────
+//
+// CoS REVISION (jump-1773, see eval/round2-delta.md): head = the LAST
+// non-neutral token only, gated to description segment 1/2. The wiki's
+// two-token formulation (also requiring the FIRST significant token) was
+// falsified by the corpus replay: 7 positive rows ("fresh kale", "dried
+// sage", "low sodium chicken broth", "french lentils", ...) carry a genuine
+// prep/freshness/variety modifier first, which the CORRECT description
+// never contains — and no rule over the two authorized vocabularies can
+// separate those from the distinguisher-first compounds the first-token
+// check aimed at ("old bay" vs "fresh kale" are structurally identical).
+// The last-token gate keeps the gluten-free-flour-class catches at zero
+// positive cost; compound-name catches (old bay, chipotle-in-adobo,
+// everything-bagel) are ROUND-3 BACKLOG — they need a modifier vocabulary
+// or negative pins, and their tests below document the accepted pass-through.
+describe("passesHeadInGate() — Rule-1: intended catches (last-non-neutral head in segment 1/2)", () => {
+  test("EXACT-rated highest-confidence error: 'gluten free flour' vs gluten-free pasta rejects — 'flour' (the head) is buried in segment 3, not segment 1/2", () => {
+    assert.equal(
+      passesHeadInGate("gluten free flour", "Pasta, gluten-free, corn and rice flour, cooked"),
+      false
+    );
+    assert.equal(
+      passesHeadInGate("gluten-free flour", "Pasta, gluten-free, corn and rice flour, cooked"),
+      false
+    );
+  });
+
+  test("'X in Y' prep phrase with an unrelated landing still rejects: 'chipotle chiles in adobo' vs a sriracha description — 'adobo' (the head) is nowhere in segment 1/2", () => {
+    assert.equal(passesHeadInGate("chipotle chiles in adobo", "Sauce, hot chile, sriracha"), false);
+  });
+
+  test("modifier-first positives PASS (the class that falsified the two-token head): 'fresh kale' vs 'Kale, raw' and 'low sodium chicken broth' vs its correct low-sodium landing", () => {
+    assert.equal(passesHeadInGate("fresh kale", "Kale, raw"), true);
+    assert.equal(passesHeadInGate("low sodium chicken broth", "Soup, chicken broth, low sodium, canned"), true);
+  });
+
+  test("a genuinely well-covered head passes: 'old bay seasoning' vs a comma-free ALL-CAPS Branded description", () => {
+    assert.equal(passesHeadInGate("old bay seasoning", "OLD BAY SEASONING"), true);
+  });
+});
+
+describe("passesHeadInGate() — Rule-1: ROUND-3 BACKLOG (compound-name classes the last-token head cannot catch, DOCUMENTED)", () => {
+  test("'old bay seasoning' vs bay scallops PASSES the gate ('bay' covers the head) — compound-name catch deferred to round 3 (modifier vocabulary or negative pin)", () => {
+    assert.equal(
+      passesHeadInGate("old bay seasoning", "Scallops, bay, Patagonian, frozen, wild caught"),
+      true
+    );
+  });
+
+  test("'chipotle peppers in adobo' vs 'Adobo, with noodles' PASSES the gate ('adobo' covers the head) — deferred to round 3", () => {
+    assert.equal(passesHeadInGate("chipotle peppers in adobo", "Adobo, with noodles"), true);
+  });
+
+  test("'everything bagel seasoning' vs 'Bagels, egg' PASSES the gate (plural-tolerant 'bagel' covers) — deferred to round 3; round-1 floor still rates it", () => {
+    assert.equal(passesHeadInGate("everything bagel seasoning", "Bagels, egg"), true);
+  });
+});
+
+describe("passesHeadInGate() — Rule-1: accepted known gap (spring-mix class, DELIBERATE)", () => {
+  test("'spring mix' vs 'Wheat, hard red spring' PASSES (does not reject) — 'mix' is neutral so both head tokens collapse to the single token 'spring', which the wrong candidate happens to cover; round-1's own floor still governs this query and round-2 does not additionally fix it here", () => {
+    assert.equal(passesHeadInGate("spring mix", "Wheat, hard red spring"), true);
+  });
+});
+
+describe("passesHeadInGate() — Rule-1: no-op rulings", () => {
+  test("a query with no significant tokens no-ops (passes) — round-1's own degenerate-case handling already governs it", () => {
+    assert.equal(passesHeadInGate("the of and", "Anything, whatever"), true);
+  });
+
+  test("a query of only neutral words no-ops (passes) — e.g. 'milk' alone", () => {
+    assert.equal(passesHeadInGate("milk", "Milk, whole, 3.25% milkfat"), true);
+  });
+
+  test("no description no-ops (passes) — round-1's own miss-on-no-description already governs it", () => {
+    assert.equal(passesHeadInGate("anything", undefined), true);
+    assert.equal(passesHeadInGate("anything", ""), true);
+  });
+});
+
+describe("passesHeadInGate() — Rule-1: modifier-first corpus HITS survive the revised head (the class that falsified the two-token formulation)", () => {
+  test("'dried sage' vs 'Spices, sage, ground' — a real corpus HIT — passes on the head 'sage'", () => {
+    assert.equal(passesHeadInGate("dried sage", "Spices, sage, ground"), true);
+  });
+
+  test("'french lentils' vs 'Lentils, dry' — a real corpus HIT — passes on the head 'lentils'", () => {
+    assert.equal(passesHeadInGate("french lentils", "Lentils, dry"), true);
+  });
+});
+
+// ─── jump-1773 round-2 Rule-2: passesCategoricalGuards() ───────────────────
+
+describe("passesCategoricalGuards() — vegan-family guard", () => {
+  test("'vegan cream cheese' vs a dairy cream cheese description rejects (segment 1/2 animal term)", () => {
+    assert.equal(passesCategoricalGuards("vegan cream cheese", "Cheese, cream"), false);
+  });
+
+  test("'vegan fish sauce' vs a real fish sauce description rejects (segment 2 animal term)", () => {
+    assert.equal(passesCategoricalGuards("vegan fish sauce", "Sauce, fish, ready-to-serve"), false);
+  });
+
+  test("beyond-segment-1/2 catch: an animal-base term buried in a LATER segment is still caught (full-description scan, not just the gate window)", () => {
+    assert.equal(
+      passesCategoricalGuards(
+        "vegan butter",
+        "Spread, vegan, made with palm and canola oil, contains milk solids"
+      ),
+      false
+    );
+  });
+
+  test("hyphenated and spaced marker forms both trigger the guard ('dairy-free' and 'dairy free' both tokenize to the same marker)", () => {
+    assert.equal(passesCategoricalGuards("dairy-free cream cheese", "Cheese, cream"), false);
+    assert.equal(passesCategoricalGuards("dairy free cream cheese", "Cheese, cream"), false);
+  });
+
+  test("'plant-based' and 'plant based' both trigger the guard", () => {
+    assert.equal(passesCategoricalGuards("plant-based butter", "Butter, salted"), false);
+    assert.equal(passesCategoricalGuards("plant based butter", "Butter, salted"), false);
+  });
+
+  test("'meatless' triggers the guard", () => {
+    assert.equal(passesCategoricalGuards("meatless bacon", "Bacon, pork, cured, raw"), false);
+  });
+
+  test("a vegan-marker query against a description with NO animal-base term passes (a real vegan-labeled FDC entry that doesn't reuse the dairy noun in its own name)", () => {
+    assert.equal(passesCategoricalGuards("vegan cream cheese", "Spread, cashew, dairy-free"), true);
+  });
+
+  test("no vegan marker in the query: an animal-term description passes through untouched (guard doesn't fire)", () => {
+    assert.equal(passesCategoricalGuards("cream cheese", "Cheese, cream"), true);
+  });
+});
+
+describe("passesCategoricalGuards() — candied-family guard", () => {
+  test("'candied ginger' vs 'Ginger root, raw' rejects (the motivating corpus case)", () => {
+    assert.equal(passesCategoricalGuards("candied ginger", "Ginger root, raw"), false);
+  });
+
+  test("'crystallized ginger' vs a fresh-ginger description rejects", () => {
+    assert.equal(passesCategoricalGuards("crystallized ginger", "Ginger root, fresh"), false);
+  });
+
+  test("a candied-marker query against a genuinely candied description passes", () => {
+    assert.equal(passesCategoricalGuards("candied ginger", "Ginger, candied"), true);
+  });
+
+  test("no candied marker in the query: a raw/fresh description passes through untouched (guard doesn't fire)", () => {
+    assert.equal(passesCategoricalGuards("ginger", "Ginger root, raw"), true);
+  });
+});
+
+describe("passesCategoricalGuards() — no-op / safety", () => {
+  test("no description no-ops (passes)", () => {
+    assert.equal(passesCategoricalGuards("vegan cheese", undefined), true);
+  });
+
+  test("both concepts are independent — a query carrying both markers passes when the description contradicts neither", () => {
+    assert.equal(passesCategoricalGuards("vegan candied ginger", "Ginger, candied"), true);
+    assert.equal(passesCategoricalGuards("candied vegan walnuts", "Walnuts, candied, glazed"), true);
+  });
+});
+
+describe("Rule-2 vocabularies — deliberate asymmetry documentation", () => {
+  test("'milk'/'butter'/'cheese' are QUERY-side neutral (isNeutralQueryWord) but DESCRIPTION-side ANIMAL_BASE_TERMS — different lists, different purposes", () => {
+    assert.ok(isNeutralQueryWord("milk"));
+    assert.ok(ANIMAL_BASE_TERMS.has("milk"));
+    assert.ok(isNeutralQueryWord("cheese"));
+    assert.ok(ANIMAL_BASE_TERMS.has("cheese"));
+  });
+
+  test("marker vocabularies are exported as token-sequence arrays, not strings", () => {
+    assert.ok(VEGAN_FAMILY_MARKERS.some((m) => m.join(" ") === "dairy free"));
+    assert.ok(CANDIED_FAMILY_MARKERS.some((m) => m.join(" ") === "crystallized"));
+    assert.ok(CANDIED_CONTRADICTION_TERMS.has("fresh"));
   });
 });

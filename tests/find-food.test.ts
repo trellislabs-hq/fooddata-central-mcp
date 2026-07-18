@@ -409,3 +409,91 @@ describe("findFood() — relevance floor: opt-in Branded append filtering (SYNTH
     assert.ok(!result.alternates.some((f) => f.fdcId === 11));
   });
 });
+
+// jump-1773: round-2 floor AND-layering. ratePassing() now requires
+// round-1 (rateMatchQuality !== 'miss') AND Rule-1 (passesHeadInGate) AND
+// Rule-2 (passesCategoricalGuards) — these tests exercise the full
+// findFood() pipeline against a candidate that round-1 ALONE would have
+// let through (proving round-1 was too weak) and shows the combined floor
+// correctly rejects it end-to-end (Branded rescue also filtered, since
+// ratePassing() is the same function on every batch).
+describe("findFood() — round-2 floor: Rule-1 rejects a round-1-passing buried-head candidate (SYNTHETIC)", () => {
+  test("'gluten free flour' vs a round-1-passing gluten-free PASTA description is rejected end-to-end -> honest no-confident-match (the head 'flour' is buried past segment 2)", async () => {
+    // Round-1 alone passes this (segment gate covers 'gluten' in segment 2)
+    // and it was one of the corpus's two EXACT-rated highest-confidence
+    // errors — exactly the confident-wrong shape round-2's last-token head
+    // gate exists to close. (The old-bay compound-name class is round-3
+    // backlog — see relevance.test.ts.)
+    const searchFoods = async (params: FdcSearchParams): Promise<FdcSearchResult> => {
+      if (params.dataType === "Branded") {
+        return { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
+      }
+      return {
+        totalHits: 1,
+        currentPage: 1,
+        totalPages: 1,
+        foods: [
+          { fdcId: 300, description: "Pasta, gluten-free, corn and rice flour, cooked", dataType: "Foundation", foodNutrients: [] },
+        ],
+      };
+    };
+
+    const result = await findFood(searchFoods, "gluten free flour");
+
+    assert.equal(result.best, undefined, "Rule-1 must reject the pasta candidate even though round-1 alone passes it");
+    assert.equal(result.usedBranded, false);
+    assert.match(result.text, /No confident match for "gluten free flour"/);
+  });
+});
+
+describe("findFood() — round-2 floor: Rule-2 vegan-family guard rejects a round-1-passing candidate (SYNTHETIC)", () => {
+  test("'vegan cream cheese' vs a real dairy cream cheese description (round-1 CLOSE) is rejected end-to-end -> honest no-confident-match", async () => {
+    const searchFoods = async (params: FdcSearchParams): Promise<FdcSearchResult> => {
+      if (params.dataType === "Branded") {
+        return { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
+      }
+      return {
+        totalHits: 1,
+        currentPage: 1,
+        totalPages: 1,
+        foods: [{ fdcId: 301, description: "Cheese, cream", dataType: "Foundation", foodNutrients: [] }],
+      };
+    };
+
+    const result = await findFood(searchFoods, "vegan cream cheese");
+
+    assert.equal(result.best, undefined, "Rule-2 must reject the dairy candidate even though round-1 alone rates it CLOSE");
+    assert.match(result.text, /No confident match for "vegan cream cheese"/);
+  });
+});
+
+describe("findFood() — round-2 floor: round-1 honest cases are unaffected (Rule-1/2 are reject-only, never a rescue)", () => {
+  test("a query with no shared segment-1/2 word is already honest under round-1 alone; Rule-1/2 add nothing and change nothing", async () => {
+    const searchFoods = async (): Promise<FdcSearchResult> => ({
+      totalHits: 1,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [{ fdcId: 302, description: "Chocolate Chip Cookies", dataType: "Foundation", foodNutrients: [] }],
+    });
+
+    const result = await findFood(searchFoods, "old bay seasoning");
+
+    assert.equal(result.best, undefined, "round-1's segment gate alone already rejects this — round-2 must not change that");
+    assert.match(result.text, /No confident match for "old bay seasoning"/);
+  });
+
+  test("a genuine EXACT match survives all three layers unchanged", async () => {
+    const searchFoods = async (): Promise<FdcSearchResult> => ({
+      totalHits: 1,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [{ fdcId: 303, description: "Cheese, cheddar", dataType: "Foundation", foodNutrients: [] }],
+    });
+
+    const result = await findFood(searchFoods, "cheddar cheese");
+
+    assert.ok(result.best);
+    assert.equal(result.best!.fdcId, 303);
+    assert.equal(result.matchQuality, "exact");
+  });
+});

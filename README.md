@@ -137,23 +137,24 @@ up.
 
 On our curated household-food identity set (drawn from our recipe-pipeline
 curation — it deliberately over-samples known-hard names, and is not an
-independently sampled benchmark), `find_food` currently resolves **10.8%
-top-1** and **26.2%** within the exposed top-4, with a **9.7% honest-miss
+independently sampled benchmark), `find_food` currently resolves **12.3%
+top-1** and **24.6%** within the exposed top-4, with a **29.0% honest-miss
 rate** on 31 names known to have no correct match in preferred data types
-(measured 2026-07-17, v1.3.0).
+(measured 2026-07-18, round-2 floor).
 
 **Known limitation — read this before trusting a confident match on niche
 names.** USDA's search always returns a *nearest neighbor*, even for foods
 FDC has nothing for. v1.3.0 added a relevance floor so `find_food` can
-refuse ("no confident match") instead of endorsing a wrong food, and on
-this challenge set the floor rejected wrong answers without costing a
-single correct one. But most remaining wrong matches share a real word
-with the query (e.g. "gluten free flour" → a gluten-free *pasta*;
-"candied ginger" → *raw* ginger), which the current heuristic still
-accepts as related. For compound or niche names — seasoning blends, brand
-names, "X of choice" — treat a confident match skeptically and check the
-alternates; the floor is being tightened iteratively against this same
-public eval set.
+refuse ("no confident match") instead of endorsing a wrong food; the
+round-2 floor (head-in-gate + vegan/candied categorical guards) tripled
+the honest-miss rate without losing a single correct answer (one
+deliberate trade documented in `eval/round2-delta.md`). Wrong matches that
+remain are mostly compound-name and form traps ("old bay seasoning" → bay
+*scallops*; "green curry paste" → a beef curry *dish*), which the current
+heuristic still accepts as related. For compound or niche names —
+seasoning blends, brand names, "X of choice" — treat a confident match
+skeptically and check the alternates; the floor is being tightened
+iteratively against this same public eval set.
 
 Method: scored against the tool's structured `best`/`alternates` output (no
 text parsing) over 96 household ingredient names — 65 with a known-correct
