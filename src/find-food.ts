@@ -10,7 +10,10 @@
  *   - PREFERRED_DATA_TYPES — Foundation -> SR Legacy -> Survey (FNDDS) cascade
  *   - dedupeByDescription() — collapses near-identical branded name spam
  *   - ratePassing() — applies the relevance floor (src/relevance.ts) to one
- *     search batch, rated against the loop-local query that produced it
+ *     search batch, rated against the loop-local query that produced it —
+ *     round-1 token-overlap floor AND round-2 Rule-1 (head-in-gate) AND
+ *     Rule-2 (categorical guards), AND-layered (jump-1773; all three are
+ *     filter-only, never a re-ranker)
  *   - findFood() — orchestrates: normalize/alias candidates -> preferred-type
  *     search (floor-filtered per batch) -> Branded fallback (opt-in or last
  *     resort, also floor-filtered) -> dedup -> format, or an honest
@@ -20,7 +23,8 @@
  *   - ./fdc-client.ts (FdcSearchParams/FdcSearchResult/FdcFood types)
  *   - ./format.ts (formatFoodSummary, formatKeyNutrients)
  *   - ./normalize.ts (buildCandidateQueries)
- *   - ./relevance.ts (rateMatchQuality, MatchQuality) — the relevance floor
+ *   - ./relevance.ts (rateMatchQuality, MatchQuality, passesHeadInGate,
+ *     passesCategoricalGuards) — the relevance floor (round-1 + round-2)
  *
  * State: Stateless. Takes a `searchFoods` function as a parameter (typically
  * `client.searchFoods.bind(client)`) rather than importing FdcClient
@@ -35,12 +39,22 @@
  * miss-rated foods are dropped before they ever reach `best` or
  * `alternates`. The floor is a FILTER, never a re-ranker — exact/close
  * survivors keep FDC's own relevance order.
+ *
+ * Round-2 floor (jump-1773): round-1 alone left 28/31 confident-wrong
+ * negatives passing because they share a real segment-1/2 token with the
+ * query without covering the query's actual identity HEAD. ratePassing()
+ * now AND-layers two more filters (src/relevance.ts): Rule-1
+ * (passesHeadInGate — the identity head must land in segment 1/2) and
+ * Rule-2 (passesCategoricalGuards — vegan/plant-based and
+ * candied/crystallized query families reject a contradicting description).
+ * Both are reject-only; a candidate that already failed round-1 was never
+ * going to reach round-2 anyway.
  */
 
 import type { FdcFood, FdcSearchParams, FdcSearchResult } from "./fdc-client.js";
 import { formatFoodSummary, formatKeyNutrients } from "./format.js";
 import { buildCandidateQueries, normalize } from "./normalize.js";
-import { rateMatchQuality, type MatchQuality } from "./relevance.js";
+import { passesCategoricalGuards, passesHeadInGate, rateMatchQuality, type MatchQuality } from "./relevance.js";
 
 export type SearchFoodsFn = (params: FdcSearchParams) => Promise<FdcSearchResult>;
 
@@ -124,14 +138,22 @@ export function dedupeByDescription(foods: FdcFood[]): FdcFood[] {
 }
 
 /**
- * Apply the relevance floor to one search batch: keep only foods whose
- * description rates 'exact' or 'close' against `query` — the SAME query
- * that produced this batch (loop-local), never `name` nor a different
- * candidate. A filter, never a re-ranker: survivors keep their original
- * (FDC relevance) order.
+ * Apply the full relevance floor to one search batch: keep only foods that
+ * pass round-1 (rateMatchQuality !== 'miss') AND round-2 Rule-1
+ * (passesHeadInGate) AND round-2 Rule-2 (passesCategoricalGuards), all
+ * rated against `query` — the SAME query that produced this batch
+ * (loop-local), never `name` nor a different candidate. A filter, never a
+ * re-ranker: survivors keep their original (FDC relevance) order. Every
+ * caller (preferred-type batches and Branded batches alike) routes through
+ * this one function, so both flow through the identical combined floor.
  */
 function ratePassing(foods: FdcFood[], query: string): FdcFood[] {
-  return foods.filter((food) => rateMatchQuality(query, food.description) !== "miss");
+  return foods.filter(
+    (food) =>
+      rateMatchQuality(query, food.description) !== "miss" &&
+      passesHeadInGate(query, food.description) &&
+      passesCategoricalGuards(query, food.description)
+  );
 }
 
 /**

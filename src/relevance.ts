@@ -14,6 +14,14 @@
  *   - NEUTRAL_QUERY_WORDS / isNeutralQueryWord() — form/shape/category words
  *     that can never BY THEMSELVES establish food identity
  *   - rateMatchQuality() — EXACT / CLOSE / MISS heuristic vs a description
+ *   - passesHeadInGate() (round-2 Rule-1) — the query's IDENTITY HEAD (the
+ *     LAST non-neutral token; CoS-revised from the falsified two-token
+ *     design) must land in description segment 1/2, not merely any shared
+ *     word there
+ *   - VEGAN_FAMILY_MARKERS / ANIMAL_BASE_TERMS / CANDIED_FAMILY_MARKERS /
+ *     passesCategoricalGuards() (round-2 Rule-2) — reject vegan/plant-based
+ *     queries landing on an animal-derived description, and
+ *     candied/crystallized queries landing on a raw/fresh description
  *
  * Dependencies: none
  * State: Stateless.
@@ -213,4 +221,171 @@ export function rateMatchQuality(query: string, description: string | undefined 
   // modifier in the primary slot, so the right food shouldn't lose on a
   // word the gates never needed.
   return "close";
+}
+
+// ─── Round-2 Rule-1: head-in-gate ──────────────────────────────────────────
+// jump-1773 (round-2 floor). Round-1's segment gate only requires ANY
+// significant query word in segment 1/2 — a compound name's DISTINGUISHER
+// word can satisfy that gate while the real identity head never appears
+// ("old BAY seasoning" gates on "bay" -> bay scallops; "gluten free FLOUR"
+// gates on "gluten" -> gluten-free pasta, "flour" itself buried in segment
+// 3). Rule-1 tightens this: the query's identity HEAD — the LAST non-neutral
+// token — must land in segment 1/2.
+//
+// CoS revision (jump-1773): the wiki design added (a) a first-significant-
+// token requirement to also catch distinguisher-first compounds ("old BAY"
+// -> bay scallops, "chipotle in ADOBO"). The corpus replay falsified that
+// half: 7 positive rows have a modifier first word ("fresh kale", "dried
+// sage", "low sodium chicken broth", "french lentils") absent from their
+// CORRECT descriptions, and no rule over the two authorized vocabularies
+// separates those from old-bay-class compounds. Last-non-neutral-only keeps
+// the gluten-free-flour-class catches at zero positive cost; the compound-
+// name catches are round-3 backlog (modifier vocabulary or negative pins).
+//
+// Known accepted gap ("spring mix" class, DELIBERATE — not a bug): when a
+// two-word query's second word is neutral ('mix' is in NEUTRAL_QUERY_WORDS),
+// both the first-significant and last-non-neutral tokens collapse to the
+// SAME single word ("spring"). Rule-1 cannot distinguish that from a
+// legitimately single-headed query in this case, so "spring mix" still
+// gates on "spring" alone and is not rejected by this rule (round-1's floor
+// already governs it, unchanged). This is a documented, accepted worst-case
+// — see eval/round2-delta.md.
+export function passesHeadInGate(query: string, description: string | undefined | null): boolean {
+  if (!description) return true; // no description: round-1's own miss-on-no-description already governs
+
+  const queryWords = normalizeWords(query);
+  const significant = getSignificantWords(queryWords);
+  if (significant.length === 0) return true; // degenerate query: round-1 floor already handles it, no-op here
+
+  const nonNeutral = significant.filter((w) => !isNeutralQueryWord(w));
+  if (nonNeutral.length === 0) return true; // all-neutral query: round-1 floor already handles it, no-op here
+
+  // Head = the LAST non-neutral token only (jump-1773 CoS revision of the
+  // wiki's two-token formulation). The corpus replay FALSIFIED the
+  // first-significant-token requirement: for 7 positive rows the first
+  // significant word is a genuine prep/freshness/variety modifier ("fresh
+  // kale", "dried sage", "low sodium chicken broth", "french lentils") that
+  // the CORRECT description never carries — round-1's CLOSE tier tolerates
+  // exactly that by design, and no formulation over STOP_WORDS +
+  // NEUTRAL_QUERY_WORDS can distinguish those from the distinguisher-first
+  // compounds the first-token check aimed at ("old bay" vs "fresh kale" are
+  // structurally identical two-non-neutral-word queries). Dropping the
+  // first-token requirement keeps every last-token gate catch (the
+  // gluten-free-flour class — identity buried past segment 2) at ZERO
+  // positive regressions; the old-bay / chipotle-in-adobo compound-name
+  // catches move to the round-3 backlog (they need a modifier vocabulary or
+  // negative pins — see eval/round2-delta.md).
+  const headLast = nonNeutral[nonNeutral.length - 1];
+
+  // Same segment-1/2 gate window as round-1's rateMatchQuality() — a
+  // comma-headed FDC taxonomy names category in segment 1, variety in
+  // segment 2; a comma-free ALL-CAPS Branded description is one segment.
+  const segs = description.split(",");
+  const gateWords = new Set(normalizeWords(`${segs[0] || ""} ${segs[1] || ""}`));
+
+  return wordInSet(headLast, gateWords);
+}
+
+// ─── Round-2 Rule-2: categorical guards ────────────────────────────────────
+// jump-1773 (round-2 floor). Two food-family categories where the query
+// asserts a PROPERTY the FDC candidate's description directly contradicts —
+// round-1's token-overlap floor is blind to this because the contradicting
+// word ('cheese' in "vegan cream cheese" -> "Cheese, cream") is itself part
+// of the shared vocabulary, not an absence of overlap.
+
+/**
+ * Query markers for the vegan/plant-based family. Token sequences (not
+ * strings) so a hyphenated or spaced form of the same phrase both match
+ * after normalizeWords() collapses punctuation to whitespace ("dairy-free"
+ * and "dairy free" both tokenize to ["dairy", "free"]).
+ */
+export const VEGAN_FAMILY_MARKERS: string[][] = [
+  ["vegan"],
+  ["plant", "based"],
+  ["meatless"],
+  ["dairy", "free"],
+];
+
+/**
+ * Animal-derived base terms that contradict a vegan-family query anywhere
+ * in a candidate's FULL description (not just segment 1/2 — "Sauce, fish,
+ * ready-to-serve" must be caught for "vegan fish sauce" even though 'fish'
+ * lands in segment 2 there, and a term buried in a later segment, e.g. a
+ * "contains milk solids" trailing modifier, must be caught too).
+ *
+ * Deliberate asymmetry, documented: 'milk', 'butter', and 'cheese' are
+ * NEUTRAL on the QUERY side (NEUTRAL_QUERY_WORDS above — a query for
+ * "milk" alone is a real, specific food and must not be rejected as
+ * vacuous). Here they are DESCRIPTION-side contradiction vocabulary for a
+ * different query family (vegan/plant-based) — the two lists serve
+ * different purposes and are not meant to mirror each other.
+ */
+export const ANIMAL_BASE_TERMS: Set<string> = new Set([
+  "cheese", "milk", "cream", "butter", "yogurt", "egg", "eggs", "fish",
+  "chicken", "beef", "pork", "bacon", "turkey", "meat", "honey", "gelatin",
+  "whey", "lard",
+]);
+
+/** Query markers for the candied/crystallized family. */
+export const CANDIED_FAMILY_MARKERS: string[][] = [["candied"], ["crystallized"]];
+
+/**
+ * Description terms that contradict a candied/crystallized query — a
+ * simplification (documented, not exhaustive): 'raw' or 'fresh' anywhere in
+ * the description is treated as "this is the plain/uncandied form", which
+ * covers the corpus's motivating case ("candied ginger" -> "Ginger root,
+ * raw") without attempting a full candied-vs-plain taxonomy.
+ */
+export const CANDIED_CONTRADICTION_TERMS: Set<string> = new Set(["raw", "fresh"]);
+
+/** True if every token of at least one marker sequence appears in queryWords (order-independent). */
+function queryHasMarker(queryWords: string[], markers: string[][]): boolean {
+  const wordSet = new Set(queryWords);
+  return markers.some((marker) => marker.every((tok) => wordSet.has(tok)));
+}
+
+/**
+ * Rule-2: reject a candidate whose description contradicts a categorical
+ * query marker. Filter-only — never upgrades a candidate, only rejects one
+ * that round-1 (and Rule-1) already let through.
+ */
+export function passesCategoricalGuards(query: string, description: string | undefined | null): boolean {
+  if (!description) return true; // no description: round-1's own miss-on-no-description already governs
+
+  const queryWords = normalizeWords(query);
+  const descWords = normalizeWords(description);
+  const descWordSet = new Set(descWords);
+
+  // Self-declaration exemptions (jump-1773 Codex code-review Significants —
+  // without these, correctly-labeled Branded matches become false refusals):
+  //
+  // VEGAN family: an animal noun is exempt ONLY when BOTH hold — the
+  // description SELF-DECLARES the family marker AND the noun is one the
+  // query itself contains (the product name being veganized). "VEGAN CREAM
+  // CHEESE" passes for 'vegan cream cheese' (self-declares; reuses the
+  // query's own nouns); plain "Cheese, cream" still rejects (no marker —
+  // the guard's core catch); "Spread, vegan, ... contains milk solids"
+  // still rejects for 'vegan butter' (self-declares, but 'milk' is not a
+  // query noun).
+  if (queryHasMarker(queryWords, VEGAN_FAMILY_MARKERS)) {
+    const descSelfDeclares = queryHasMarker(descWords, VEGAN_FAMILY_MARKERS);
+    const querySet = new Set(queryWords);
+    for (const term of ANIMAL_BASE_TERMS) {
+      if (descWordSet.has(term)) {
+        if (descSelfDeclares && querySet.has(term)) continue;
+        return false;
+      }
+    }
+  }
+
+  // CANDIED family: a description that itself says candied/crystallized
+  // asserts the candied form — 'fresh'/'raw' in it is provenance wording
+  // ("Candied ginger, made from fresh ginger"), not a plain-form landing.
+  if (queryHasMarker(queryWords, CANDIED_FAMILY_MARKERS) && !queryHasMarker(descWords, CANDIED_FAMILY_MARKERS)) {
+    for (const term of CANDIED_CONTRADICTION_TERMS) {
+      if (descWordSet.has(term)) return false;
+    }
+  }
+
+  return true;
 }
