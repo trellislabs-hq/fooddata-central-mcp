@@ -46,11 +46,31 @@
  *    14. excluded[] pass-through on RunOutcome.
  *    15. The committed household-representative-v1 fixture's own schema +
  *        spec-measured coverage/evidence-class counts.
+ *    16. Statistics layer (eval/lib/statistics.ts, jump-1778 fix-pass):
+ *        wilsonInterval() sanity (point estimate always inside its own
+ *        interval, known reference values), computeStratumStats() (unique-
+ *        name, Wilson-CI'd), computeWeightedPositiveStats() (occurrence-
+ *        weighted, descriptive — proven DISTINCT from the unique number on a
+ *        skewed synthetic distribution), computeCoverageStats(),
+ *        computePackRollups() (occurrence-weighted AND excluded-row-aware —
+ *        the two defects the fix-pass named), and computeRepresentativeStats()
+ *        end-to-end including the human-adjudicated stratum.
+ *    17. Assembly script classification (classifyEvidence/classifyName,
+ *        exported from eval/scripts/assemble-representative-fixture.ts):
+ *        the PIN-BINDING GUARD (a pin under the right product_name but the
+ *        WRONG fdc_id must not count as human_pin for this identity) and the
+ *        distinct non_preferred_type exclusion bucket (must not be silently
+ *        folded into no_ref).
+ *    18. Dry statistics demo: synthetic scoring (NOT a live cache) against
+ *        the committed representative fixture's own `cases`/`excluded`,
+ *        proving the statistics layer's end-to-end wiring and printing a
+ *        full unique+weighted+coverage+stratified+per-pack summary.
  *
  * Dependencies: node:test, node:assert/strict, node:fs, node:os, node:path,
  *   ../src/find-food.js, ../src/fdc-client.js, ../src/normalize.js,
  *   ../tests/helpers/mock-fetch.js (read-only import — see CONSTRAINTS,
- *   tests/ is never modified), and this module's own eval/lib/* + eval/run.js.
+ *   tests/ is never modified), and this module's own eval/lib/*, eval/run.js,
+ *   and eval/scripts/assemble-representative-fixture.js.
  * State: Uses node:fs temp files (os.tmpdir()) for cache/fixture round-trip
  *   tests — never writes to the committed eval/cache/ or eval/fixtures/.
  */
@@ -70,7 +90,7 @@ import { normalize } from "../src/normalize.js";
 import { installFetchMock, jsonResponse, loadFixture as loadRealApiFixture } from "../tests/helpers/mock-fetch.js";
 
 import { DEFAULT_FIXTURE_PATH, loadFixture, validateFixtureSchema, type EvalFixture } from "./lib/fixture.js";
-import { scoreCase } from "./lib/scoring.js";
+import { scoreCase, type CaseResult } from "./lib/scoring.js";
 import { projectFoods } from "./lib/projection.js";
 import {
   aggregateCacheBytes,
@@ -85,7 +105,23 @@ import {
   type CacheFile,
 } from "./lib/cache.js";
 import { CacheMissError, makeRecordingSearchFn, makeReplaySearchFn } from "./lib/search-fn.js";
+import {
+  computeCoverageStats,
+  computePackRollups,
+  computeRepresentativeStats,
+  computeStratumStats,
+  computeWeightedPositiveStats,
+  wilsonInterval,
+} from "./lib/statistics.js";
 import { FIXTURE_REGISTRY, resolveFixtureBinding, runEval } from "./run.js";
+import {
+  classifyEvidence,
+  classifyName,
+  type Dictionary,
+  type FdcPins,
+  type IdentityRulings,
+  type NameStats,
+} from "./scripts/assemble-representative-fixture.js";
 
 async function withTempDir<T>(fn: (dir: string) => T | Promise<T>): Promise<T> {
   const dir = mkdtempSync(path.join(tmpdir(), "fdc-mcp-eval-test-"));
@@ -600,13 +636,13 @@ describe("multi-call searchFoods cache wiring (replay)", () => {
       // {widget,food,snack}, none of which is the fused token "widgetfood",
       // so it would rate 'miss' and get floor-filtered, and this scenario
       // would fall through to the OTHER refusal path (best undefined, no
-      // Branded rescue at all) instead of the usedBranded=true rescue path
-      // this test is actually named for. The assertion (status ===
-      // "labeled_branded_fallback") happens to hold either way (scoreCase
-      // treats both refusal and labeled_branded_fallback as the "not
-      // confidently wrong" side of the taxonomy — see section 1 above), but
-      // leaving it broken would silently stop this test from exercising the
-      // Branded-fallback-scores-labeled_branded_fallback mechanism it
+      // Branded fallback at all) instead of the usedBranded=true labeled-
+      // fallback path this test is actually named for. The assertion
+      // (status === "labeled_branded_fallback") happens to hold either way
+      // (scoreCase treats both refusal and labeled_branded_fallback as the
+      // "not confidently wrong" side of the taxonomy — see section 1 above),
+      // but leaving it broken would silently stop this test from exercising
+      // the Branded-fallback-scores-labeled_branded_fallback mechanism it
       // documents.
       const cache: Record<string, unknown> = {};
       cache[cacheKeyFor("widgetfood", PREFERRED_DATA_TYPES)] = { totalHits: 0, foods: [] };
@@ -1017,10 +1053,35 @@ describe("household-representative-v1 fixture", () => {
     assert.equal(evidence?.automated_screened, 104);
     assert.equal((evidence?.human_pin ?? 0) + (evidence?.human_ruling ?? 0) + (evidence?.automated_screened ?? 0), 142);
 
-    // Every case must carry expectedSource "dictionary-ratified" (spec S6/S11 "resolver source").
+    // Every case must carry expectedSource "dictionary-ratified" (the constant
+    // answer-provenance tag) AND a per-row resolverSource (spec S11's actual
+    // "resolver source" — fdc_ref.match_method, e.g. exact/close/pinned;
+    // jump-1778 fix-pass — these are two DIFFERENT fields, never conflated).
     for (const c of fixture.cases) {
       assert.equal(c.expectedSource, "dictionary-ratified", `case "${c.name}" is missing expectedSource`);
+      assert.ok(typeof c.resolverSource === "string" && c.resolverSource.length > 0, `case "${c.name}" is missing resolverSource`);
     }
+  });
+
+  test("provenance carries a FULL 40-hex dictionaryCommit SHA (never the short --commit arg) plus the pack-input file hashes and assembly parameters", () => {
+    const binding = resolveFixtureBinding("representative");
+    const fixture = loadFixture(binding.fixturePath);
+    const p = fixture.provenance;
+
+    assert.ok(p.dictionaryCommit && /^[0-9a-f]{40}$/.test(p.dictionaryCommit), `dictionaryCommit must be a full 40-hex SHA, got ${p.dictionaryCommit}`);
+    assert.ok(p.queryProductionCommit && /^[0-9a-f]{40}$/.test(p.queryProductionCommit), `queryProductionCommit must be a full 40-hex SHA, got ${p.queryProductionCommit}`);
+
+    assert.ok(p.packInputSha256, "packInputSha256 must be present (distinct from packSnapshotSha256)");
+    assert.equal(Object.keys(p.packInputSha256 ?? {}).length, 4);
+    for (const [packId, inputHash] of Object.entries(p.packInputSha256 ?? {})) {
+      assert.notEqual(inputHash, p.packSnapshotSha256?.[packId], `${packId}: input file hash must differ from its (much larger) run-snapshot hash`);
+    }
+
+    assert.ok(p.parameters, "parameters block must be present");
+    assert.equal(p.parameters?.commitResolved, p.dictionaryCommit);
+    assert.equal(p.parameters?.date, p.derivedAt);
+
+    assert.equal(p.coverage?.uniqueNonPreferredType, 0, "v1's battery has zero non-preferred-type exclusions (verified) — but the bucket must exist and be a number, not undefined");
   });
 
   test("cases[] and excluded[] names are disjoint and together cover all 178 unique battery names", () => {
@@ -1031,6 +1092,288 @@ describe("household-representative-v1 fixture", () => {
     const overlap = [...caseNames].filter((n) => excludedNames.has(n));
     assert.deepEqual(overlap, [], "a name must never be both a scoreable case and an excluded row");
     assert.equal(caseNames.size + excludedNames.size, 178);
+  });
+});
+
+// ─── 16. Statistics layer (eval/lib/statistics.ts, jump-1778 fix-pass) ────
+
+describe("statistics layer: wilsonInterval", () => {
+  test("n<=0 returns {lower:0, upper:0} — no claim can be made from zero draws", () => {
+    assert.deepEqual(wilsonInterval(0, 0), { lower: 0, upper: 0 });
+    assert.deepEqual(wilsonInterval(5, -1), { lower: 0, upper: 0 });
+  });
+
+  test("known reference values (hand-computed Wilson score interval, z=1.96)", () => {
+    const half = wilsonInterval(50, 100);
+    assert.ok(Math.abs(half.lower - 40.383) < 0.01, `lower ${half.lower}`);
+    assert.ok(Math.abs(half.upper - 59.617) < 0.01, `upper ${half.upper}`);
+
+    const zero = wilsonInterval(0, 10);
+    assert.ok(Math.abs(zero.lower - 0) < 0.01);
+    assert.ok(Math.abs(zero.upper - 27.754) < 0.01);
+
+    const all = wilsonInterval(10, 10);
+    assert.ok(Math.abs(all.lower - 72.246) < 0.01);
+    assert.equal(all.upper, 100);
+  });
+
+  test("the point estimate always falls within its own Wilson interval", () => {
+    const cases: Array<[number, number]> = [
+      [1, 3],
+      [5, 7],
+      [0, 10],
+      [10, 10],
+      [38, 142],
+      [142, 142],
+    ];
+    for (const [hits, n] of cases) {
+      const pointPct = (hits / n) * 100;
+      const interval = wilsonInterval(hits, n);
+      assert.ok(pointPct >= interval.lower - 1e-9 && pointPct <= interval.upper + 1e-9, `${hits}/${n}: point ${pointPct} not in [${interval.lower}, ${interval.upper}]`);
+    }
+  });
+});
+
+describe("statistics layer: computeStratumStats / computeWeightedPositiveStats / computeCoverageStats / computePackRollups", () => {
+  function row(overrides: Partial<CaseResult> & Pick<CaseResult, "name" | "status">): CaseResult {
+    return { kind: "positive", ...overrides };
+  }
+
+  test("computeStratumStats: unique-name accuracy is Wilson-CI'd and ignores occurrences entirely", () => {
+    const rows: CaseResult[] = [row({ name: "a", status: "hit", occurrences: 100 }), row({ name: "b", status: "miss", occurrences: 1 })];
+    const stratum = computeStratumStats(rows, () => true);
+    assert.equal(stratum.n, 2);
+    assert.equal(stratum.hits, 1);
+    assert.equal(stratum.top1Pct, 50);
+    assert.deepEqual(stratum.top1Wilson, wilsonInterval(1, 2));
+  });
+
+  test("computeWeightedPositiveStats produces a DIFFERENT number than the unique stratum when occurrences are skewed — proves weighting actually changes the answer", () => {
+    const rows: CaseResult[] = [row({ name: "a", status: "hit", occurrences: 100 }), row({ name: "b", status: "miss", occurrences: 1 })];
+    const unique = computeStratumStats(rows, () => true);
+    const weighted = computeWeightedPositiveStats(rows);
+    assert.equal(unique.top1Pct, 50, "unique: 1 hit / 2 names = 50%");
+    assert.equal(weighted.top1Pct, (100 / 101) * 100, "weighted: 100 occurrences hit / 101 total occurrences");
+    assert.notEqual(Math.round(unique.top1Pct), Math.round(weighted.top1Pct), "the whole point of weighting: these must differ on a skewed distribution");
+    assert.equal(weighted.label, "pack-item-weighted");
+  });
+
+  test("computeWeightedPositiveStats degrades to the unique numbers when rows carry no occurrences metadata (adversarial-fixture shape)", () => {
+    const rows: CaseResult[] = [row({ name: "a", status: "hit" }), row({ name: "b", status: "miss" })];
+    const unique = computeStratumStats(rows, () => true);
+    const weighted = computeWeightedPositiveStats(rows);
+    assert.equal(weighted.n, unique.n, "no occurrences metadata -> every row implicitly weights 1 -> weighted n === unique n");
+    assert.equal(weighted.top1Pct, unique.top1Pct);
+  });
+
+  test("computeCoverageStats: eligible/total, unique AND weighted, includes excluded rows in the denominator", () => {
+    const rows: CaseResult[] = [row({ name: "a", status: "hit", occurrences: 5 }), row({ name: "b", status: "uncached", occurrences: 2 })];
+    const excluded = [
+      { name: "c", reason: "unresolved", occurrences: 3, packs: {} },
+      { name: "d", reason: "unresolved", occurrences: 1, packs: {} },
+    ];
+    const coverage = computeCoverageStats(rows, excluded);
+    // eligible = every POSITIVE row regardless of scored status (fixture-assembly-time truth, not run-time coverage).
+    assert.equal(coverage.uniqueEligible, 2);
+    assert.equal(coverage.uniqueTotal, 4);
+    assert.equal(coverage.uniqueCoveragePct, 50);
+    assert.equal(coverage.weightedEligible, 7);
+    assert.equal(coverage.weightedTotal, 11);
+    assert.ok(Math.abs(coverage.weightedCoveragePct - (7 / 11) * 100) < 1e-9);
+  });
+
+  test("computePackRollups is occurrence-weighted AND counts excluded rows into each pack's total (the two named defects)", () => {
+    const rows: CaseResult[] = [
+      row({ name: "a", status: "hit", occurrences: 4, packs: { "pack-1": 4 } }),
+      row({ name: "b", status: "miss", occurrences: 1, packs: { "pack-1": 1 } }),
+    ];
+    const excluded = [{ name: "c", reason: "unresolved", occurrences: 10, packs: { "pack-1": 10 } }];
+    const rollups = computePackRollups(rows, excluded);
+    const p1 = rollups["pack-1"];
+    assert.equal(p1.uniqueEligible, 2, "2 eligible names in pack-1");
+    assert.equal(p1.uniqueTotal, 3, "2 eligible + 1 excluded name");
+    assert.equal(p1.weightedEligible, 5, "4+1 occurrences");
+    assert.equal(p1.weightedTotal, 15, "4+1+10 occurrences INCLUDING the excluded row — this is the fix");
+    assert.equal(p1.weightedScored, 5);
+    assert.equal(p1.weightedHits, 4);
+    assert.equal(p1.top1Pct, 80, "4/5 weighted hit rate — NOT unique 1/2=50%, proving it's occurrence-weighted");
+  });
+
+  test("computeRepresentativeStats assembles coverage/unique/weighted/humanAdjudicated/byPack/model in one call", () => {
+    const rows: CaseResult[] = [
+      row({ name: "a", status: "hit", occurrences: 2, packs: { "pack-1": 2 }, evidenceClass: "human_pin" }),
+      row({ name: "b", status: "miss", occurrences: 1, packs: { "pack-1": 1 }, evidenceClass: "automated_screened" }),
+    ];
+    const stats = computeRepresentativeStats(rows, []);
+    assert.equal(stats.coverage.uniqueEligible, 2);
+    assert.equal(stats.unique.n, 2);
+    assert.equal(stats.weighted.n, 3);
+    assert.equal(stats.humanAdjudicated.n, 1, "only the human_pin row counts toward the human-adjudicated stratum");
+    assert.equal(stats.humanAdjudicated.hits, 1);
+    assert.ok(stats.byPack["pack-1"]);
+    assert.ok(stats.model.includes("Wilson"));
+  });
+});
+
+// ─── 17. Assembly classification: pin-binding guard + distinct data_type bucket ───
+
+describe("assembly classification: pin-binding guard (spec S2, jump-1778 fix-pass)", () => {
+  test("classifyEvidence returns human_pin ONLY when the pin's fdc_id matches THIS row's fdc_ref.fdc_id", () => {
+    const pins: FdcPins = {
+      carrots: { fdc_id: "100" }, // matches the row under test below
+      onions: { fdc_id: "999" }, // does NOT match the row we'll test against (777)
+    };
+    const rulings: IdentityRulings = { decisions: {} };
+
+    assert.equal(classifyEvidence("carrots", "100", pins, rulings), "human_pin", "matching pin -> human_pin");
+    assert.equal(
+      classifyEvidence("onions", "777", pins, rulings),
+      "automated_screened",
+      "a pin exists under this product_name but points at a DIFFERENT fdc_id (999 != 777) — must NOT count as human_pin for this identity"
+    );
+  });
+
+  test("classifyEvidence falls through to human_ruling when the pin is a binding mismatch but a ruling exists for this exact identity", () => {
+    const pins: FdcPins = { onions: { fdc_id: "999" } }; // mismatched pin
+    const rulings: IdentityRulings = { decisions: { "onions|777": { ruling: "keep" } } };
+    assert.equal(classifyEvidence("onions", "777", pins, rulings), "human_ruling");
+  });
+
+  test("classifyEvidence falls through to automated_screened when the pin's fdc_id is null (an explicit negative pin, not an identity match)", () => {
+    const pins: FdcPins = { widget: { fdc_id: null } };
+    const rulings: IdentityRulings = { decisions: {} };
+    assert.equal(classifyEvidence("widget", "555", pins, rulings), "automated_screened");
+  });
+
+  test("classifyEvidence tolerates a numeric pin.fdc_id vs a string fdcId argument (String-compared, source vintage varies)", () => {
+    const pins = { thing: { fdc_id: 42 as unknown as string } };
+    const rulings: IdentityRulings = { decisions: {} };
+    assert.equal(classifyEvidence("thing", "42", pins, rulings), "human_pin");
+  });
+});
+
+describe("assembly classification: classifyName full decision tree", () => {
+  function nameStats(occ = 1, packs: Record<string, number> = { "pack-1": occ }): NameStats {
+    return { name: "x", occurrences: occ, packs };
+  }
+
+  test("unresolved: a name not in the index becomes excluded, bucket unresolved", () => {
+    const nameIndex = new Map<string, string>();
+    const result = classifyName("mystery ingredient", nameStats(), {}, nameIndex, {}, { decisions: {} });
+    assert.equal(result.kind, "excluded");
+    if (result.kind === "excluded") assert.equal(result.bucket, "unresolved");
+  });
+
+  test("no_ref: resolves, but the entry carries no fdc_ref at all", () => {
+    const dict: Dictionary = { k: { product_name: "k", names: ["k"] } };
+    const nameIndex = new Map([["k", "k"]]);
+    const result = classifyName("k", nameStats(), dict, nameIndex, {}, { decisions: {} });
+    assert.equal(result.kind, "excluded");
+    if (result.kind === "excluded") assert.equal(result.bucket, "no_ref");
+  });
+
+  test("non_preferred_type: resolves, HAS an fdc_ref, but data_type is Branded — a DISTINCT bucket from no_ref, never silently folded in", () => {
+    const dict: Dictionary = { k: { product_name: "k", names: ["k"], fdc_ref: { fdc_id: "9", description: "K Snack", data_type: "Branded", match_method: "exact" } } };
+    const nameIndex = new Map([["k", "k"]]);
+    const result = classifyName("k", nameStats(), dict, nameIndex, {}, { decisions: {} });
+    assert.equal(result.kind, "excluded");
+    if (result.kind === "excluded") {
+      assert.equal(result.bucket, "non_preferred_type");
+      assert.notEqual(result.bucket, "no_ref");
+    }
+  });
+
+  test("eligible: resolves, has a preferred-type fdc_ref -> a positive case carrying resolverSource = match_method", () => {
+    const dict: Dictionary = { k: { product_name: "carrots", names: ["k"], fdc_ref: { fdc_id: "100", description: "Carrots, raw", data_type: "Foundation", match_method: "exact" } } };
+    const nameIndex = new Map([["k", "k"]]);
+    const result = classifyName("k", nameStats(3, { "pack-2": 3 }), dict, nameIndex, { carrots: { fdc_id: "100" } }, { decisions: {} });
+    assert.equal(result.kind, "eligible");
+    if (result.kind === "eligible") {
+      assert.equal(result.evidenceClass, "human_pin");
+      assert.equal(result.case.expected.fdcId, 100);
+      assert.equal(result.case.resolverSource, "exact");
+      assert.equal(result.case.occurrences, 3);
+      assert.deepEqual(result.case.packs, { "pack-2": 3 });
+    }
+  });
+
+  test("PIN-BINDING GUARD end-to-end through classifyName: a mismatched pin does not leak human_pin onto the wrong identity", () => {
+    const dict: Dictionary = { k: { product_name: "onions", names: ["k"], fdc_ref: { fdc_id: "777", description: "Onions, raw", data_type: "Foundation", match_method: "close" } } };
+    const nameIndex = new Map([["k", "k"]]);
+    const pins: FdcPins = { onions: { fdc_id: "999" } }; // pinned to a DIFFERENT identity than 777
+    const result = classifyName("k", nameStats(), dict, nameIndex, pins, { decisions: {} });
+    assert.equal(result.kind, "eligible");
+    if (result.kind === "eligible") {
+      assert.equal(result.evidenceClass, "automated_screened", "a same-name pin bound to a different fdc_id must not count as human_pin here");
+    }
+  });
+});
+
+// ─── 18. Dry statistics demo (no live cache; synthetic scoring) ───────────
+
+describe("representative fixture — dry statistics demo (no live cache; synthetic scoring against `expected` directly)", () => {
+  test("computeRepresentativeStats produces coherent unique/weighted/human-subset/coverage/byPack numbers from the committed fixture's cases, and prints a full summary", () => {
+    const binding = resolveFixtureBinding("representative");
+    const fixture = loadFixture(binding.fixturePath);
+
+    // Synthetic "would-be" scoring — NOT a real find_food measurement (no
+    // live cache exists yet for this fixture; the recording run is the
+    // coordinator's step). Every 3rd case (by sorted order) is marked a
+    // miss, everything else a hit, so the distribution is non-trivial
+    // enough to prove the statistics layer's wiring (Wilson/weighted/
+    // stratified/coverage/per-pack) actually computes something, not just
+    // returns 100% everywhere.
+    const rows: CaseResult[] = fixture.cases.map(
+      (c, i): CaseResult => ({
+        name: c.name,
+        kind: "positive",
+        status: i % 3 === 0 ? "miss" : "hit",
+        evidenceClass: c.evidenceClass,
+        expectedSource: c.expectedSource,
+        resolverSource: c.resolverSource,
+        occurrences: c.occurrences,
+        packs: c.packs,
+      })
+    );
+
+    const stats = computeRepresentativeStats(rows, fixture.excluded ?? []);
+
+    // Coverage is fixture-assembly-time truth, independent of the synthetic scoring.
+    assert.equal(stats.coverage.uniqueEligible, 142);
+    assert.equal(stats.coverage.uniqueTotal, 178);
+    assert.equal(stats.coverage.weightedEligible, 212);
+    assert.equal(stats.coverage.weightedTotal, 251);
+
+    assert.equal(stats.unique.n, 142);
+    assert.ok(stats.unique.top1Pct > stats.unique.top1Wilson.lower && stats.unique.top1Pct < stats.unique.top1Wilson.upper);
+
+    assert.equal(stats.humanAdjudicated.n, 38, "30 human_pin + 8 human_ruling");
+
+    assert.ok(stats.weighted.n >= stats.unique.n, "weighted denominator counts every occurrence, so it's >= the unique denominator");
+
+    assert.equal(Object.keys(stats.byPack).length, 4, "all four packs should appear in the rollup");
+
+    console.log("");
+    console.log("── representative fixture: dry statistics demo (synthetic scoring, NOT a real measurement) ──");
+    console.log(
+      `coverage: unique ${stats.coverage.uniqueEligible}/${stats.coverage.uniqueTotal} (${stats.coverage.uniqueCoveragePct.toFixed(1)}%) | ` +
+        `weighted ${stats.coverage.weightedEligible}/${stats.coverage.weightedTotal} (${stats.coverage.weightedCoveragePct.toFixed(1)}%)`
+    );
+    console.log(
+      `unique top-1:   ${stats.unique.top1Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${stats.unique.top1Wilson.lower.toFixed(1)}, ${stats.unique.top1Wilson.upper.toFixed(1)}]`
+    );
+    console.log(
+      `unique top-4:   ${stats.unique.top4Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${stats.unique.top4Wilson.lower.toFixed(1)}, ${stats.unique.top4Wilson.upper.toFixed(1)}]`
+    );
+    console.log(`weighted top-1: ${stats.weighted.top1Pct.toFixed(1)}% (pack-item-weighted, n=${stats.weighted.n}, descriptive — no CI)`);
+    console.log(`weighted top-4: ${stats.weighted.top4Pct.toFixed(1)}% (pack-item-weighted, n=${stats.weighted.n}, descriptive — no CI)`);
+    console.log(
+      `human-adjudicated top-1: ${stats.humanAdjudicated.top1Pct.toFixed(1)}% (n=${stats.humanAdjudicated.n}) 95% CI [${stats.humanAdjudicated.top1Wilson.lower.toFixed(1)}, ${stats.humanAdjudicated.top1Wilson.upper.toFixed(1)}]`
+    );
+    for (const packId of Object.keys(stats.byPack).sort()) {
+      const p = stats.byPack[packId];
+      console.log(`  ${packId}: weighted top-1 ${p.top1Pct.toFixed(1)}% (scored ${p.weightedHits}/${p.weightedScored} weighted, ${p.uniqueHits}/${p.uniqueScored} unique)`);
+    }
   });
 });
 

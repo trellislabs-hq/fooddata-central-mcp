@@ -42,21 +42,23 @@
  *
  * Major Sections:
  *   - CaseResult / AggregateReport types — CaseResult carries an optional
- *     EvalCaseMeta pass-through (evidenceClass/expectedSource/occurrences/
- *     packs) so representative-fixture rows keep their fixture metadata all
- *     the way into the results JSON; always undefined for the adversarial
- *     fixture's rows.
- *   - SCORED_STATUSES — which statuses count as "scored" (accuracy
- *     denominators EXCLUDE uncached/error cases — see computeAggregate())
+ *     EvalCaseMeta pass-through (evidenceClass/expectedSource/resolverSource/
+ *     occurrences/packs) so representative-fixture rows keep their fixture
+ *     metadata all the way into the results JSON; always undefined for the
+ *     adversarial fixture's rows.
+ *   - SCORED_STATUSES (exported) — which statuses count as "scored"
+ *     (accuracy denominators EXCLUDE uncached/error cases — see
+ *     computeAggregate() below AND eval/lib/statistics.ts, which reuses this
+ *     same set for its population-level numbers)
  *   - scoreCase() — scores one successfully-completed findFood() call
  *   - percentile() — nearest-rank percentile helper for latency stats
- *   - computeRollups() — per-pack / per-evidenceClass hit-rate breakdowns
- *     (spec S11 auditability manifest); a no-op ({} buckets) when rows carry
- *     no pack/evidenceClass metadata, so it's safe to always compute
  *   - computeAggregate() — rolls case rows + optional latencies into a
  *     report; every percentage is computed over SCORED cases only
  *     (uncached/error cases carry no accuracy signal and would otherwise
- *     silently distort the percentages on a thin/broken cache)
+ *     silently distort the percentages on a thin/broken cache). Per-pack/
+ *     per-evidenceClass rollups, Wilson intervals, occurrence weighting, and
+ *     coverage now live in eval/lib/statistics.ts (jump-1778 fix-pass) — this
+ *     module stays scoped to per-case scoring + the row-level matrix.
  *
  * Dependencies: ../../src/find-food.js (FindFoodResult type),
  *   ../../src/fdc-client.js (FdcFood type), ./fixture.js (EvalCase,
@@ -104,6 +106,7 @@ function metaOf(caseDef: EvalCase): EvalCaseMeta {
   return {
     evidenceClass: caseDef.evidenceClass,
     expectedSource: caseDef.expectedSource,
+    resolverSource: caseDef.resolverSource,
     occurrences: caseDef.occurrences,
     packs: caseDef.packs,
   };
@@ -177,7 +180,7 @@ export interface LatencyStats {
  * an accuracy denominator would silently understate accuracy on thin runs
  * and, worse, let a broken/near-empty cache masquerade as a real result.
  */
-const SCORED_STATUSES: ReadonlySet<CaseStatus> = new Set([
+export const SCORED_STATUSES: ReadonlySet<CaseStatus> = new Set([
   "hit",
   "near",
   "near_branded",
@@ -202,54 +205,15 @@ export interface NegativeMatrix {
   confident_wrong: number;
 }
 
-export interface RollupBucket {
-  /** Rows counted toward this pack/evidenceClass (scored + unscored). */
-  total: number;
-  /** Rows that completed scoring (excludes uncached/error). */
-  scored: number;
-  hit: number;
-  top1Pct: number;
-}
-
-export interface Rollups {
-  byEvidenceClass: Record<string, RollupBucket>;
-  byPack: Record<string, RollupBucket>;
-}
-
-/**
- * Per-pack and per-evidenceClass hit-rate breakdowns (spec S11 auditability
- * manifest: "coverage + accuracy by pack"; spec S2: stratified reporting by
- * evidence tier). Only POSITIVE rows carry evidenceClass/packs today (the
- * representative fixture has no negative cases) — negative rows are simply
- * never counted here. Rows with neither field (the adversarial fixture, in
- * full) produce empty {} buckets — always safe to call.
- */
-function computeRollups(rows: CaseResult[]): Rollups {
-  const byEvidenceClass: Record<string, RollupBucket> = {};
-  const byPack: Record<string, RollupBucket> = {};
-
-  const bump = (map: Record<string, RollupBucket>, key: string, row: CaseResult): void => {
-    const bucket = map[key] ?? (map[key] = { total: 0, scored: 0, hit: 0, top1Pct: 0 });
-    bucket.total++;
-    if (SCORED_STATUSES.has(row.status)) bucket.scored++;
-    if (row.status === "hit") bucket.hit++;
-  };
-
-  for (const row of rows) {
-    if (row.evidenceClass) bump(byEvidenceClass, row.evidenceClass, row);
-    if (row.packs) {
-      for (const packId of Object.keys(row.packs)) bump(byPack, packId, row);
-    }
-  }
-
-  for (const map of [byEvidenceClass, byPack]) {
-    for (const bucket of Object.values(map)) {
-      bucket.top1Pct = bucket.scored > 0 ? (bucket.hit / bucket.scored) * 100 : 0;
-    }
-  }
-
-  return { byEvidenceClass, byPack };
-}
+// NOTE (jump-1778 fix-pass): the per-pack/per-evidenceClass rollup that used
+// to live here was UNIQUE-COUNT-only and never saw excluded rows — both
+// named defects in the fix-pass review. It has been REMOVED and replaced by
+// eval/lib/statistics.ts's computePackRollups(), which is occurrence-
+// weighted and takes `excluded` as an explicit input. See that module for
+// the full population-level statistics layer (Wilson CI, occurrence
+// weighting, evidence-tier stratification, coverage, per-pack rollups) —
+// this module (scoring.ts) stays scoped to per-case scoring + the kind x
+// result matrix aggregation, which computeRepresentativeStats() builds on.
 
 export interface AggregateReport {
   totals: { positive: number; negative: number; total: number };
@@ -285,7 +249,6 @@ export interface AggregateReport {
     uncached: CaseResult[];
     errors: CaseResult[];
   };
-  rollups: Rollups;
   method: string;
 }
 
@@ -379,7 +342,6 @@ export function computeAggregate(rows: CaseResult[], latencies: number[] | "cach
       uncached: rows.filter((r) => r.status === "uncached"),
       errors: rows.filter((r) => r.status === "error"),
     },
-    rollups: computeRollups(rows),
     method: METHOD_NOTE,
   };
 }

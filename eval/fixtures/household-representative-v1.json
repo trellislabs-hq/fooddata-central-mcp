@@ -2,9 +2,9 @@
   "provenance": {
     "fixtureId": "household-representative-v1",
     "sourcePath": "recipe-app/data/recipe-packs/runs/<runId>/pack-{1..4}.json",
-    "sourceRepoCommit": "7e681cb",
+    "sourceRepoCommit": "7e681cbcd652c0d43fc2e3d681eb5d31ca0e98f5",
     "derivedAt": "2026-07-19T00:00:00.000Z",
-    "derivationRule": "Assembled by eval/scripts/assemble-representative-fixture.ts from the four-cart recipe-pack battery's aggregated shopping-list names (result.items[].product_name, occurrence-counted across all four packs including within-pack duplicates). Each unique name is resolved through a port of recipe-app's own scripts/lib/ingredient-name-index.js (buildNameIndex + resolveName, base.json only, exact match then -es/-s plural fallback) to a canonical dictionary entry; the entry's fdc_ref becomes the case's expected answer. Names that fail resolution, or resolve to an entry with no usable fdc_ref, are EXCLUDED (never scored) and recorded with a reason for honest coverage reporting. evidence_class is human_pin (an explicit fdc-pins.json ruling), human_ruling (an identity-rulings.json \"keep\" decision), or automated_screened (cascade-produced, screen-passed, no individual human adjudication) — see spec spec_findfood_representative_eval_v1_2026-07-19.md S2. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime; only this assembly script does, and only at assembly time.",
+    "derivationRule": "Assembled by eval/scripts/assemble-representative-fixture.ts from the four-cart recipe-pack battery's aggregated shopping-list names (result.items[].product_name, occurrence-counted across all four packs including within-pack duplicates). Each unique name is resolved through a port of recipe-app's own scripts/lib/ingredient-name-index.js (buildNameIndex + resolveName, base.json only, exact match then -es/-s plural fallback) to a canonical dictionary entry; the entry's fdc_ref becomes the case's expected answer. Names that fail resolution (unresolved), resolve to an entry with no fdc_ref at all (no_ref), or resolve to an entry whose fdc_ref.data_type isn't a preferred type (non_preferred_type — a bucket distinct from no_ref) are EXCLUDED (never scored) and recorded with a reason for honest coverage reporting. evidence_class is human_pin (an explicit fdc-pins.json ruling whose OWN fdc_id matches this row's fdc_ref — the pin-binding guard), human_ruling (an identity-rulings.json \"keep\" decision), or automated_screened (cascade-produced, screen-passed, no individual human adjudication) — see spec spec_findfood_representative_eval_v1_2026-07-19.md S2. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime; only this assembly script does, and only at assembly time.",
     "counts": {
       "positive": 142,
       "negative": 0,
@@ -18,16 +18,30 @@
       "pack-3": "dc2bb17ec06800e48864099f151414ab0a472168aa510fcbee3a9466e2de7c3a",
       "pack-4": "7de841e7aebacb00af18d8e5787d89cb6e17715428876816a2e7efe2bf786c9a"
     },
+    "packInputSha256": {
+      "pack-1": "1c468722ec81b0b5e25aa1ead4c1ded27e85f8fcb8c3afd9d571f2c823b66f2b",
+      "pack-2": "0a1530d8fbdb55b023b5bf1247304c4f5bf188455d89b51126c9b50a46823624",
+      "pack-3": "6c3870af63c2149b57135fb33ea6b41a6726f63d3a17072e7678eff6e55b16dc",
+      "pack-4": "bc080775bdb4ff9aa2a99cdfc683c9c64df45af7bdb24045bdbc303003683184"
+    },
     "packSnapshotSchemaVersion": 2,
     "queryProductionCommit": "0cc3bb795e1e50ebc4c82b969ca59fc7bf243e9d",
-    "dictionaryCommit": "7e681cb",
+    "dictionaryCommit": "7e681cbcd652c0d43fc2e3d681eb5d31ca0e98f5",
     "dictionaryBlobSha": "a3b2dca96f7d25e6507d871a9ca1ef3dfd2c3976",
-    "assemblyScriptSha256": "2e76915b247992ba13b930d3f89c63d66f8fe00f93393ecd49d1181e7a297070",
+    "assemblyScriptSha256": "956b595aef49feecadd95ea7ac4676937e99096b32aa21f9e51bf28a67c74a75",
+    "parameters": {
+      "commitArg": "7e681cb",
+      "commitResolved": "7e681cbcd652c0d43fc2e3d681eb5d31ca0e98f5",
+      "packDir": "/Users/thomasstewart/Projects/recipe-app/data/recipe-packs/runs/2026-07-17T03-12-09-887Z",
+      "recipeAppPath": "/Users/thomasstewart/Projects/recipe-app",
+      "date": "2026-07-19T00:00:00.000Z"
+    },
     "coverage": {
       "uniqueNames": 178,
       "uniqueEligible": 142,
       "uniqueUnresolved": 30,
       "uniqueNoRef": 6,
+      "uniqueNonPreferredType": 0,
       "weightedOccurrences": 251,
       "weightedEligible": 212
     },
@@ -49,6 +63,7 @@
       "reason": "Representative battery: canonical entry \"chinese cooking wine\" (product_name \"Chinese cooking wine\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -65,6 +80,7 @@
       "reason": "Representative battery: canonical entry \"dijon mustard\" (product_name \"Dijon mustard\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -81,6 +97,7 @@
       "reason": "Representative battery: canonical entry \"all-purpose flour\" (product_name \"all purpose flour\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-3": 1,
@@ -98,6 +115,7 @@
       "reason": "Representative battery: canonical entry \"almond butter\" (product_name \"almond butter\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -114,6 +132,7 @@
       "reason": "Representative battery: canonical entry \"almonds\" (product_name \"almonds\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -131,6 +150,7 @@
       "reason": "Representative battery: canonical entry \"apple cider vinegar\" (product_name \"apple cider vinegar\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -148,6 +168,7 @@
       "reason": "Representative battery: canonical entry \"baking powder\" (product_name \"baking powder\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -165,6 +186,7 @@
       "reason": "Representative battery: canonical entry \"baking soda\" (product_name \"baking soda\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -183,6 +205,7 @@
       "reason": "Representative battery: canonical entry \"banana\" (product_name \"banana\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -199,6 +222,7 @@
       "reason": "Representative battery: canonical entry \"basmati rice\" (product_name \"basmati rice\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -216,6 +240,7 @@
       "reason": "Representative battery: canonical entry \"bean sprouts\" (product_name \"bean sprouts\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -232,6 +257,7 @@
       "reason": "Representative battery: canonical entry \"beef broth\" (product_name \"beef broth\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -248,6 +274,7 @@
       "reason": "Representative battery: canonical entry \"beer\" (product_name \"beer\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -264,6 +291,7 @@
       "reason": "Representative battery: canonical entry \"black pepper\" (product_name \"black pepper\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -283,6 +311,7 @@
       "reason": "Representative battery: canonical entry \"blueberries\" (product_name \"blueberries\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -299,6 +328,7 @@
       "reason": "Representative battery: canonical entry \"boneless chuck roast\" (product_name \"boneless chuck roast\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -315,6 +345,7 @@
       "reason": "Representative battery: canonical entry \"bread\" (product_name \"bread\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -331,6 +362,7 @@
       "reason": "Representative battery: canonical entry \"breakfast sausage\" (product_name \"breakfast sausage\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -347,6 +379,7 @@
       "reason": "Representative battery: canonical entry \"brown lentils\" (product_name \"brown lentils\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -363,6 +396,7 @@
       "reason": "Representative battery: canonical entry \"brown rice\" (product_name \"brown rice\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -379,6 +413,7 @@
       "reason": "Representative battery: canonical entry \"brown sugar\" (product_name \"brown sugar\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -395,6 +430,7 @@
       "reason": "Representative battery: canonical entry \"butter\" (product_name \"unsalted butter\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -411,6 +447,7 @@
       "reason": "Representative battery: canonical entry \"buttermilk\" (product_name \"buttermilk\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -427,6 +464,7 @@
       "reason": "Representative battery: canonical entry \"canola oil\" (product_name \"canola oil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -443,6 +481,7 @@
       "reason": "Representative battery: canonical entry \"cardamom\" (product_name \"cardamom\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -460,6 +499,7 @@
       "reason": "Representative battery: canonical entry \"carrots\" (product_name \"carrots\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -478,6 +518,7 @@
       "reason": "Representative battery: canonical entry \"cashews\" (product_name \"cashews\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -494,6 +535,7 @@
       "reason": "Representative battery: canonical entry \"cayenne pepper\" (product_name \"cayenne pepper\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -510,6 +552,7 @@
       "reason": "Representative battery: canonical entry \"celery\" (product_name \"celery\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -526,6 +569,7 @@
       "reason": "Representative battery: canonical entry \"cherry tomatoes\" (product_name \"cherry tomatoes\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -542,6 +586,7 @@
       "reason": "Representative battery: canonical entry \"chicken bouillon\" (product_name \"chicken bouillons\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -558,6 +603,7 @@
       "reason": "Representative battery: canonical entry \"chicken breast\" (product_name \"chicken breast\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -575,6 +621,7 @@
       "reason": "Representative battery: canonical entry \"chicken breast\" (product_name \"chicken breast\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -591,6 +638,7 @@
       "reason": "Representative battery: canonical entry \"chicken broth\" (product_name \"chicken broth\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -607,6 +655,7 @@
       "reason": "Representative battery: canonical entry \"chickpeas\" (product_name \"chickpeas\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 2
@@ -623,6 +672,7 @@
       "reason": "Representative battery: canonical entry \"chili garlic sauce\" (product_name \"chili garlic sauce\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -639,6 +689,7 @@
       "reason": "Representative battery: canonical entry \"chili powder\" (product_name \"chili powder\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -656,6 +707,7 @@
       "reason": "Representative battery: canonical entry \"chocolate chips\" (product_name \"chocolate chips\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -672,6 +724,7 @@
       "reason": "Representative battery: canonical entry \"choy sum\" (product_name \"choy sum\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -688,6 +741,7 @@
       "reason": "Representative battery: canonical entry \"cilantro\" (product_name \"cilantro\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -705,6 +759,7 @@
       "reason": "Representative battery: canonical entry \"cinnamon\" (product_name \"cinnamon\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -722,6 +777,7 @@
       "reason": "Representative battery: canonical entry \"cloves\" (product_name \"whole cloves\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -738,6 +794,7 @@
       "reason": "Representative battery: canonical entry \"coconut milk\" (product_name \"coconut milk\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -754,6 +811,7 @@
       "reason": "Representative battery: canonical entry \"coconut oil\" (product_name \"coconut oil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -770,6 +828,7 @@
       "reason": "Representative battery: canonical entry \"coconut sugar\" (product_name \"coconut sugar\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -786,6 +845,7 @@
       "reason": "Representative battery: canonical entry \"cooked chicken breast\" (product_name \"cooked chicken breast\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -802,6 +862,7 @@
       "reason": "Representative battery: canonical entry \"coriander\" (product_name \"coriander\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -820,6 +881,7 @@
       "reason": "Representative battery: canonical entry \"cornstarch\" (product_name \"cornstarch\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -836,6 +898,7 @@
       "reason": "Representative battery: canonical entry \"cottage cheese\" (product_name \"cottage cheese\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -852,6 +915,7 @@
       "reason": "Representative battery: canonical entry \"cream\" (product_name \"cream\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -868,6 +932,7 @@
       "reason": "Representative battery: canonical entry \"cream cheese\" (product_name \"cream cheese\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -884,6 +949,7 @@
       "reason": "Representative battery: canonical entry \"crushed tomatoes\" (product_name \"crushed tomatoes\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -901,6 +967,7 @@
       "reason": "Representative battery: canonical entry \"cucumber\" (product_name \"cucumber\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -917,6 +984,7 @@
       "reason": "Representative battery: canonical entry \"curry powder\" (product_name \"curry powder\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -934,6 +1002,7 @@
       "reason": "Representative battery: canonical entry \"diced tomatoes\" (product_name \"diced tomatoes\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -950,6 +1019,7 @@
       "reason": "Representative battery: canonical entry \"dried basil\" (product_name \"dried basil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -966,6 +1036,7 @@
       "reason": "Representative battery: canonical entry \"dried dill\" (product_name \"dried dill\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -982,6 +1053,7 @@
       "reason": "Representative battery: canonical entry \"dried oregano\" (product_name \"dried oregano\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -999,6 +1071,7 @@
       "reason": "Representative battery: canonical entry \"dried parsley\" (product_name \"dried parsley\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1015,6 +1088,7 @@
       "reason": "Representative battery: canonical entry \"dried thyme\" (product_name \"dried thyme\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1031,6 +1105,7 @@
       "reason": "Representative battery: canonical entry \"eggs\" (product_name \"eggs\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -1050,6 +1125,7 @@
       "reason": "Representative battery: canonical entry \"elbow pasta\" (product_name \"elbow pasta\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1066,6 +1142,7 @@
       "reason": "Representative battery: canonical entry \"enoki mushroom\" (product_name \"enoki mushrooms\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1082,6 +1159,7 @@
       "reason": "Representative battery: canonical entry \"extra firm tofu\" (product_name \"extra firm tofu\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1098,6 +1176,7 @@
       "reason": "Representative battery: canonical entry \"feta cheese\" (product_name \"feta cheese\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1114,6 +1193,7 @@
       "reason": "Representative battery: canonical entry \"fire roasted diced tomatoes\" (product_name \"fire roasted diced tomatoes\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1131,6 +1211,7 @@
       "reason": "Representative battery: canonical entry \"flour\" (product_name \"flour\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -1148,6 +1229,7 @@
       "reason": "Representative battery: canonical entry \"garlic\" (product_name \"garlic\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -1166,6 +1248,7 @@
       "reason": "Representative battery: canonical entry \"garlic powder\" (product_name \"garlic powder\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -1184,6 +1267,7 @@
       "reason": "Representative battery: canonical entry \"ghee\" (product_name \"ghee\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1200,6 +1284,7 @@
       "reason": "Representative battery: canonical entry \"ginger\" (product_name \"ginger\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1216,6 +1301,7 @@
       "reason": "Representative battery: canonical entry \"grated parmesan cheese\" (product_name \"Parmesan cheese\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1232,6 +1318,7 @@
       "reason": "Representative battery: canonical entry \"green bell pepper\" (product_name \"green bell pepper\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1248,6 +1335,7 @@
       "reason": "Representative battery: canonical entry \"green chilies\" (product_name \"green chilies\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1264,6 +1352,7 @@
       "reason": "Representative battery: canonical entry \"green onion\" (product_name \"green onion\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1280,6 +1369,7 @@
       "reason": "Representative battery: canonical entry \"green onion\" (product_name \"green onion\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1296,6 +1386,7 @@
       "reason": "Representative battery: canonical entry \"ground beef\" (product_name \"ground beef\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1313,6 +1404,7 @@
       "reason": "Representative battery: canonical entry \"cumin\" (product_name \"ground cumin\"), match_method \"close\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -1331,6 +1423,7 @@
       "reason": "Representative battery: canonical entry \"heavy cream\" (product_name \"heavy cream\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1347,6 +1440,7 @@
       "reason": "Representative battery: canonical entry \"honey\" (product_name \"honey\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1363,6 +1457,7 @@
       "reason": "Representative battery: canonical entry \"jasmine rice\" (product_name \"jasmine rice\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1379,6 +1474,7 @@
       "reason": "Representative battery: canonical entry \"kalamata olives\" (product_name \"kalamata olives\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1395,6 +1491,7 @@
       "reason": "Representative battery: canonical entry \"kidney bean\" (product_name \"kidney beans\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1411,6 +1508,7 @@
       "reason": "Representative battery: canonical entry \"lasagna noodles\" (product_name \"lasagna noodles\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1427,6 +1525,7 @@
       "reason": "Representative battery: canonical entry \"lemon\" (product_name \"lemon\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1444,6 +1543,7 @@
       "reason": "Representative battery: canonical entry \"lemon juice\" (product_name \"lemon juice\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -1463,6 +1563,7 @@
       "reason": "Representative battery: canonical entry \"lemon\" (product_name \"lemon\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1479,6 +1580,7 @@
       "reason": "Representative battery: canonical entry \"light brown sugar\" (product_name \"light brown sugar\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1495,6 +1597,7 @@
       "reason": "Representative battery: canonical entry \"maple syrup\" (product_name \"maple syrup\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1511,6 +1614,7 @@
       "reason": "Representative battery: canonical entry \"mayonnaise\" (product_name \"mayonnaise\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1527,6 +1631,7 @@
       "reason": "Representative battery: canonical entry \"milk\" (product_name \"milk\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-3": 1,
@@ -1544,6 +1649,7 @@
       "reason": "Representative battery: canonical entry \"miso paste\" (product_name \"miso paste\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1560,6 +1666,7 @@
       "reason": "Representative battery: canonical entry \"mozzarella cheese\" (product_name \"mozzarella cheese\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1576,6 +1683,7 @@
       "reason": "Representative battery: canonical entry \"mushroom\" (product_name \"mushrooms\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1593,6 +1701,7 @@
       "reason": "Representative battery: canonical entry \"nonfat greek yogurt\" (product_name \"greek yogurt\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1609,6 +1718,7 @@
       "reason": "Representative battery: canonical entry \"nonfat milk\" (product_name \"nonfat milk\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1625,6 +1735,7 @@
       "reason": "Representative battery: canonical entry \"nutmeg\" (product_name \"nutmeg\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1641,6 +1752,7 @@
       "reason": "Representative battery: canonical entry \"oil\" (product_name \"oil\"), match_method \"exact\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1657,6 +1769,7 @@
       "reason": "Representative battery: canonical entry \"olive oil\" (product_name \"olive oil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1674,6 +1787,7 @@
       "reason": "Representative battery: canonical entry \"onion\" (product_name \"onion\"), match_method \"exact\".",
       "evidenceClass": "human_ruling",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -1693,6 +1807,7 @@
       "reason": "Representative battery: canonical entry \"onion powder\" (product_name \"onion powder\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1709,6 +1824,7 @@
       "reason": "Representative battery: canonical entry \"oyster sauce\" (product_name \"oyster sauce\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1725,6 +1841,7 @@
       "reason": "Representative battery: canonical entry \"paprika\" (product_name \"paprika\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1741,6 +1858,7 @@
       "reason": "Representative battery: canonical entry \"parsley\" (product_name \"parsley\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -1758,6 +1876,7 @@
       "reason": "Representative battery: canonical entry \"peanut butter\" (product_name \"peanut butter\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1774,6 +1893,7 @@
       "reason": "Representative battery: canonical entry \"peas\" (product_name \"peas\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1790,6 +1910,7 @@
       "reason": "Representative battery: canonical entry \"poblano pepper\" (product_name \"poblano pepper\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1806,6 +1927,7 @@
       "reason": "Representative battery: canonical entry \"potatoes\" (product_name \"potatoes\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -1822,6 +1944,7 @@
       "reason": "Representative battery: canonical entry \"powdered sugar\" (product_name \"powdered sugar\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-3": 1,
@@ -1839,6 +1962,7 @@
       "reason": "Representative battery: canonical entry \"red bell pepper\" (product_name \"red bell peppers\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1855,6 +1979,7 @@
       "reason": "Representative battery: canonical entry \"red lentils\" (product_name \"red lentils\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1871,6 +1996,7 @@
       "reason": "Representative battery: canonical entry \"red onion\" (product_name \"red onions\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1887,6 +2013,7 @@
       "reason": "Representative battery: canonical entry \"red pepper flakes\" (product_name \"red pepper flakes\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -1904,6 +2031,7 @@
       "reason": "Representative battery: canonical entry \"red wine vinegar\" (product_name \"red wine vinegar\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1920,6 +2048,7 @@
       "reason": "Representative battery: canonical entry \"white rice\" (product_name \"rice\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -1936,6 +2065,7 @@
       "reason": "Representative battery: canonical entry \"rolled oats\" (product_name \"rolled oats\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -1952,6 +2082,7 @@
       "reason": "Representative battery: canonical entry \"salt\" (product_name \"salt\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -1971,6 +2102,7 @@
       "reason": "Representative battery: canonical entry \"serrano peppers\" (product_name \"serrano peppers\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-4": 1
@@ -1987,6 +2119,7 @@
       "reason": "Representative battery: canonical entry \"sesame oil\" (product_name \"sesame oil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -2004,6 +2137,7 @@
       "reason": "Representative battery: canonical entry \"sesame seeds\" (product_name \"sesame seeds\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -2020,6 +2154,7 @@
       "reason": "Representative battery: canonical entry \"smoked paprika\" (product_name \"smoked paprika\"), match_method \"close\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "close",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -2038,6 +2173,7 @@
       "reason": "Representative battery: canonical entry \"soy sauce\" (product_name \"soy sauce\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -2055,6 +2191,7 @@
       "reason": "Representative battery: canonical entry \"spinach\" (product_name \"spinach\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2071,6 +2208,7 @@
       "reason": "Representative battery: canonical entry \"sugar\" (product_name \"sugar\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-3": 1,
@@ -2088,6 +2226,7 @@
       "reason": "Representative battery: canonical entry \"tahini\" (product_name \"tahini\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2104,6 +2243,7 @@
       "reason": "Representative battery: canonical entry \"thyme\" (product_name \"thyme\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -2121,6 +2261,7 @@
       "reason": "Representative battery: canonical entry \"tomato paste\" (product_name \"tomato paste\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 3,
       "packs": {
         "pack-1": 1,
@@ -2139,6 +2280,7 @@
       "reason": "Representative battery: canonical entry \"tomatoes\" (product_name \"tomatoes\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2155,6 +2297,7 @@
       "reason": "Representative battery: canonical entry \"turbinado sugar\" (product_name \"turbinado sugar\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -2171,6 +2314,7 @@
       "reason": "Representative battery: canonical entry \"turmeric\" (product_name \"turmeric\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-2": 1,
@@ -2188,6 +2332,7 @@
       "reason": "Representative battery: canonical entry \"unsalted butter\" (product_name \"unsalted butter\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -2207,6 +2352,7 @@
       "reason": "Representative battery: canonical entry \"unsweetened applesauce\" (product_name \"unsweetened applesauce\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -2223,6 +2369,7 @@
       "reason": "Representative battery: canonical entry \"vanilla extract\" (product_name \"vanilla extract\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 3,
       "packs": {
         "pack-2": 1,
@@ -2241,6 +2388,7 @@
       "reason": "Representative battery: canonical entry \"vegan butter\" (product_name \"vegan butter\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-3": 1
@@ -2257,6 +2405,7 @@
       "reason": "Representative battery: canonical entry \"vegetable broth\" (product_name \"vegetable broth\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -2273,6 +2422,7 @@
       "reason": "Representative battery: canonical entry \"vegetable oil\" (product_name \"vegetable oil\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 4,
       "packs": {
         "pack-1": 1,
@@ -2291,6 +2441,7 @@
       "reason": "Representative battery: canonical entry \"white onion\" (product_name \"white onion\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2307,6 +2458,7 @@
       "reason": "Representative battery: canonical entry \"white pepper\" (product_name \"white pepper\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2323,6 +2475,7 @@
       "reason": "Representative battery: canonical entry \"whole milk\" (product_name \"whole milk\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-2": 1
@@ -2339,6 +2492,7 @@
       "reason": "Representative battery: canonical entry \"whole tomatoes\" (product_name \"whole tomatoes\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 1,
       "packs": {
         "pack-1": 1
@@ -2355,6 +2509,7 @@
       "reason": "Representative battery: canonical entry \"yellow onion\" (product_name \"yellow onion\"), match_method \"exact\".",
       "evidenceClass": "automated_screened",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "exact",
       "occurrences": 2,
       "packs": {
         "pack-1": 1,
@@ -2372,6 +2527,7 @@
       "reason": "Representative battery: canonical entry \"zucchini\" (product_name \"zucchini\"), match_method \"pinned\".",
       "evidenceClass": "human_pin",
       "expectedSource": "dictionary-ratified",
+      "resolverSource": "pinned",
       "occurrences": 1,
       "packs": {
         "pack-3": 1

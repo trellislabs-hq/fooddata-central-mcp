@@ -28,26 +28,37 @@
  *   - FIXTURE_REGISTRY / resolveFixtureBinding() — the fixture <-> cache
  *     path binding --fixture selects between
  *   - runEval() — the testable core: load+validate fixture, dispatch to
- *     runLive()/runReplay(), attach fixture.excluded, return rows +
- *     aggregate + exit code. Pure w.r.t. process.exit/console — never calls
+ *     runLive()/runReplay(), attach fixture.excluded AND the
+ *     eval/lib/statistics.js population-level stats (Wilson CI, occurrence
+ *     weighting, human-adjudicated stratum, coverage, per-pack rollups) —
+ *     ALWAYS computed (degrades gracefully to unique-only/empty-stratum
+ *     numbers on the adversarial fixture, which carries no occurrence/pack/
+ *     evidenceClass data). Pure w.r.t. process.exit/console — never calls
  *     either.
- *   - runLive() / runReplay() — the two searchFn-wiring + scoring loops
+ *   - runLive() / runReplay() — the two searchFn-wiring + scoring loops.
+ *     runLive() records `recordedAt` (when the live recording actually
+ *     happened); runReplay() never sets it — a replay didn't record anything
+ *     (spec S11 fix-pass finding: recordingDate must never be misrepresented
+ *     as the fixture's assembly date on a run that made zero network calls).
  *   - strictExitCode() — shared published-mode exit-code rule (spec S8: ANY
  *     uncached/errored row fails, no threshold)
- *   - buildManifest() / sha256File() / gitHeadSha() — CLI-only auditability
- *     manifest assembly (spec S9/S11): fixture/cache/code hashes, the
- *     dictionary blob hash ECHOED from the fixture's own provenance (never
- *     recomputed here), recording date, search-call count, latency-
- *     denominator policy, every exclusion + its reason, pack/evidenceClass
- *     rollups. Never throws — a manifest field that can't be computed comes
+ *   - buildManifest() / sha256File() / gitHeadInfo() — CLI-only auditability
+ *     manifest assembly (spec S9/S11): fixture/cache/code hashes (code hash
+ *     now also reports worktree dirty/clean), the dictionary blob hash
+ *     ECHOED from the fixture's own provenance (never recomputed here),
+ *     recording date + search-call count (both "pending-recording" on a
+ *     replay, never a fabricated live-looking value), latency-denominator
+ *     policy, every exclusion + its reason, the full representative-stats
+ *     block. Never throws — a manifest field that can't be computed comes
  *     back undefined rather than failing the run.
  *   - main() — CLI-only glue: argv parsing, results-file write, report
  *     printing, process.exit. Guarded so importing this module (tests) never
  *     triggers it.
  *
  * Dependencies: ../src/find-food.js, ../src/fdc-client.js, ./lib/fixture.js,
- *   ./lib/scoring.js, ./lib/cache.js, ./lib/search-fn.js, node:child_process
- *   (git HEAD, CLI-glue only), node:crypto (manifest hashing, CLI-glue only)
+ *   ./lib/scoring.js, ./lib/cache.js, ./lib/search-fn.js, ./lib/statistics.js,
+ *   node:child_process (git HEAD/dirty check, CLI-glue only), node:crypto
+ *   (manifest hashing, CLI-glue only)
  * State: Reads the bound fixture file (read-only) and the bound cache file
  *   (read in replay mode, read+fill-missing-only-write in live mode). Writes
  *   eval/results/<runId>.json (gitignored) only from main(), never from
@@ -77,6 +88,7 @@ import {
 import { DEFAULT_FIXTURE_PATH, loadFixture, validateFixtureSchema, type EvalCase, type EvalFixture, type ExcludedEvalCase } from "./lib/fixture.js";
 import { computeAggregate, scoreCase, type AggregateReport, type CaseResult } from "./lib/scoring.js";
 import { CacheMissError, makeRecordingSearchFn, makeReplaySearchFn } from "./lib/search-fn.js";
+import { computeRepresentativeStats, type RepresentativeStats } from "./lib/statistics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_RESULTS_DIR = path.join(__dirname, "results");
@@ -140,20 +152,30 @@ export interface RunOutcome {
   cacheSizeStatus?: CacheSizeStatus;
   /** Names with no scoreable reference identity (fixture.excluded, pass-through) — [] when the fixture has none. */
   excluded: ExcludedEvalCase[];
-  /** Live mode only: count of ACTUAL network searchFoods() calls made (fill-missing-only skips never increment this). */
+  /** Live mode only: count of ACTUAL network searchFoods() calls made (fill-missing-only skips never increment this). undefined on a replay — never fabricated as 0. */
   searchCallCount?: number;
+  /** Live mode only: ISO timestamp captured at the START of the live run — when a real recording actually happened. undefined on a replay (nothing was recorded this run). */
+  recordedAt?: string;
+  /** Population-level statistics (Wilson CI, occurrence weighting, human-adjudicated stratum, coverage, per-pack rollups) — see eval/lib/statistics.ts. Always computed; degrades gracefully (weighted==unique, humanAdjudicated.n===0) on fixtures with no occurrence/pack/evidenceClass metadata. */
+  representativeStats: RepresentativeStats;
 }
 
-/** Internal shape returned by runLive/runReplay before runEval attaches `excluded`. */
-type RunOutcomeCore = Omit<RunOutcome, "excluded">;
+/** Internal shape returned by runLive/runReplay before runEval attaches `excluded`/`representativeStats`. */
+type RunOutcomeCore = Omit<RunOutcome, "excluded" | "representativeStats">;
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
 /** Copies representative-fixture metadata off a case def for the uncached/error CaseResult shapes constructed outside scoreCase(). */
-function metaFrom(caseDef: EvalCase): Pick<CaseResult, "evidenceClass" | "expectedSource" | "occurrences" | "packs"> {
-  return { evidenceClass: caseDef.evidenceClass, expectedSource: caseDef.expectedSource, occurrences: caseDef.occurrences, packs: caseDef.packs };
+function metaFrom(caseDef: EvalCase): Pick<CaseResult, "evidenceClass" | "expectedSource" | "resolverSource" | "occurrences" | "packs"> {
+  return {
+    evidenceClass: caseDef.evidenceClass,
+    expectedSource: caseDef.expectedSource,
+    resolverSource: caseDef.resolverSource,
+    occurrences: caseDef.occurrences,
+    packs: caseDef.packs,
+  };
 }
 
 /** Published-mode exit rule (spec S8): zero tolerance — ANY uncached or errored row fails the run, no threshold. */
@@ -164,6 +186,11 @@ function strictExitCode(rows: CaseResult[]): number {
 async function runLive(cases: EvalCase[], cachePath: string, strict: boolean): Promise<RunOutcomeCore> {
   const apiKey = process.env.FDC_API_KEY;
   if (!apiKey) throw new MissingApiKeyError();
+
+  // Captured BEFORE any call — this IS "when the recording happened" for
+  // the manifest's recordingDate (spec S11 fix-pass: never the fixture's
+  // assembly derivedAt, which describes a completely different event).
+  const recordedAt = new Date().toISOString();
 
   const client = new FdcClient(apiKey);
   const real = client.searchFoods.bind(client);
@@ -217,7 +244,7 @@ async function runLive(cases: EvalCase[], cachePath: string, strict: boolean): P
   const errorRate = rows.length > 0 ? aggregate.counts.error / rows.length : 0;
   const exitCode = cacheSizeStatus.exceeded ? 1 : strict ? strictExitCode(rows) : errorRate > 0.1 ? 1 : 0;
 
-  return { rows, aggregate, exitCode, cacheSizeStatus, searchCallCount };
+  return { rows, aggregate, exitCode, cacheSizeStatus, searchCallCount, recordedAt };
 }
 
 async function runReplay(cases: EvalCase[], cachePath: string, strict: boolean): Promise<RunOutcomeCore> {
@@ -248,14 +275,18 @@ async function runReplay(cases: EvalCase[], cachePath: string, strict: boolean):
   const coverage = rows.length > 0 ? aggregate.scored.total / rows.length : 0;
   const exitCode = strict ? strictExitCode(rows) : coverage < 0.9 ? 1 : 0;
 
+  // No recordedAt/searchCallCount: a replay makes ZERO network calls, so
+  // neither field is set here — runEval/buildManifest must never coerce
+  // their absence into a misleadingly "real" value (spec S11 fix-pass).
   return { rows, aggregate, exitCode };
 }
 
 /**
  * Core eval logic: load+validate the fixture, sort cases by name (byte-
- * stable output ordering), dispatch to live/replay, attach fixture.excluded.
- * Never touches process.exit or console — main() owns CLI/process concerns
- * so this stays directly unit-testable against temp fixture/cache paths.
+ * stable output ordering), dispatch to live/replay, attach fixture.excluded
+ * and the population-level representativeStats. Never touches process.exit
+ * or console — main() owns CLI/process concerns so this stays directly
+ * unit-testable against temp fixture/cache paths.
  */
 export async function runEval(options: RunOptions): Promise<RunOutcome> {
   const fixturePath = options.fixturePath ?? DEFAULT_FIXTURE_PATH;
@@ -267,7 +298,8 @@ export async function runEval(options: RunOptions): Promise<RunOutcome> {
   const cases = [...fixture.cases].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
   const core = options.live ? await runLive(cases, cachePath, strict) : await runReplay(cases, cachePath, strict);
-  return { ...core, excluded: fixture.excluded ?? [] };
+  const excluded = fixture.excluded ?? [];
+  return { ...core, excluded, representativeStats: computeRepresentativeStats(core.rows, excluded) };
 }
 
 // ─── CLI-only glue ─────────────────────────────────────────────────────────
@@ -296,6 +328,14 @@ const LATENCY_DENOMINATOR_POLICY =
   "search latency, and including it would skew percentiles for reasons unrelated to find_food's " +
   "actual performance. Replay mode never reports latency (no network calls are made).";
 
+const RESOLVER_SOURCE_NOTE =
+  "Per-row resolver source is rows[].resolverSource — the dictionary entry's OWN fdc_ref.match_method " +
+  "(exact/close/pinned/etc — how THAT identity was matched during recipe-app's enrichment cascade). " +
+  "rows[].expectedSource is a DIFFERENT, constant field (which corpus the expected answer was drawn " +
+  "from, e.g. \"dictionary-ratified\") — do not conflate the two.";
+
+const PENDING_RECORDING = "pending-recording";
+
 function sha256File(filePath: string): string | undefined {
   try {
     return createHash("sha256").update(readFileSync(filePath)).digest("hex");
@@ -304,34 +344,48 @@ function sha256File(filePath: string): string | undefined {
   }
 }
 
-function gitHeadSha(): string | undefined {
+/** Repo root's git HEAD sha + whether the worktree has uncommitted changes. Never throws — degrades to {} if git is unavailable. */
+function gitHeadInfo(): { sha?: string; dirty?: boolean } {
+  const cwd = path.join(__dirname, "..");
   try {
-    return execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.join(__dirname, ".."), encoding: "utf-8" }).trim();
+    const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf-8" }).trim();
+    let dirty: boolean | undefined;
+    try {
+      const status = execFileSync("git", ["status", "--porcelain"], { cwd, encoding: "utf-8" });
+      dirty = status.trim().length > 0;
+    } catch {
+      dirty = undefined;
+    }
+    return { sha, dirty };
   } catch {
-    return undefined;
+    return {};
   }
 }
 
 /**
  * Auditability manifest (spec S11): per-run hashes for true re-derivability,
- * the exclusion list with reasons, and rollups already computed by
- * computeAggregate(). The dictionary blob hash is ECHOED from the fixture's
- * OWN provenance block (recorded once, at assembly time) — never recomputed
- * here, since this runner has no reason to talk to the recipe-app repo.
- * Never throws: every field degrades to undefined rather than failing the
- * CLI run over a best-effort audit field.
+ * the exclusion list with reasons, and the full representative-stats block.
+ * The dictionary blob hash is ECHOED from the fixture's OWN provenance block
+ * (recorded once, at assembly time) — never recomputed here, since this
+ * runner has no reason to talk to the recipe-app repo. recordingDate and
+ * searchCallCount are ONLY ever real values on a live run — a replay (zero
+ * network calls) reports "pending-recording" for both, never a value that
+ * could be mistaken for an actual recording. Never throws: every field
+ * degrades to undefined rather than failing the CLI run over a best-effort
+ * audit field.
  */
 function buildManifest(fixturePath: string, cachePath: string, fixture: EvalFixture, outcome: RunOutcome) {
   return {
     fixtureSha256: sha256File(fixturePath),
     cacheSha256: sha256File(cachePath),
-    codeGitHead: gitHeadSha(),
+    codeGitHead: gitHeadInfo(),
     dictionaryBlobSha: fixture.provenance.dictionaryBlobSha,
-    recordingDate: fixture.provenance.derivedAt,
-    searchCallCount: outcome.searchCallCount ?? 0,
+    resolverSourceNote: RESOLVER_SOURCE_NOTE,
+    recordingDate: outcome.recordedAt ?? PENDING_RECORDING,
+    searchCallCount: outcome.searchCallCount ?? PENDING_RECORDING,
     latencyDenominatorPolicy: LATENCY_DENOMINATOR_POLICY,
     exclusions: outcome.excluded,
-    rollups: outcome.aggregate.rollups,
+    representativeStats: outcome.representativeStats,
   };
 }
 
@@ -345,6 +399,7 @@ function writeResultsFile(runId: string, live: boolean, fixtureKey: string, bind
     mode: live ? "live" : "replay",
     generatedAt: new Date().toISOString(),
     aggregate: outcome.aggregate,
+    representativeStats: outcome.representativeStats,
     rows: outcome.rows,
     excluded: outcome.excluded,
     manifest: buildManifest(binding.fixturePath, binding.cachePath, fixture, outcome),
@@ -357,8 +412,12 @@ function pct(n: number): string {
   return `${n.toFixed(1)}%`;
 }
 
+function ci(interval: { lower: number; upper: number }): string {
+  return `[${interval.lower.toFixed(1)}, ${interval.upper.toFixed(1)}]`;
+}
+
 function printReport(runId: string, live: boolean, fixtureKey: string, outcome: RunOutcome): void {
-  const { aggregate, cacheSizeStatus, excluded } = outcome;
+  const { aggregate, cacheSizeStatus, excluded, representativeStats: stats } = outcome;
   const lines: string[] = [];
   lines.push(`find_food eval — run ${runId} (fixture: ${fixtureKey}, ${live ? "live" : "cached replay"})`);
   lines.push(`Cases: ${aggregate.totals.total} (${aggregate.totals.positive} positive, ${aggregate.totals.negative} negative)`);
@@ -372,6 +431,14 @@ function printReport(runId: string, live: boolean, fixtureKey: string, outcome: 
       `negative: ${aggregate.unscored.negative.uncached} uncached/${aggregate.unscored.negative.error} error)`
   );
   lines.push("");
+
+  // ── explicit coverage: eligible/total, unique AND weighted (spec S4) ──
+  lines.push(
+    `coverage: unique ${stats.coverage.uniqueEligible}/${stats.coverage.uniqueTotal} (${pct(stats.coverage.uniqueCoveragePct)}) | ` +
+      `weighted ${stats.coverage.weightedEligible}/${stats.coverage.weightedTotal} (${pct(stats.coverage.weightedCoveragePct)})`
+  );
+  lines.push("");
+
   lines.push(`(percentages below are over SCORED cases only — uncached/errored cases are excluded from every denominator)`);
 
   const pm = aggregate.matrix.positive;
@@ -379,10 +446,43 @@ function printReport(runId: string, live: boolean, fixtureKey: string, outcome: 
     `positive matrix: hit=${pm.hit} near=${pm.near} near_branded=${pm.near_branded} miss=${pm.miss} ` +
       `labeled_branded_fallback=${pm.labeled_branded_fallback} refusal=${pm.refusal}`
   );
-  lines.push(`  top-1:              ${pct(aggregate.top1Pct)}`);
+  lines.push(`  top-1 (row-level):  ${pct(aggregate.top1Pct)}`);
   lines.push(`  top-4 (exposed):    ${pct(aggregate.top4Pct)}`);
   lines.push(`  false-refusal (on verified answers): ${pct(aggregate.positiveRefusalPct)}`);
   lines.push(`  labeled_branded_fallback (on verified answers): ${pct(aggregate.positiveLabeledBrandedFallbackPct)}`);
+  lines.push("");
+
+  // ── statistics layer (spec S4/S8): unique-name Wilson-CI'd, THEN weighted-descriptive, THEN human-adjudicated stratum ──
+  lines.push(`unique-name top-1:   ${pct(stats.unique.top1Pct)} (n=${stats.unique.n}) 95% CI ${ci(stats.unique.top1Wilson)}`);
+  lines.push(`unique-name top-4:   ${pct(stats.unique.top4Pct)} (n=${stats.unique.n}) 95% CI ${ci(stats.unique.top4Wilson)}`);
+  lines.push(`  ${stats.model}`);
+  lines.push(
+    `pack-item-weighted top-1: ${pct(stats.weighted.top1Pct)} (n=${stats.weighted.n}, DESCRIPTIVE — no CI, repeated occurrences are perfectly correlated)`
+  );
+  lines.push(`pack-item-weighted top-4: ${pct(stats.weighted.top4Pct)} (n=${stats.weighted.n}, descriptive)`);
+  if (stats.humanAdjudicated.n > 0) {
+    lines.push(
+      `human-adjudicated subset top-1: ${pct(stats.humanAdjudicated.top1Pct)} (n=${stats.humanAdjudicated.n}) 95% CI ${ci(stats.humanAdjudicated.top1Wilson)}`
+    );
+    lines.push(
+      `human-adjudicated subset top-4: ${pct(stats.humanAdjudicated.top4Pct)} (n=${stats.humanAdjudicated.n}) 95% CI ${ci(stats.humanAdjudicated.top4Wilson)}`
+    );
+  } else {
+    lines.push(`human-adjudicated subset: n/a (no scored rows carry evidenceClass human_pin/human_ruling)`);
+  }
+  const packIds = Object.keys(stats.byPack).sort();
+  if (packIds.length > 0) {
+    lines.push("");
+    lines.push(`per-pack (occurrence-weighted; excluded rows counted into each pack's total):`);
+    for (const packId of packIds) {
+      const p = stats.byPack[packId];
+      lines.push(
+        `  ${packId}: top-1 ${pct(p.top1Pct)} — weighted ${p.weightedHits}/${p.weightedScored} scored / ${p.weightedEligible} eligible / ${p.weightedTotal} total; ` +
+          `unique ${p.uniqueHits}/${p.uniqueScored} scored / ${p.uniqueEligible} eligible / ${p.uniqueTotal} total`
+      );
+    }
+  }
+  lines.push("");
 
   const nm = aggregate.matrix.negative;
   lines.push(`negative matrix: refusal=${nm.refusal} labeled_branded_fallback=${nm.labeled_branded_fallback} confident_wrong=${nm.confident_wrong}`);

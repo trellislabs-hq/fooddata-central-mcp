@@ -64,8 +64,10 @@ export type EvidenceClass = "human_pin" | "human_ruling" | "automated_screened";
 export interface EvalCaseMeta {
   /** Stratification tier for this row's reference identity — see EvidenceClass. */
   evidenceClass?: EvidenceClass;
-  /** Where the expected answer itself came from (spec S6/S11 "resolver source"); representative-fixture cases carry the literal string "dictionary-ratified". */
+  /** The constant answer-PROVENANCE tag (which corpus the expected answer was drawn from) — representative-fixture cases carry the literal string "dictionary-ratified". This is NOT the per-row resolver detail (see resolverSource below); a Codex jump-1778 fix-pass finding caught this field being mislabeled as spec S11's "resolver source" — it isn't, it's constant across every row and carries no per-row audit signal. */
   expectedSource?: string;
+  /** Spec S11's actual "resolver source" per row: the dictionary entry's OWN fdc_ref.match_method (e.g. "exact" | "close" | "pinned") — how THAT identity was matched during recipe-app's dictionary-to-FDC enrichment, independent of evidenceClass (which is about human adjudication tier, not match mechanics). */
+  resolverSource?: string;
   /** Total occurrences of this name across the pack battery (within-pack duplicates included — see the fixture's own provenance for the exact rule). */
   occurrences?: number;
   /** Per-pack occurrence counts, e.g. {"pack-1": 2, "pack-3": 1}. Packs the name never appears in are simply absent (never zero-valued). */
@@ -121,24 +123,38 @@ export interface EvalFixtureProvenance {
   // by eval/scripts/assemble-representative-fixture.ts; NEVER hand-edited.
   /** The recipe-app recipe-pack run id this fixture was assembled from. */
   packRunId?: string;
-  /** sha256 of each of the four pack-N.json snapshot files, keyed by pack id. */
+  /** sha256 of each of the four pack-N.json RUN SNAPSHOT files (runs/<runId>/pack-N.json — the pipeline's OUTPUT), keyed by pack id. */
   packSnapshotSha256?: Record<string, string>;
+  /** sha256 of each of the four pack-N.json INPUT DEFINITION files (data/recipe-packs/pack-N.json — the recipe lists fed INTO the pipeline to produce the run snapshot), keyed by pack id. Distinct file set from packSnapshotSha256 — a jump-1778 fix-pass finding caught these being missing from provenance entirely. */
+  packInputSha256?: Record<string, string>;
   /** Snapshot schemaVersion shared by all four pack files (assembly rejects a mismatch). */
   packSnapshotSchemaVersion?: number;
-  /** recipe-app commit that PRODUCED the pack run (query-production) — differs from dictionaryCommit (label-production). */
+  /** recipe-app commit that PRODUCED the pack run (query-production) — differs from dictionaryCommit (label-production). Always the FULL 40-hex SHA. */
   queryProductionCommit?: string;
-  /** recipe-app commit the dictionary/pins/rulings were read from (label-production). */
+  /** recipe-app commit the dictionary/pins/rulings were read from (label-production). Always the FULL 40-hex SHA (resolved via `git rev-parse` — a jump-1778 fix-pass finding caught the short arg form "7e681cb" being stored here directly, which isn't stable/re-derivable on its own if the short form ever became ambiguous). */
   dictionaryCommit?: string;
   /** git BLOB hash (not a content sha256) of data/ingredient-dictionary.base.json at dictionaryCommit — assembly reads via `git show`, never the working tree. */
   dictionaryBlobSha?: string;
   /** sha256 of this assembly script's own source at the time it produced this fixture. */
   assemblyScriptSha256?: string;
-  /** Coverage buckets over the 178-name universe: unresolved (names-index miss) + noRef (resolved, but the dictionary entry carries no fdc_ref) + eligible (scoreable, in `cases`). */
+  /** The exact CLI parameters the assembly run was invoked with — the other half of true re-derivability alongside the hashes above. */
+  parameters?: {
+    /** The --commit argument AS PASSED (may be a short ref like "7e681cb"). */
+    commitArg: string;
+    /** The same commit, resolved to its full 40-hex SHA — see dictionaryCommit. */
+    commitResolved: string;
+    packDir: string;
+    recipeAppPath: string;
+    /** The --date argument AS PASSED — this fixture's derivedAt. */
+    date: string;
+  };
+  /** Coverage buckets over the 178-name universe: unresolved (names-index miss) + noRef (resolved, has NO fdc_ref at all) + nonPreferredType (resolved, HAS an fdc_ref, but its data_type isn't Foundation/SR Legacy/Survey — a DISTINCT bucket from noRef, a jump-1778 fix-pass finding caught these being silently lumped together) + eligible (scoreable, in `cases`). */
   coverage?: {
     uniqueNames: number;
     uniqueEligible: number;
     uniqueUnresolved: number;
     uniqueNoRef: number;
+    uniqueNonPreferredType: number;
     weightedOccurrences: number;
     weightedEligible: number;
   };
@@ -168,12 +184,15 @@ const PREFERRED_DATA_TYPES = new Set<PreferredDataType>([
 const EVIDENCE_CLASSES = new Set<EvidenceClass>(["human_pin", "human_ruling", "automated_screened"]);
 
 /** Shared meta-field validation for both case kinds and (loosely) excluded rows. Pushes onto `errors`, never throws directly. */
-function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; occurrences?: unknown; packs?: unknown }, errors: string[]): void {
+function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; resolverSource?: unknown; occurrences?: unknown; packs?: unknown }, errors: string[]): void {
   if (c.evidenceClass !== undefined && !EVIDENCE_CLASSES.has(c.evidenceClass as EvidenceClass)) {
     errors.push(`${label}: evidenceClass must be one of human_pin | human_ruling | automated_screened, got ${JSON.stringify(c.evidenceClass)}`);
   }
   if (c.expectedSource !== undefined && (typeof c.expectedSource !== "string" || c.expectedSource.trim().length === 0)) {
     errors.push(`${label}: expectedSource must be a non-empty string when present, got ${JSON.stringify(c.expectedSource)}`);
+  }
+  if (c.resolverSource !== undefined && (typeof c.resolverSource !== "string" || c.resolverSource.trim().length === 0)) {
+    errors.push(`${label}: resolverSource must be a non-empty string when present, got ${JSON.stringify(c.resolverSource)}`);
   }
   if (c.occurrences !== undefined && (!Number.isInteger(c.occurrences) || (c.occurrences as number) <= 0)) {
     errors.push(`${label}: occurrences must be a positive integer when present, got ${JSON.stringify(c.occurrences)}`);
