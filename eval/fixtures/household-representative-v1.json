@@ -1,0 +1,2674 @@
+{
+  "provenance": {
+    "fixtureId": "household-representative-v1",
+    "sourcePath": "recipe-app/data/recipe-packs/runs/<runId>/pack-{1..4}.json",
+    "sourceRepoCommit": "7e681cb",
+    "derivedAt": "2026-07-19T00:00:00.000Z",
+    "derivationRule": "Assembled by eval/scripts/assemble-representative-fixture.ts from the four-cart recipe-pack battery's aggregated shopping-list names (result.items[].product_name, occurrence-counted across all four packs including within-pack duplicates). Each unique name is resolved through a port of recipe-app's own scripts/lib/ingredient-name-index.js (buildNameIndex + resolveName, base.json only, exact match then -es/-s plural fallback) to a canonical dictionary entry; the entry's fdc_ref becomes the case's expected answer. Names that fail resolution, or resolve to an entry with no usable fdc_ref, are EXCLUDED (never scored) and recorded with a reason for honest coverage reporting. evidence_class is human_pin (an explicit fdc-pins.json ruling), human_ruling (an identity-rulings.json \"keep\" decision), or automated_screened (cascade-produced, screen-passed, no individual human adjudication) — see spec spec_findfood_representative_eval_v1_2026-07-19.md S2. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime; only this assembly script does, and only at assembly time.",
+    "counts": {
+      "positive": 142,
+      "negative": 0,
+      "total": 142
+    },
+    "license": "FDC identifiers and food composition data are U.S. public domain (USDA FoodData Central, a U.S. Government work). The recipe-pack battery and dictionary curation were authored by this project's maintainers and are released under this repository's MIT license (see LICENSE).",
+    "packRunId": "2026-07-17T03-12-09-887Z",
+    "packSnapshotSha256": {
+      "pack-1": "8347273443a5089bb56ae3e839f1e7b21909554f19d758e068ba5296b69b7d95",
+      "pack-2": "998cbbd60ba44732c811a8cbe3ab114f72e0de60d2f301d0734e0d98024260d0",
+      "pack-3": "dc2bb17ec06800e48864099f151414ab0a472168aa510fcbee3a9466e2de7c3a",
+      "pack-4": "7de841e7aebacb00af18d8e5787d89cb6e17715428876816a2e7efe2bf786c9a"
+    },
+    "packSnapshotSchemaVersion": 2,
+    "queryProductionCommit": "0cc3bb795e1e50ebc4c82b969ca59fc7bf243e9d",
+    "dictionaryCommit": "7e681cb",
+    "dictionaryBlobSha": "a3b2dca96f7d25e6507d871a9ca1ef3dfd2c3976",
+    "assemblyScriptSha256": "2e76915b247992ba13b930d3f89c63d66f8fe00f93393ecd49d1181e7a297070",
+    "coverage": {
+      "uniqueNames": 178,
+      "uniqueEligible": 142,
+      "uniqueUnresolved": 30,
+      "uniqueNoRef": 6,
+      "weightedOccurrences": 251,
+      "weightedEligible": 212
+    },
+    "evidenceClassCounts": {
+      "human_pin": 30,
+      "human_ruling": 8,
+      "automated_screened": 104
+    }
+  },
+  "cases": [
+    {
+      "name": "Chinese cooking wine",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169070,
+        "description": "Alcoholic beverage, wine, cooking",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"chinese cooking wine\" (product_name \"Chinese cooking wine\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "Dijon mustard",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 326698,
+        "description": "Mustard, prepared, yellow",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"dijon mustard\" (product_name \"Dijon mustard\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "all purpose flour",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 789890,
+        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"all-purpose flour\" (product_name \"all purpose flour\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "almond butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2262074,
+        "description": "Almond butter, creamy",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"almond butter\" (product_name \"almond butter\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "almonds",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170567,
+        "description": "Nuts, almonds",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"almonds\" (product_name \"almonds\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "apple cider vinegar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173469,
+        "description": "Vinegar, cider",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"apple cider vinegar\" (product_name \"apple cider vinegar\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "baking powder",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172805,
+        "description": "Leavening agents, baking powder, low-sodium",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"baking powder\" (product_name \"baking powder\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "baking soda",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 175040,
+        "description": "Leavening agents, baking soda",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"baking soda\" (product_name \"baking soda\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "banana",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173944,
+        "description": "Bananas, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"banana\" (product_name \"banana\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "basmati rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"basmati rice\" (product_name \"basmati rice\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "bean sprouts",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2709768,
+        "description": "Bean sprouts, raw",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"bean sprouts\" (product_name \"bean sprouts\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "beef broth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171561,
+        "description": "Soup, beef broth, cubed, dry",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"beef broth\" (product_name \"beef broth\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "beer",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2710616,
+        "description": "Beer",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"beer\" (product_name \"beer\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "black pepper",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170931,
+        "description": "Spices, pepper, black",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"black pepper\" (product_name \"black pepper\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "blueberries",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346411,
+        "description": "Blueberries, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"blueberries\" (product_name \"blueberries\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "boneless chuck roast",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2646174,
+        "description": "Beef, chuck, roast, boneless, choice, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"boneless chuck roast\" (product_name \"boneless chuck roast\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "bread",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174924,
+        "description": "Bread, white, commercially prepared (includes soft bread crumbs)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"bread\" (product_name \"bread\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "breakfast sausage",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 746779,
+        "description": "Sausage, breakfast sausage, beef, pre-cooked, unprepared",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"breakfast sausage\" (product_name \"breakfast sausage\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "brown lentils",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2644283,
+        "description": "Lentils, dry",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"brown lentils\" (product_name \"brown lentils\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "brown rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512380,
+        "description": "Rice, brown, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"brown rice\" (product_name \"brown rice\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "brown sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168833,
+        "description": "Sugars, brown",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"brown sugar\" (product_name \"brown sugar\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 789828,
+        "description": "Butter, stick, unsalted",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"butter\" (product_name \"unsalted butter\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "buttermilk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2259792,
+        "description": "Buttermilk, low fat",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"buttermilk\" (product_name \"buttermilk\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "canola oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 748278,
+        "description": "Oil, canola",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"canola oil\" (product_name \"canola oil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "cardamom",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170919,
+        "description": "Spices, cardamom",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cardamom\" (product_name \"cardamom\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "carrots",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2258587,
+        "description": "Carrots, baby, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"carrots\" (product_name \"carrots\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 2,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "cashews",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2707493,
+        "description": "Cashews, NFS",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"cashews\" (product_name \"cashews\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "cayenne pepper",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170932,
+        "description": "Spices, pepper, red or cayenne",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cayenne pepper\" (product_name \"cayenne pepper\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "celery",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346405,
+        "description": "Celery, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"celery\" (product_name \"celery\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "cherry tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 321360,
+        "description": "Tomatoes, grape, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cherry tomatoes\" (product_name \"cherry tomatoes\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "chicken bouillons",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171562,
+        "description": "Soup, chicken broth or bouillon, dry",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"chicken bouillon\" (product_name \"chicken bouillons\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "chicken breast",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2646170,
+        "description": "Chicken, breast, boneless, skinless, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"chicken breast\" (product_name \"chicken breast\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "chicken breasts",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2646170,
+        "description": "Chicken, breast, boneless, skinless, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"chicken breast\" (product_name \"chicken breast\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "chicken broth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174536,
+        "description": "Soup, chicken broth, ready-to-serve",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"chicken broth\" (product_name \"chicken broth\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "chickpeas",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2644282,
+        "description": "Chickpeas, (garbanzo beans, bengal gram), dry",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"chickpeas\" (product_name \"chickpeas\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 2
+      }
+    },
+    {
+      "name": "chili garlic sauce",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171604,
+        "description": "Sauce, peppers, hot, chili, mature red, canned",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"chili garlic sauce\" (product_name \"chili garlic sauce\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "chili powder",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171319,
+        "description": "Spices, chili powder",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"chili powder\" (product_name \"chili powder\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "chocolate chips",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2710333,
+        "description": "Chocolate chips",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"chocolate chips\" (product_name \"chocolate chips\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "choy sum",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2685572,
+        "description": "Cabbage, bok choy, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"choy sum\" (product_name \"choy sum\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "cilantro",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169997,
+        "description": "Coriander (cilantro) leaves, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cilantro\" (product_name \"cilantro\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "cinnamon",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171320,
+        "description": "Spices, cinnamon, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cinnamon\" (product_name \"cinnamon\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "cloves",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171321,
+        "description": "Spices, cloves, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cloves\" (product_name \"whole cloves\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "coconut milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2705413,
+        "description": "Coconut milk",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"coconut milk\" (product_name \"coconut milk\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "coconut oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 330458,
+        "description": "Oil, coconut",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"coconut oil\" (product_name \"coconut oil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "coconut sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 746784,
+        "description": "Sugars, granulated",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"coconut sugar\" (product_name \"coconut sugar\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "cooked chicken breast",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 331960,
+        "description": "Chicken, broiler or fryers, breast, skinless, boneless, meat only, cooked, braised",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cooked chicken breast\" (product_name \"cooked chicken breast\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "coriander",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170922,
+        "description": "Spices, coriander seed",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"coriander\" (product_name \"coriander\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "cornstarch",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169698,
+        "description": "Cornstarch",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cornstarch\" (product_name \"cornstarch\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "cottage cheese",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 328841,
+        "description": "Cheese, cottage, lowfat, 2% milkfat",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cottage cheese\" (product_name \"cottage cheese\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "cream",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346386,
+        "description": "Cream, heavy",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cream\" (product_name \"cream\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "cream cheese",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346385,
+        "description": "Cream cheese, full fat, block",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cream cheese\" (product_name \"cream cheese\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "crushed tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2685581,
+        "description": "Tomatoes, crushed, canned",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"crushed tomatoes\" (product_name \"crushed tomatoes\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "cucumber",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346406,
+        "description": "Cucumber, with peel, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"cucumber\" (product_name \"cucumber\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "curry powder",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170924,
+        "description": "Spices, curry powder",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"curry powder\" (product_name \"curry powder\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "diced tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 333281,
+        "description": "Tomatoes, canned, red, ripe, diced",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"diced tomatoes\" (product_name \"diced tomatoes\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "dried basil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171317,
+        "description": "Spices, basil, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"dried basil\" (product_name \"dried basil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "dried dill",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171322,
+        "description": "Spices, dill weed, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"dried dill\" (product_name \"dried dill\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "dried oregano",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171328,
+        "description": "Spices, oregano, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"dried oregano\" (product_name \"dried oregano\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "dried parsley",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170930,
+        "description": "Spices, parsley, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"dried parsley\" (product_name \"dried parsley\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "dried thyme",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170938,
+        "description": "Spices, thyme, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"dried thyme\" (product_name \"dried thyme\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "eggs",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 748967,
+        "description": "Eggs, Grade A, Large, egg whole",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"eggs\" (product_name \"eggs\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "elbow pasta",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2758998,
+        "description": "Pasta, dry, enriched, spaghetti",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"elbow pasta\" (product_name \"elbow pasta\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "enoki mushrooms",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2003600,
+        "description": "Mushroom, enoki",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"enoki mushroom\" (product_name \"enoki mushrooms\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "extra firm tofu",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174290,
+        "description": "Tofu, extra firm, prepared with nigari",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"extra firm tofu\" (product_name \"extra firm tofu\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "feta cheese",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2259796,
+        "description": "Cheese, feta, whole milk, crumbled",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"feta cheese\" (product_name \"feta cheese\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "fire roasted diced tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 333281,
+        "description": "Tomatoes, canned, red, ripe, diced",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"fire roasted diced tomatoes\" (product_name \"fire roasted diced tomatoes\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "flour",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2003586,
+        "description": "Flour, 00",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"flour\" (product_name \"flour\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "garlic",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 1104647,
+        "description": "Garlic, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"garlic\" (product_name \"garlic\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "garlic powder",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171325,
+        "description": "Spices, garlic powder",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"garlic powder\" (product_name \"garlic powder\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "ghee",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2710168,
+        "description": "Ghee, clarified butter",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"ghee\" (product_name \"ghee\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "ginger",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169231,
+        "description": "Ginger root, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"ginger\" (product_name \"ginger\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "grated parmesan cheese",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 325036,
+        "description": "Cheese, parmesan, grated",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"grated parmesan cheese\" (product_name \"Parmesan cheese\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "green bell pepper",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2258588,
+        "description": "Peppers, bell, green, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"green bell pepper\" (product_name \"green bell pepper\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "green chilies",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168577,
+        "description": "Peppers, chili, green, canned",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"green chilies\" (product_name \"green chilies\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "green onion",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2727585,
+        "description": "Green onion, (scallion), bulb and greens, root removed, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"green onion\" (product_name \"green onion\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "green onions",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2727585,
+        "description": "Green onion, (scallion), bulb and greens, root removed, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"green onion\" (product_name \"green onion\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "ground beef",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2514744,
+        "description": "Beef, ground, 80% lean meat / 20% fat, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"ground beef\" (product_name \"ground beef\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "ground cumin",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170923,
+        "description": "Spices, cumin seed",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"cumin\" (product_name \"ground cumin\"), match_method \"close\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "heavy cream",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346386,
+        "description": "Cream, heavy",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"heavy cream\" (product_name \"heavy cream\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "honey",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169640,
+        "description": "Honey",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"honey\" (product_name \"honey\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "jasmine rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2512381,
+        "description": "Rice, white, long grain, unenriched, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"jasmine rice\" (product_name \"jasmine rice\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "kalamata olives",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169094,
+        "description": "Olives, ripe, canned (small-extra large)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"kalamata olives\" (product_name \"kalamata olives\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "kidney beans",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 747440,
+        "description": "Beans, Dry, Dark Red Kidney (0% moisture)",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"kidney bean\" (product_name \"kidney beans\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "lasagna noodles",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2708352,
+        "description": "Noodles, cooked",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"lasagna noodles\" (product_name \"lasagna noodles\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "lemon",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 167746,
+        "description": "Lemons, raw, without peel",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"lemon\" (product_name \"lemon\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "lemon juice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 167747,
+        "description": "Lemon juice, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"lemon juice\" (product_name \"lemon juice\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "lemons",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 167746,
+        "description": "Lemons, raw, without peel",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"lemon\" (product_name \"lemon\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "light brown sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168833,
+        "description": "Sugars, brown",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"light brown sugar\" (product_name \"light brown sugar\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "maple syrup",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169661,
+        "description": "Syrups, maple",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"maple syrup\" (product_name \"maple syrup\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "mayonnaise",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2758986,
+        "description": "Mayonnaise, Regular",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"mayonnaise\" (product_name \"mayonnaise\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2705385,
+        "description": "Milk, whole",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"milk\" (product_name \"milk\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "miso paste",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172442,
+        "description": "Miso",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"miso paste\" (product_name \"miso paste\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "mozzarella cheese",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 329370,
+        "description": "Cheese, mozzarella, low moisture, part-skim",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"mozzarella cheese\" (product_name \"mozzarella cheese\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "mushrooms",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 1999629,
+        "description": "Mushrooms, white button",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"mushroom\" (product_name \"mushrooms\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "nonfat Greek yogurt",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 330137,
+        "description": "Yogurt, Greek, plain, nonfat",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"nonfat greek yogurt\" (product_name \"greek yogurt\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "nonfat milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 746776,
+        "description": "Milk, nonfat, fluid, with added vitamin A and vitamin D (fat free or skim)",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"nonfat milk\" (product_name \"nonfat milk\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "nutmeg",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171326,
+        "description": "Spices, nutmeg, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"nutmeg\" (product_name \"nutmeg\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 748278,
+        "description": "Oil, canola",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"oil\" (product_name \"oil\"), match_method \"exact\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "olive oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 1750351,
+        "description": "Oil, olive, extra light",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"olive oil\" (product_name \"olive oil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "onion",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 790577,
+        "description": "Onions, red, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"onion\" (product_name \"onion\"), match_method \"exact\".",
+      "evidenceClass": "human_ruling",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "onion powder",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171327,
+        "description": "Spices, onion powder",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"onion powder\" (product_name \"onion powder\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "oyster sauce",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174529,
+        "description": "Sauce, oyster, ready-to-serve",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"oyster sauce\" (product_name \"oyster sauce\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "paprika",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171329,
+        "description": "Spices, paprika",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"paprika\" (product_name \"paprika\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "parsley",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170416,
+        "description": "Parsley, fresh",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"parsley\" (product_name \"parsley\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "peanut butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2262072,
+        "description": "Peanut butter, creamy",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"peanut butter\" (product_name \"peanut butter\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "peas",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170016,
+        "description": "Peas, green, frozen, unprepared (Includes foods for USDA's Food Distribution Program)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"peas\" (product_name \"peas\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "poblano pepper",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2747662,
+        "description": "Peppers, poblano, seeded, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"poblano pepper\" (product_name \"poblano pepper\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "potatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346403,
+        "description": "Potatoes, gold, without skin, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"potatoes\" (product_name \"potatoes\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "powdered sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 169656,
+        "description": "Sugars, powdered",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"powdered sugar\" (product_name \"powdered sugar\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "red bell peppers",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2258590,
+        "description": "Peppers, bell, red, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"red bell pepper\" (product_name \"red bell peppers\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "red lentils",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174284,
+        "description": "Lentils, pink or red, raw",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"red lentils\" (product_name \"red lentils\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "red onions",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 790577,
+        "description": "Onions, red, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"red onion\" (product_name \"red onions\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "red pepper flakes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170932,
+        "description": "Spices, pepper, red or cayenne",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"red pepper flakes\" (product_name \"red pepper flakes\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "red wine vinegar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172240,
+        "description": "Vinegar, red wine",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"red wine vinegar\" (product_name \"red wine vinegar\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "rice",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 168877,
+        "description": "Rice, white, long-grain, regular, raw, enriched",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"white rice\" (product_name \"rice\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "rolled oats",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346396,
+        "description": "Oats, whole grain, rolled, old fashioned",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"rolled oats\" (product_name \"rolled oats\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "salt",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 746775,
+        "description": "Salt, table, iodized",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"salt\" (product_name \"salt\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "serrano peppers",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2747663,
+        "description": "Peppers, serrano, seeded, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"serrano peppers\" (product_name \"serrano peppers\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "sesame oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171016,
+        "description": "Oil, sesame, salad or cooking",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"sesame oil\" (product_name \"sesame oil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "sesame seeds",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170150,
+        "description": "Seeds, sesame seeds, whole, dried",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"sesame seeds\" (product_name \"sesame seeds\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "smoked paprika",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171329,
+        "description": "Spices, paprika",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"smoked paprika\" (product_name \"smoked paprika\"), match_method \"close\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "soy sauce",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 174278,
+        "description": "Soy sauce made from soy (tamari)",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"soy sauce\" (product_name \"soy sauce\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "spinach",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 1999632,
+        "description": "Spinach, baby",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"spinach\" (product_name \"spinach\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 746784,
+        "description": "Sugars, granulated",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"sugar\" (product_name \"sugar\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "tahini",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2707587,
+        "description": "Tahini",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"tahini\" (product_name \"tahini\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "thyme",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173470,
+        "description": "Thyme, fresh",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"thyme\" (product_name \"thyme\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "tomato paste",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2685580,
+        "description": "Tomato, paste, canned, without salt added",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"tomato paste\" (product_name \"tomato paste\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170457,
+        "description": "Tomatoes, red, ripe, raw, year round average",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"tomatoes\" (product_name \"tomatoes\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "turbinado sugar",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170674,
+        "description": "Sugar, turbinado",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"turbinado sugar\" (product_name \"turbinado sugar\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "turmeric",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172231,
+        "description": "Spices, turmeric, ground",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"turmeric\" (product_name \"turmeric\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-2": 1,
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "unsalted butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 789828,
+        "description": "Butter, stick, unsalted",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"unsalted butter\" (product_name \"unsalted butter\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "unsweetened applesauce",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2346414,
+        "description": "Applesauce, unsweetened, with added vitamin C",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"unsweetened applesauce\" (product_name \"unsweetened applesauce\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "vanilla extract",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 173471,
+        "description": "Vanilla extract",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"vanilla extract\" (product_name \"vanilla extract\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 3,
+      "packs": {
+        "pack-2": 1,
+        "pack-3": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "vegan butter",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172346,
+        "description": "Margarine, regular, 80% fat, composite, stick, with salt",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"vegan butter\" (product_name \"vegan butter\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "vegetable broth",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 171583,
+        "description": "Soup, vegetable broth, ready to serve",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"vegetable broth\" (product_name \"vegetable broth\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "vegetable oil",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 172370,
+        "description": "Oil, vegetable, soybean, refined",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"vegetable oil\" (product_name \"vegetable oil\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 4,
+      "packs": {
+        "pack-1": 1,
+        "pack-3": 2,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "white onion",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 1104962,
+        "description": "Onions, white, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"white onion\" (product_name \"white onion\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "white pepper",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 170933,
+        "description": "Spices, pepper, white",
+        "dataType": "SR Legacy"
+      },
+      "reason": "Representative battery: canonical entry \"white pepper\" (product_name \"white pepper\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "whole milk",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2705385,
+        "description": "Milk, whole",
+        "dataType": "Survey (FNDDS)"
+      },
+      "reason": "Representative battery: canonical entry \"whole milk\" (product_name \"whole milk\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "whole tomatoes",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2685578,
+        "description": "Tomatoes, whole, canned, solids and liquids, with salt added",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"whole tomatoes\" (product_name \"whole tomatoes\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "yellow onion",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 790646,
+        "description": "Onions, yellow, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"yellow onion\" (product_name \"yellow onion\"), match_method \"exact\".",
+      "evidenceClass": "automated_screened",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "zucchini",
+      "kind": "positive",
+      "expected": {
+        "fdcId": 2685568,
+        "description": "Squash, summer, green, zucchini, includes skin, raw",
+        "dataType": "Foundation"
+      },
+      "reason": "Representative battery: canonical entry \"zucchini\" (product_name \"zucchini\"), match_method \"pinned\".",
+      "evidenceClass": "human_pin",
+      "expectedSource": "dictionary-ratified",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "name": "American cheese slices",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "Indian red chili powder",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "King Arthur Pure Vanilla Extract",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "King Arthur Unbleached All-Purpose Flour",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "Montreal steak seasoning",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "Tokyo negi",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "baby portobello mushrooms",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "beef tri-tip roast",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "cabbage kimchi",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "cinnamon stick",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "classic mixed vegetables",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "dashi packet",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "dried ancho chiles",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "extra-virgin olive oil",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 2,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "fresh collard greens",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "fresh ginger",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "fresh turmeric",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "garam masala",
+      "reason": "resolved to canonical entry \"garam masala\" but it carries no fdc_ref",
+      "occurrences": 3,
+      "packs": {
+        "pack-1": 1,
+        "pack-2": 1,
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "ginger garlic paste",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "green cardamom",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "green olives",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "ice water",
+      "reason": "resolved to canonical entry \"ice water\" but it carries no fdc_ref",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "kasuri methi",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "low sodium vegetable broth",
+      "reason": "resolved to canonical entry \"low sodium vegetable broth\" but it carries no fdc_ref",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "masa harina",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "medium-firm tofu",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "natural cocoa powder",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-4": 1
+      }
+    },
+    {
+      "name": "nutritional yeast",
+      "reason": "resolved to canonical entry \"nutritional yeast\" but it carries no fdc_ref",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "paneer",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "panko breadcrumbs",
+      "reason": "resolved to canonical entry \"panko breadcrumb\" but it carries no fdc_ref",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "penne",
+      "reason": "resolved to canonical entry \"penne\" but it carries no fdc_ref",
+      "occurrences": 1,
+      "packs": {
+        "pack-1": 1
+      }
+    },
+    {
+      "name": "pepperoncini",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "perilla leaves",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "short-grain brown rice",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    },
+    {
+      "name": "shredded vegan cheddar cheese",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-3": 1
+      }
+    },
+    {
+      "name": "whole peeled tomatoes",
+      "reason": "names-index resolution miss (no dictionary entry claims this name, incl. -s/-es plural fallback)",
+      "occurrences": 1,
+      "packs": {
+        "pack-2": 1
+      }
+    }
+  ]
+}
