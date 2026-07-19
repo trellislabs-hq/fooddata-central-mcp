@@ -11,14 +11,21 @@
  * Major Sections:
  *   - CacheMissError — thrown by the replay searchFn; callers catch this
  *     specifically to mark a case "uncached" rather than "error"
- *   - makeRecordingSearchFn() — live mode: real client + buffered cache write
+ *   - makeRecordingSearchFn() — live mode: FILL-MISSING-ONLY (spec S8: "recording
+ *     mode must consult existing cache entries before any network call" —
+ *     the pre-jump-1778 version always called the network and overwrote,
+ *     burning API budget re-fetching answers the cache already had). Checks
+ *     the in-run buffer, then the pre-loaded on-disk `existing` cache,
+ *     before ever calling `real()`; a hit in either short-circuits the
+ *     network call entirely and NEVER re-writes the existing entry.
  *   - makeReplaySearchFn() — replay mode: cache-only, no network
  *
  * Dependencies: ../../src/fdc-client.js (SearchFoodsFn's param/result types),
  *   ./cache.js (buildCacheKey, toCacheEntry, fromCacheEntry, CacheFile)
  * State: makeRecordingSearchFn mutates the `buffer` Map passed in (by
- *   design — the caller owns flushing it to disk). makeReplaySearchFn reads
- *   an already-loaded, immutable CacheFile.
+ *   design — the caller owns flushing it to disk) but only ever WRITES a key
+ *   that was actually fetched fresh; `existing` is read-only. makeReplaySearchFn
+ *   reads an already-loaded, immutable CacheFile.
  */
 
 import type { FdcSearchParams, FdcSearchResult } from "../../src/fdc-client.js";
@@ -36,16 +43,28 @@ export class CacheMissError extends Error {
 }
 
 /**
- * Wrap a real searchFoods function: forward the call untouched (so the live
- * run's findFood() output is built from full-fidelity real data), while
- * writing a PROJECTED copy of every response into `buffer` keyed by
- * buildCacheKey(). Does not write to disk — the caller flushes `buffer`
- * once, after all latency timing for the run is complete.
+ * Wrap a real searchFoods function: FILL-MISSING-ONLY. Before ever calling
+ * `real()`, checks `buffer` (this run's already-fetched keys) and then
+ * `existing` (the pre-loaded on-disk cache) for a hit — a hit in either
+ * short-circuits straight to fromCacheEntry(), no network call, no rewrite.
+ * Only a genuine miss in both calls `real()` and writes a PROJECTED copy of
+ * the response into `buffer`, keyed by buildCacheKey(). Does not write to
+ * disk itself — the caller flushes `buffer` once, after all latency timing
+ * for the run is complete.
  */
-export function makeRecordingSearchFn(real: SearchFoodsFn, buffer: Map<string, CacheEntry>): SearchFoodsFn {
+export function makeRecordingSearchFn(
+  real: SearchFoodsFn,
+  buffer: Map<string, CacheEntry>,
+  existing: CacheFile = {}
+): SearchFoodsFn {
   return async (params: FdcSearchParams): Promise<FdcSearchResult> => {
+    const key = buildCacheKey(params);
+
+    const cached = buffer.get(key) ?? existing[key];
+    if (cached) return fromCacheEntry(cached);
+
     const result = await real(params);
-    buffer.set(buildCacheKey(params), toCacheEntry(result));
+    buffer.set(key, toCacheEntry(result));
     return result;
   };
 }

@@ -1,18 +1,23 @@
 /**
  * Module: eval harness self-tests
  * Purpose: Proves the eval harness's own machinery is correct — independent
- *   of any live baseline run (the committed eval/cache/search-cache.json is
- *   empty until the post-merge CoS live-baseline run populates it). Covers:
- *     1. Scoring semantics (hit/near/miss/honest/confident_wrong), including
- *        the usedBranded-honest case.
+ *   of any live baseline run for the representative fixture (the household
+ *   fixture's eval/cache/search-cache.json IS committed and populated — see
+ *   section 9). Covers:
+ *     1. Scoring semantics — the full kind x result matrix (spec S7): hit/
+ *        near/near_branded/miss/labeled_branded_fallback/refusal for
+ *        positive cases, refusal/labeled_branded_fallback/confident_wrong
+ *        for negative cases. This REPLACES the old collapsed "honest"
+ *        bucket, which hid the difference between a true refusal and an
+ *        honestly-labeled Branded fallback.
  *     2. Cache record -> replay round-trip identity.
  *     3. Projection faithfulness — findFood()'s rendered text over a full
  *        response vs its projection, byte-identical.
  *     4. Fixture schema validation, including the string-vs-number fdc_id
- *        coercion footgun the source pins file has (fdc_id is a STRING
- *        there; FdcFood.fdcId is NUMERIC).
+ *        coercion footgun, and the new representative-fixture-only meta
+ *        fields (evidenceClass/occurrences/packs) + excluded[].
  *     5. Replay coverage-threshold failure (<90% cache coverage -> nonzero
- *        exit) vs full-coverage success.
+ *        exit, non-strict mode) vs full-coverage success.
  *     6. The live request path through the REAL FdcClient (not a stub),
  *        under a mocked global.fetch, proving the X-Api-Key header is
  *        attached, no key reaches the URL, and the recording wrapper
@@ -23,18 +28,29 @@
  *        (first call cached, second uncached -> the whole case is
  *        classified "uncached", never half-scored).
  *     8. Scored-only denominators: an all-errors replay (every case HAS a
- *        cache entry but it's malformed, so zero are "uncached" yet none
- *        score) must still exit nonzero — coverage counts errored cases as
- *        non-covered, not just uncached ones — and a hand-computed mixed
- *        run proves top1Pct/top4Pct/negativeHonestyPct are computed over
+ *        cache entry but it's malformed, so zero are "uncached") must still
+ *        exit nonzero — coverage counts errored cases as non-covered, not
+ *        just uncached ones — and a hand-computed mixed run proves the new
+ *        top1Pct/top4Pct/positive*Pct/negative*Pct fields are computed over
  *        SCORED cases only.
- *   Plus a sanity check that the committed household-food-eval-v1 fixture
- *   itself passes schema validation with the expected case-count floors.
+ *     9. The committed adversarial fixture's FULL default replay (real
+ *        cache, no stubs) under the new taxonomy — every row lands in a
+ *        known status, 100% coverage, exit 0.
+ *    10. Published/strict mode (spec S8): ANY uncached or errored row is a
+ *        hard failure, independent of the 90% coverage threshold.
+ *    11. Fill-missing-only recording (spec S8): makeRecordingSearchFn never
+ *        calls the network for a key `existing` already has.
+ *    12. Fixture <-> cache binding (--fixture registry).
+ *    13. Aggregate cache size budget (spec S8: budget is aggregate over
+ *        eval/cache/*.json, not per-file).
+ *    14. excluded[] pass-through on RunOutcome.
+ *    15. The committed household-representative-v1 fixture's own schema +
+ *        spec-measured coverage/evidence-class counts.
  *
  * Dependencies: node:test, node:assert/strict, node:fs, node:os, node:path,
  *   ../src/find-food.js, ../src/fdc-client.js, ../src/normalize.js,
  *   ../tests/helpers/mock-fetch.js (read-only import — see CONSTRAINTS,
- *   tests/ is never modified), and this module's own eval/lib/*.
+ *   tests/ is never modified), and this module's own eval/lib/* + eval/run.js.
  * State: Uses node:fs temp files (os.tmpdir()) for cache/fixture round-trip
  *   tests — never writes to the committed eval/cache/ or eval/fixtures/.
  */
@@ -56,9 +72,20 @@ import { installFetchMock, jsonResponse, loadFixture as loadRealApiFixture } fro
 import { DEFAULT_FIXTURE_PATH, loadFixture, validateFixtureSchema, type EvalFixture } from "./lib/fixture.js";
 import { scoreCase } from "./lib/scoring.js";
 import { projectFoods } from "./lib/projection.js";
-import { buildCacheKey, CACHE_HARD_BYTES, CACHE_WARN_BYTES, checkCacheSizeBudget, loadCache, writeCache, type CacheFile } from "./lib/cache.js";
+import {
+  aggregateCacheBytes,
+  buildCacheKey,
+  CACHE_HARD_BYTES,
+  CACHE_WARN_BYTES,
+  checkCacheSizeBudget,
+  DEFAULT_CACHE_PATH,
+  loadCache,
+  writeCache,
+  type CacheEntry,
+  type CacheFile,
+} from "./lib/cache.js";
 import { CacheMissError, makeRecordingSearchFn, makeReplaySearchFn } from "./lib/search-fn.js";
-import { runEval } from "./run.js";
+import { FIXTURE_REGISTRY, resolveFixtureBinding, runEval } from "./run.js";
 
 async function withTempDir<T>(fn: (dir: string) => T | Promise<T>): Promise<T> {
   const dir = mkdtempSync(path.join(tmpdir(), "fdc-mcp-eval-test-"));
@@ -73,7 +100,7 @@ async function withTempDir<T>(fn: (dir: string) => T | Promise<T>): Promise<T> {
   }
 }
 
-// ─── 1. Scoring semantics ──────────────────────────────────────────────────
+// ─── 1. Scoring semantics (full kind x result matrix) ──────────────────────
 
 describe("scoring semantics", () => {
   test("positive: hit when best.fdcId === expected.fdcId", async () => {
@@ -89,7 +116,7 @@ describe("scoring semantics", () => {
     assert.equal(scored.status, "hit");
   });
 
-  test("positive: near when expected.fdcId is in alternates but not best", async () => {
+  test("positive: near when expected.fdcId is in alternates but not best (usedBranded false)", async () => {
     const caseDef = { name: "cheese", kind: "positive" as const, expected: { fdcId: 2, description: "Second cheese", dataType: "Foundation" as const } };
     const searchFoods = async (): Promise<FdcSearchResult> => ({
       totalHits: 2,
@@ -101,11 +128,32 @@ describe("scoring semantics", () => {
       ],
     });
     const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    assert.equal(result.usedBranded, false);
     const scored = scoreCase(caseDef, result);
     assert.equal(scored.status, "near");
   });
 
-  test("positive: miss when expected.fdcId is neither best nor an alternate", async () => {
+  test("positive: near_branded when expected.fdcId is in alternates AND usedBranded is true (Branded automatic last resort)", async () => {
+    const caseDef = { name: "cheese", kind: "positive" as const, expected: { fdcId: 2, description: "Second cheese", dataType: "Foundation" as const } };
+    const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
+    const brandedResult: FdcSearchResult = {
+      totalHits: 2,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [
+        { fdcId: 1, description: "First cheese", dataType: "Branded", foodNutrients: [] },
+        { fdcId: 2, description: "Second cheese", dataType: "Branded", foodNutrients: [] },
+      ],
+    };
+    const searchFoods = async (params: FdcSearchParams): Promise<FdcSearchResult> =>
+      params.dataType === "Branded" ? brandedResult : emptyResult;
+    const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    assert.equal(result.usedBranded, true, "sanity: preferred types were empty, Branded automatic last resort fired");
+    const scored = scoreCase(caseDef, result);
+    assert.equal(scored.status, "near_branded", "a near hit sourced from Branded must be reported separately from plain near, never silently folded in");
+  });
+
+  test("positive: miss when expected.fdcId is neither best nor an alternate (usedBranded false)", async () => {
     const caseDef = { name: "cheese", kind: "positive" as const, expected: { fdcId: 999999, description: "Nonexistent", dataType: "Foundation" as const } };
     const searchFoods = async (): Promise<FdcSearchResult> => ({
       totalHits: 1,
@@ -114,22 +162,52 @@ describe("scoring semantics", () => {
       foods: [{ fdcId: 1, description: "Some cheese", dataType: "Foundation", foodNutrients: [] }],
     });
     const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    assert.equal(result.usedBranded, false);
     const scored = scoreCase(caseDef, result);
     assert.equal(scored.status, "miss");
     assert.equal(scored.actual?.fdcId, 1);
   });
 
-  test("negative: honest when best is undefined (no results anywhere)", async () => {
+  test("positive: labeled_branded_fallback when usedBranded true and the Branded answer doesn't match expected (not even an alternate)", async () => {
+    const caseDef = { name: "widgetcheese", kind: "positive" as const, expected: { fdcId: 999999, description: "Nonexistent Cheese", dataType: "Foundation" as const } };
+    const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
+    const brandedResult: FdcSearchResult = {
+      totalHits: 1,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [{ fdcId: 42, description: "Widgetcheese Snack", dataType: "Branded", foodNutrients: [] }],
+    };
+    const searchFoods = async (params: FdcSearchParams): Promise<FdcSearchResult> =>
+      params.dataType === "Branded" ? brandedResult : emptyResult;
+    const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    assert.equal(result.usedBranded, true);
+    assert.ok(result.best);
+    const scored = scoreCase(caseDef, result);
+    assert.equal(scored.status, "labeled_branded_fallback", "a wrong-in-kind Branded fallback is distinct from a confident miss — it's honestly labeled low-confidence");
+    assert.equal(scored.actual?.fdcId, 42);
+  });
+
+  test("positive: refusal when nothing clears the floor anywhere (best undefined)", async () => {
+    const caseDef = { name: "nonexistentfood", kind: "positive" as const, expected: { fdcId: 123, description: "Nonexistent Food", dataType: "Foundation" as const } };
+    const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
+    const searchFoods = async (): Promise<FdcSearchResult> => emptyResult;
+    const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    assert.equal(result.best, undefined);
+    const scored = scoreCase(caseDef, result);
+    assert.equal(scored.status, "refusal", "a true refusal (best undefined) is distinct from an honestly-labeled Branded fallback");
+  });
+
+  test("negative: refusal when best is undefined (no results anywhere)", async () => {
     const caseDef = { name: "gluten free flour", kind: "negative" as const };
     const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
     const searchFoods = async (): Promise<FdcSearchResult> => emptyResult;
     const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
     assert.equal(result.best, undefined);
     const scored = scoreCase(caseDef, result);
-    assert.equal(scored.status, "honest");
+    assert.equal(scored.status, "refusal");
   });
 
-  test("negative: honest when usedBranded === true (Branded last-resort, best defined)", async () => {
+  test("negative: labeled_branded_fallback when usedBranded === true (Branded last-resort, best defined)", async () => {
     const caseDef = { name: "candied ginger", kind: "negative" as const };
     const emptyResult: FdcSearchResult = { totalHits: 0, currentPage: 1, totalPages: 0, foods: [] };
     const brandedResult: FdcSearchResult = {
@@ -144,7 +222,7 @@ describe("scoring semantics", () => {
     assert.ok(result.best, "Branded last-resort should still populate best");
     assert.equal(result.usedBranded, true);
     const scored = scoreCase(caseDef, result);
-    assert.equal(scored.status, "honest", "usedBranded===true must count as honest even though best is defined");
+    assert.equal(scored.status, "labeled_branded_fallback", "usedBranded===true must score labeled_branded_fallback, never the old collapsed honest bucket");
   });
 
   test("negative: confident_wrong when a preferred-type match lands (usedBranded false, best defined)", async () => {
@@ -160,6 +238,30 @@ describe("scoring semantics", () => {
     const scored = scoreCase(caseDef, result);
     assert.equal(scored.status, "confident_wrong");
     assert.equal(scored.actual?.fdcId, 7);
+  });
+
+  test("scoreCase passes representative-fixture metadata (evidenceClass/expectedSource/occurrences/packs) straight through onto every CaseResult", async () => {
+    const caseDef = {
+      name: "carrots",
+      kind: "positive" as const,
+      expected: { fdcId: 100, description: "Carrots, raw", dataType: "Foundation" as const },
+      evidenceClass: "human_pin" as const,
+      expectedSource: "dictionary-ratified",
+      occurrences: 5,
+      packs: { "pack-1": 2, "pack-2": 3 },
+    };
+    const searchFoods = async (): Promise<FdcSearchResult> => ({
+      totalHits: 1,
+      currentPage: 1,
+      totalPages: 1,
+      foods: [{ fdcId: 100, description: "Carrots, raw", dataType: "Foundation", foodNutrients: [] }],
+    });
+    const result = await findFood(searchFoods, caseDef.name, { includeBranded: false });
+    const scored = scoreCase(caseDef, result);
+    assert.equal(scored.evidenceClass, "human_pin");
+    assert.equal(scored.expectedSource, "dictionary-ratified");
+    assert.equal(scored.occurrences, 5);
+    assert.deepEqual(scored.packs, { "pack-1": 2, "pack-2": 3 });
   });
 });
 
@@ -339,6 +441,42 @@ describe("fixture schema validation", () => {
     }
   });
 
+  test("accepts representative-fixture meta fields (evidenceClass/expectedSource/occurrences/packs) and an excluded[] block", () => {
+    const fixture = {
+      provenance: {} as unknown as EvalFixture["provenance"],
+      cases: [
+        {
+          name: "carrots",
+          kind: "positive",
+          expected: { fdcId: 100, description: "Carrots, raw", dataType: "Foundation" },
+          evidenceClass: "human_pin",
+          expectedSource: "dictionary-ratified",
+          occurrences: 5,
+          packs: { "pack-1": 2, "pack-2": 3 },
+        },
+      ],
+      excluded: [{ name: "some unresolved thing", reason: "names-index resolution miss", occurrences: 1, packs: { "pack-4": 1 } }],
+    } as unknown as EvalFixture;
+    assert.doesNotThrow(() => validateFixtureSchema(fixture));
+  });
+
+  test("rejects an invalid evidenceClass value", () => {
+    const fixture = {
+      provenance: {} as unknown as EvalFixture["provenance"],
+      cases: [{ name: "x", kind: "positive", expected: { fdcId: 1, description: "d", dataType: "Foundation" }, evidenceClass: "totally_made_up" }],
+    } as unknown as EvalFixture;
+    assert.throws(() => validateFixtureSchema(fixture), /evidenceClass/);
+  });
+
+  test("rejects an excluded[] entry missing a reason", () => {
+    const fixture = {
+      provenance: {} as unknown as EvalFixture["provenance"],
+      cases: [],
+      excluded: [{ name: "no reason given", occurrences: 1, packs: {} }],
+    } as unknown as EvalFixture;
+    assert.throws(() => validateFixtureSchema(fixture), /reason/);
+  });
+
   test("the committed household-food-eval-v1 fixture itself passes validation with >=60 positive and >=25 negative cases", () => {
     const fixture = loadFixture(DEFAULT_FIXTURE_PATH);
     assert.doesNotThrow(() => validateFixtureSchema(fixture));
@@ -349,9 +487,9 @@ describe("fixture schema validation", () => {
   });
 });
 
-// ─── 5. Replay coverage threshold ──────────────────────────────────────────
+// ─── 5. Replay coverage threshold (non-strict) ─────────────────────────────
 
-describe("replay coverage threshold", () => {
+describe("replay coverage threshold (non-strict mode)", () => {
   const simpleNames = ["apple", "banana", "carrot", "date", "eggplant", "fig", "grape", "honeydew", "kiwi", "lime"];
 
   function buildTinyFixture(): EvalFixture {
@@ -443,7 +581,7 @@ describe("multi-call searchFoods cache wiring (replay)", () => {
     });
   });
 
-  test("preferred-empty -> Branded-fallback case: both calls cached -> honest (negative case)", async () => {
+  test("preferred-empty -> Branded-fallback case: both calls cached -> labeled_branded_fallback (negative case)", async () => {
     await withTempDir(async (dir) => {
       const fixturePath = path.join(dir, "fixture.json");
       const cachePath = path.join(dir, "cache.json");
@@ -461,12 +599,15 @@ describe("multi-call searchFoods cache wiring (replay)", () => {
       // query "widgetfood" — "Widget Food Snack" tokenizes to
       // {widget,food,snack}, none of which is the fused token "widgetfood",
       // so it would rate 'miss' and get floor-filtered, and this scenario
-      // would fall through to the OTHER honest path (best undefined, no
+      // would fall through to the OTHER refusal path (best undefined, no
       // Branded rescue at all) instead of the usedBranded=true rescue path
-      // this test is actually named for. The assertion (status === "honest")
-      // happens to hold either way (scoreCase treats both as honest), but
+      // this test is actually named for. The assertion (status ===
+      // "labeled_branded_fallback") happens to hold either way (scoreCase
+      // treats both refusal and labeled_branded_fallback as the "not
+      // confidently wrong" side of the taxonomy — see section 1 above), but
       // leaving it broken would silently stop this test from exercising the
-      // Branded-fallback-scores-honest mechanism it documents.
+      // Branded-fallback-scores-labeled_branded_fallback mechanism it
+      // documents.
       const cache: Record<string, unknown> = {};
       cache[cacheKeyFor("widgetfood", PREFERRED_DATA_TYPES)] = { totalHits: 0, foods: [] };
       cache[cacheKeyFor("widgetfood", "Branded")] = {
@@ -477,7 +618,7 @@ describe("multi-call searchFoods cache wiring (replay)", () => {
 
       const outcome = await runEval({ live: false, fixturePath, cachePath });
       assert.equal(outcome.rows.length, 1);
-      assert.equal(outcome.rows[0].status, "honest", "usedBranded===true (last-resort) is honest for a negative case");
+      assert.equal(outcome.rows[0].status, "labeled_branded_fallback", "usedBranded===true (last-resort) is labeled_branded_fallback for a negative case");
     });
   });
 
@@ -546,13 +687,13 @@ describe("scored-only denominators and coverage", () => {
     });
   });
 
-  test("mixed run: top1Pct/top4Pct/negativeHonestyPct match hand-computed SCORED-only denominators", async () => {
+  test("mixed run: matrix counts and *Pct fields match hand-computed SCORED-only denominators", async () => {
     await withTempDir(async (dir) => {
       const fixturePath = path.join(dir, "fixture.json");
       const cachePath = path.join(dir, "cache.json");
 
       // positive: 2 hit, 1 miss, 1 uncached, 1 error(malformed) -> scored = 3
-      // negative: 1 honest, 1 confident_wrong, 1 uncached          -> scored = 2
+      // negative: 1 labeled_branded_fallback, 1 confident_wrong, 1 uncached -> scored = 2
       const fixture: EvalFixture = {
         provenance: {} as unknown as EvalFixture["provenance"],
         cases: [
@@ -561,7 +702,7 @@ describe("scored-only denominators and coverage", () => {
           { name: "missone", kind: "positive", expected: { fdcId: 999, description: "Miss One", dataType: "Foundation" } },
           { name: "uncachedpos", kind: "positive", expected: { fdcId: 3, description: "Uncached Pos", dataType: "Foundation" } },
           { name: "errorpos", kind: "positive", expected: { fdcId: 4, description: "Error Pos", dataType: "Foundation" } },
-          { name: "honestone", kind: "negative" },
+          { name: "brandedneg", kind: "negative" },
           { name: "wrongone", kind: "negative" },
           { name: "uncachedneg", kind: "negative" },
         ],
@@ -588,9 +729,9 @@ describe("scored-only denominators and coverage", () => {
       cache[preferredKey("missone")] = { totalHits: 1, foods: [{ fdcId: 12345, description: "Missone Snack", dataType: "Foundation" }] };
       // "uncachedpos": no entry at all.
       cache[preferredKey("errorpos")] = { totalHits: 0 }; // malformed -> error, not uncached
-      // "honestone": preferred empty -> Branded fallback hit -> usedBranded=true -> honest.
-      cache[preferredKey("honestone")] = { totalHits: 0, foods: [] };
-      cache[brandedKey("honestone")] = { totalHits: 1, foods: [{ fdcId: 50, description: "Honestone Snack", dataType: "Branded" }] };
+      // "brandedneg": preferred empty -> Branded fallback hit -> usedBranded=true -> labeled_branded_fallback.
+      cache[preferredKey("brandedneg")] = { totalHits: 0, foods: [] };
+      cache[brandedKey("brandedneg")] = { totalHits: 1, foods: [{ fdcId: 50, description: "Brandedneg Snack", dataType: "Branded" }] };
       // "wrongone": preferred hit directly -> usedBranded=false, best defined -> confident_wrong.
       cache[preferredKey("wrongone")] = { totalHits: 1, foods: [{ fdcId: 60, description: "Wrongone Snack", dataType: "Foundation" }] };
       // "uncachedneg": no entry at all.
@@ -601,7 +742,7 @@ describe("scored-only denominators and coverage", () => {
 
       assert.equal(aggregate.counts.hit, 2);
       assert.equal(aggregate.counts.miss, 1);
-      assert.equal(aggregate.counts.honest, 1);
+      assert.equal(aggregate.counts.labeled_branded_fallback, 1, "brandedneg scores labeled_branded_fallback (negative + usedBranded)");
       assert.equal(aggregate.counts.confident_wrong, 1);
       assert.equal(aggregate.counts.uncached, 2);
       assert.equal(aggregate.counts.error, 1);
@@ -611,14 +752,285 @@ describe("scored-only denominators and coverage", () => {
       assert.deepEqual(aggregate.unscored.positive, { uncached: 1, error: 1 });
       assert.deepEqual(aggregate.unscored.negative, { uncached: 1, error: 0 });
 
+      assert.deepEqual(aggregate.matrix.positive, { hit: 2, near: 0, near_branded: 0, miss: 1, labeled_branded_fallback: 0, refusal: 0 });
+      assert.deepEqual(aggregate.matrix.negative, { refusal: 0, labeled_branded_fallback: 1, confident_wrong: 1 });
+
       // Hand-computed against SCORED denominators only (never against totals.positive=5/totals.negative=3).
       assert.equal(aggregate.top1Pct, (2 / 3) * 100);
       assert.equal(aggregate.top4Pct, (2 / 3) * 100);
-      assert.equal(aggregate.negativeHonestyPct, (1 / 2) * 100);
+      assert.equal(aggregate.positiveRefusalPct, 0);
+      assert.equal(aggregate.positiveLabeledBrandedFallbackPct, 0);
+      assert.equal(aggregate.negativeRefusalPct, 0);
+      assert.equal(aggregate.negativeLabeledBrandedFallbackPct, (1 / 2) * 100);
+      assert.equal(aggregate.negativeConfidentWrongPct, (1 / 2) * 100);
 
-      // Coverage = scored.total/total = 5/8 = 62.5% < 90% -> nonzero exit.
+      // Coverage = scored.total/total = 5/8 = 62.5% < 90% -> nonzero exit (non-strict).
       assert.equal(outcome.exitCode, 1);
     });
+  });
+});
+
+// ─── 9. Adversarial fixture — full default replay under the new taxonomy ──
+
+describe("adversarial fixture — full default replay (real committed cache, new scoring matrix)", () => {
+  test("household-food-eval-v1 + search-cache.json replays cleanly: 100% coverage, every row a known status, exit 0", async () => {
+    const outcome = await runEval({ live: false }); // defaults: DEFAULT_FIXTURE_PATH + DEFAULT_CACHE_PATH
+    assert.equal(outcome.aggregate.totals.total, 96);
+    assert.equal(outcome.aggregate.scored.total, 96, "the committed cache should give 100% coverage for the committed fixture");
+    const knownStatuses = new Set(["hit", "near", "near_branded", "miss", "labeled_branded_fallback", "refusal", "confident_wrong"]);
+    for (const row of outcome.rows) {
+      assert.ok(knownStatuses.has(row.status), `unexpected status "${row.status}" for "${row.name}"`);
+    }
+    assert.equal(outcome.exitCode, 0);
+    assert.deepEqual(outcome.excluded, [], "the adversarial fixture carries no excluded[] block");
+  });
+});
+
+// ─── 10. Published/strict mode (spec S8: zero tolerance) ──────────────────
+
+describe("published/strict mode", () => {
+  const names = Array.from({ length: 10 }, (_, i) => `strictname${i}`);
+
+  function buildFixture(): EvalFixture {
+    return {
+      provenance: {} as unknown as EvalFixture["provenance"],
+      cases: names.map((name, i) => ({ name, kind: "positive" as const, expected: { fdcId: 5000 + i, description: name, dataType: "Foundation" as const } })),
+    };
+  }
+
+  test("strict mode hard-fails on a single uncached row even at 90% coverage (non-strict passes the same cache)", async () => {
+    await withTempDir(async (dir) => {
+      const fixturePath = path.join(dir, "fixture.json");
+      const cachePath = path.join(dir, "cache.json");
+      writeFileSync(fixturePath, JSON.stringify(buildFixture()));
+
+      const cache: CacheFile = {};
+      for (const name of names.slice(0, 9)) {
+        // 9 of 10 cached = exactly 90% coverage.
+        const key = buildCacheKey({ query: normalize(name), dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 });
+        cache[key] = { totalHits: 1, foods: [{ fdcId: 5000 + names.indexOf(name), description: name }] };
+      }
+      writeFileSync(cachePath, JSON.stringify(cache));
+
+      const nonStrict = await runEval({ live: false, fixturePath, cachePath, strict: false });
+      assert.equal(nonStrict.exitCode, 0, "sanity: non-strict passes at exactly 90% coverage (threshold is coverage < 90%)");
+
+      const strict = await runEval({ live: false, fixturePath, cachePath, strict: true });
+      assert.equal(strict.exitCode, 1, "strict mode must hard-fail on the single uncached row, ignoring the 90% threshold entirely");
+      assert.equal(strict.aggregate.counts.uncached, 1);
+    });
+  });
+
+  test("strict mode hard-fails on a single errored row even at high coverage", async () => {
+    await withTempDir(async (dir) => {
+      const fixturePath = path.join(dir, "fixture.json");
+      const cachePath = path.join(dir, "cache.json");
+      writeFileSync(fixturePath, JSON.stringify(buildFixture()));
+
+      const cache: Record<string, unknown> = {};
+      for (const [i, name] of names.entries()) {
+        const key = buildCacheKey({ query: normalize(name), dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 });
+        cache[key] = i === 0 ? { totalHits: 0 } /* malformed -> error */ : { totalHits: 1, foods: [{ fdcId: 5000 + i, description: name }] };
+      }
+      writeFileSync(cachePath, JSON.stringify(cache));
+
+      const strict = await runEval({ live: false, fixturePath, cachePath, strict: true });
+      assert.equal(strict.exitCode, 1, "strict mode must hard-fail on the single errored row");
+      assert.equal(strict.aggregate.counts.error, 1);
+    });
+  });
+
+  test("strict mode exits 0 when every row scores (zero uncached, zero errored)", async () => {
+    await withTempDir(async (dir) => {
+      const fixturePath = path.join(dir, "fixture.json");
+      const cachePath = path.join(dir, "cache.json");
+      writeFileSync(fixturePath, JSON.stringify(buildFixture()));
+
+      const cache: CacheFile = {};
+      for (const [i, name] of names.entries()) {
+        const key = buildCacheKey({ query: normalize(name), dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 });
+        cache[key] = { totalHits: 1, foods: [{ fdcId: 5000 + i, description: name }] };
+      }
+      writeFileSync(cachePath, JSON.stringify(cache));
+
+      const strict = await runEval({ live: false, fixturePath, cachePath, strict: true });
+      assert.equal(strict.exitCode, 0);
+    });
+  });
+});
+
+// ─── 11. Fill-missing-only recording ───────────────────────────────────────
+
+describe("fill-missing-only recording", () => {
+  test("makeRecordingSearchFn never calls real() for a key already in `existing`", async () => {
+    let callCount = 0;
+    const stubReal = async (): Promise<FdcSearchResult> => {
+      callCount++;
+      return { totalHits: 1, currentPage: 1, totalPages: 1, foods: [{ fdcId: 1, description: "Should not be called" }] };
+    };
+    const params: FdcSearchParams = { query: "already cached", dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 };
+    const key = buildCacheKey(params);
+    const existing: CacheFile = { [key]: { totalHits: 1, foods: [{ fdcId: 777, description: "Existing Cached Food" }] } };
+
+    const buffer = new Map<string, CacheEntry>();
+    const recording = makeRecordingSearchFn(stubReal, buffer, existing);
+    const result = await recording(params);
+
+    assert.equal(callCount, 0, "a key already in `existing` must never trigger a network call");
+    assert.equal(result.foods[0].fdcId, 777, "the served result must come from the existing cache entry, not a fresh call");
+    assert.equal(buffer.size, 0, "fill-missing-only must not re-write a key it never fetched");
+  });
+
+  test("makeRecordingSearchFn DOES call real() for a genuinely new key, and buffers only that one", async () => {
+    let callCount = 0;
+    const stubReal = async (): Promise<FdcSearchResult> => {
+      callCount++;
+      return { totalHits: 1, currentPage: 1, totalPages: 1, foods: [{ fdcId: 2, description: "Freshly Fetched" }] };
+    };
+    const cachedParams: FdcSearchParams = { query: "cached one", dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 };
+    const newParams: FdcSearchParams = { query: "new one", dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 };
+    const existing: CacheFile = { [buildCacheKey(cachedParams)]: { totalHits: 1, foods: [{ fdcId: 1, description: "Old" }] } };
+
+    const buffer = new Map<string, CacheEntry>();
+    const recording = makeRecordingSearchFn(stubReal, buffer, existing);
+    await recording(cachedParams);
+    await recording(newParams);
+
+    assert.equal(callCount, 1, "only the genuinely new key should hit the network");
+    assert.equal(buffer.size, 1);
+    assert.ok(buffer.has(buildCacheKey(newParams)));
+  });
+});
+
+// ─── 12. Fixture <-> cache binding (--fixture registry) ────────────────────
+
+describe("fixture <-> cache binding (--fixture registry)", () => {
+  test("resolveFixtureBinding('household') binds the original default paths", () => {
+    const binding = resolveFixtureBinding("household");
+    assert.equal(binding.fixturePath, DEFAULT_FIXTURE_PATH);
+    assert.equal(binding.cachePath, DEFAULT_CACHE_PATH);
+  });
+
+  test("resolveFixtureBinding('representative') binds the representative fixture to its OWN cache file, never the household one", () => {
+    const binding = resolveFixtureBinding("representative");
+    assert.ok(binding.fixturePath.endsWith(path.join("fixtures", "household-representative-v1.json")));
+    assert.ok(binding.cachePath.endsWith(path.join("cache", "representative-search-cache.json")));
+    assert.notEqual(binding.cachePath, DEFAULT_CACHE_PATH, "the representative fixture must never share a cache file with the household fixture");
+  });
+
+  test("resolveFixtureBinding throws a clear error on an unknown key", () => {
+    assert.throws(() => resolveFixtureBinding("nonexistent"), /Unknown --fixture/);
+  });
+
+  test("FIXTURE_REGISTRY exposes exactly household + representative", () => {
+    assert.deepEqual(new Set(Object.keys(FIXTURE_REGISTRY)), new Set(["household", "representative"]));
+  });
+});
+
+// ─── 13. Aggregate cache size budget (spec S8: aggregate, not per-file) ───
+
+describe("aggregate cache size budget", () => {
+  test("checkCacheSizeBudget warn/exceeded thresholds (pure math over a byte count)", () => {
+    assert.deepEqual(checkCacheSizeBudget(1024), { bytes: 1024, warn: false, exceeded: false });
+    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).warn, true);
+    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).exceeded, false);
+    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES + 1).exceeded, true);
+    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES).exceeded, false, "exactly the hard budget is within (only >hard exceeds)");
+  });
+
+  test("aggregateCacheBytes sums every *.json file directly inside the cache dir, ignoring non-.json files", async () => {
+    await withTempDir(async (dir) => {
+      writeFileSync(path.join(dir, "search-cache.json"), "a".repeat(1000));
+      writeFileSync(path.join(dir, "representative-search-cache.json"), "b".repeat(2000));
+      writeFileSync(path.join(dir, "not-json.txt"), "c".repeat(5000));
+      assert.equal(aggregateCacheBytes(dir), 3000);
+    });
+  });
+
+  test("aggregateCacheBytes returns 0 for a nonexistent directory", () => {
+    assert.equal(aggregateCacheBytes(path.join(tmpdir(), "definitely-does-not-exist-eval-cache-test")), 0);
+  });
+
+  test("two separate under-budget files can together cross the aggregate threshold that neither crosses alone", () => {
+    const fileABytes = CACHE_HARD_BYTES - 100;
+    const fileBBytes = 200;
+    assert.equal(checkCacheSizeBudget(fileABytes).exceeded, false, "file A alone is under budget");
+    assert.equal(checkCacheSizeBudget(fileABytes + fileBBytes).exceeded, true, "the AGGREGATE of both exceeds it — this is why the budget must be checked as a sum, never per-file");
+  });
+});
+
+// ─── 14. excluded[] pass-through on RunOutcome ─────────────────────────────
+
+describe("excluded[] pass-through", () => {
+  test("runEval's outcome.excluded mirrors fixture.excluded verbatim", async () => {
+    await withTempDir(async (dir) => {
+      const fixturePath = path.join(dir, "fixture.json");
+      const cachePath = path.join(dir, "cache.json");
+      const fixture: EvalFixture = {
+        provenance: {} as unknown as EvalFixture["provenance"],
+        cases: [{ name: "known", kind: "positive", expected: { fdcId: 1, description: "Known", dataType: "Foundation" } }],
+        excluded: [{ name: "unknownthing", reason: "names-index resolution miss", occurrences: 3, packs: { "pack-1": 3 } }],
+      };
+      writeFileSync(fixturePath, JSON.stringify(fixture));
+      const cache: CacheFile = {};
+      cache[buildCacheKey({ query: normalize("known"), dataType: [...PREFERRED_DATA_TYPES], pageSize: 10 })] = { totalHits: 1, foods: [{ fdcId: 1, description: "Known" }] };
+      writeFileSync(cachePath, JSON.stringify(cache));
+
+      const outcome = await runEval({ live: false, fixturePath, cachePath });
+      assert.deepEqual(outcome.excluded, fixture.excluded);
+    });
+  });
+
+  test("runEval's outcome.excluded is [] when the fixture has no excluded field (adversarial-fixture shape)", async () => {
+    await withTempDir(async (dir) => {
+      const fixturePath = path.join(dir, "fixture.json");
+      const cachePath = path.join(dir, "cache.json");
+      writeFileSync(fixturePath, JSON.stringify({ provenance: {}, cases: [] }));
+      writeFileSync(cachePath, JSON.stringify({}));
+      const outcome = await runEval({ live: false, fixturePath, cachePath });
+      assert.deepEqual(outcome.excluded, []);
+    });
+  });
+});
+
+// ─── 15. household-representative-v1 fixture ───────────────────────────────
+
+describe("household-representative-v1 fixture", () => {
+  test("passes schema validation with the spec-measured coverage + evidence-class counts", () => {
+    const binding = resolveFixtureBinding("representative");
+    const fixture = loadFixture(binding.fixturePath);
+    assert.doesNotThrow(() => validateFixtureSchema(fixture));
+
+    assert.equal(fixture.cases.length, 142);
+    assert.equal(fixture.excluded?.length, 36);
+
+    assert.equal(fixture.provenance.coverage?.uniqueNames, 178);
+    assert.equal(fixture.provenance.coverage?.uniqueEligible, 142);
+    assert.equal(fixture.provenance.coverage?.uniqueUnresolved, 30);
+    assert.equal(fixture.provenance.coverage?.uniqueNoRef, 6);
+    assert.equal(fixture.provenance.coverage?.weightedOccurrences, 251);
+    assert.equal(fixture.provenance.coverage?.weightedEligible, 212);
+
+    const evidence = fixture.provenance.evidenceClassCounts;
+    assert.equal(evidence?.human_pin, 30);
+    assert.equal(evidence?.human_ruling, 8);
+    assert.equal(evidence?.automated_screened, 104);
+    assert.equal((evidence?.human_pin ?? 0) + (evidence?.human_ruling ?? 0) + (evidence?.automated_screened ?? 0), 142);
+
+    // Every case must carry expectedSource "dictionary-ratified" (spec S6/S11 "resolver source").
+    for (const c of fixture.cases) {
+      assert.equal(c.expectedSource, "dictionary-ratified", `case "${c.name}" is missing expectedSource`);
+    }
+  });
+
+  test("cases[] and excluded[] names are disjoint and together cover all 178 unique battery names", () => {
+    const binding = resolveFixtureBinding("representative");
+    const fixture = loadFixture(binding.fixturePath);
+    const caseNames = new Set(fixture.cases.map((c) => c.name));
+    const excludedNames = new Set((fixture.excluded ?? []).map((x) => x.name));
+    const overlap = [...caseNames].filter((n) => excludedNames.has(n));
+    assert.deepEqual(overlap, [], "a name must never be both a scoreable case and an excluded row");
+    assert.equal(caseNames.size + excludedNames.size, 178);
   });
 });
 
@@ -667,19 +1079,5 @@ describe("live request path (real FdcClient, mocked fetch)", () => {
     } finally {
       restore();
     }
-  });
-});
-
-// ─── Bonus: cache size budget thresholds ───────────────────────────────────
-
-describe("cache size budget", () => {
-  test("warn/exceeded thresholds", () => {
-    // Assert against the exported constants so this test tracks budget
-    // changes instead of hardcoding stale byte values.
-    assert.deepEqual(checkCacheSizeBudget(1024), { bytes: 1024, warn: false, exceeded: false });
-    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).warn, true);
-    assert.equal(checkCacheSizeBudget(CACHE_WARN_BYTES + 1).exceeded, false);
-    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES + 1).exceeded, true);
-    assert.equal(checkCacheSizeBudget(CACHE_HARD_BYTES).exceeded, false, "exactly the hard budget is within (only >hard exceeds)");
   });
 });
