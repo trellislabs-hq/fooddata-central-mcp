@@ -16,7 +16,16 @@
  * Major Sections:
  *   - wilsonInterval() — Wilson score interval (95% by default), the ONLY
  *     interval ever computed on a proportion here (spec S5: never on the
- *     occurrence-weighted numbers — those are descriptive, no CI)
+ *     occurrence-weighted numbers — those are descriptive, no CI). Returns
+ *     NULL for n<=0 (jump-1778 second fix-pass: a fake [0,0] interval is a
+ *     confidence claim from zero observations — never fabricate one).
+ *   - formatBoundOutward() — the ONLY place raw Wilson-interval precision is
+ *     ever rounded. Every StratumStats/RepresentativeStats object, and the
+ *     manifest JSON, keep FULL PRECISION raw numbers (auditable) — rounding
+ *     happens exclusively at this human-facing print/format boundary, and
+ *     it rounds OUTWARD (lower floored, upper ceiled), never to nearest:
+ *     interpretation sentences key off the lower bound, so rounding it UP
+ *     (nearest-rounding can do that) would overstate confidence.
  *   - computeStratumStats() — unique-name top-1/top-4 + Wilson CI over any
  *     row predicate (used for both the full set and the human-adjudicated
  *     subset — same shape, same honesty)
@@ -45,11 +54,18 @@ export interface WilsonInterval {
 
 /**
  * Wilson score interval for a proportion of `successes`/`n`, returned as
- * PERCENTAGES (0-100), clamped to [0, 100]. z=1.96 is the 95% default.
- * n<=0 returns {lower: 0, upper: 0} (no claim can be made from zero draws).
+ * FULL-PRECISION PERCENTAGES (0-100), clamped to [0, 100] — NEVER rounded
+ * here (see formatBoundOutward() for the one place display rounding
+ * happens). z=1.96 is the 95% default.
+ *
+ * n<=0 returns NULL, not a fake {lower: 0, upper: 0} — a [0,0] interval
+ * reads as "we're 95% confident the true rate is between 0% and 0%", which
+ * is a real (false) confidence claim from zero observations. Every
+ * consumer (StratumStats fields, the manifest JSON, the console print)
+ * must treat this as "no interval available", not as a degenerate zero.
  */
-export function wilsonInterval(successes: number, n: number, z = 1.96): WilsonInterval {
-  if (n <= 0) return { lower: 0, upper: 0 };
+export function wilsonInterval(successes: number, n: number, z = 1.96): WilsonInterval | null {
+  if (n <= 0) return null;
   const p = successes / n;
   const z2 = z * z;
   const denom = 1 + z2 / n;
@@ -59,6 +75,23 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): WilsonIn
     lower: Math.max(0, (center - margin) * 100),
     upper: Math.min(100, (center + margin) * 100),
   };
+}
+
+/**
+ * The ONLY place a raw Wilson-interval bound is ever rounded for display.
+ * Rounds OUTWARD, never to nearest: `direction: 'lower'` floors to 1
+ * decimal, `direction: 'upper'` ceils to 1 decimal. This is deliberately
+ * asymmetric — nearest-rounding the lower bound can round it UP (e.g. a raw
+ * 58.081... nearest-rounds to 58.1), which overstates confidence, since
+ * interpretation sentences key off the lower bound (spec S4: "usually
+ * right" requires lower bound > 50%). Callers must keep the RAW `x` for any
+ * computed/serialized value (StratumStats objects, the manifest JSON) — this
+ * function is display-only, called exclusively at the print/format
+ * boundary (e.g. eval/run.ts's console report).
+ */
+export function formatBoundOutward(x: number, direction: "lower" | "upper"): string {
+  const rounded = direction === "lower" ? Math.floor(x * 10) / 10 : Math.ceil(x * 10) / 10;
+  return rounded.toFixed(1);
 }
 
 function occurrencesOf(row: CaseResult): number {
@@ -77,20 +110,22 @@ export interface StratumStats {
   n: number;
   hits: number;
   top1Pct: number;
-  top1Wilson: WilsonInterval;
+  /** NULL when n===0 — never a fake {lower:0,upper:0}. See wilsonInterval()'s header note. */
+  top1Wilson: WilsonInterval | null;
   top4Hits: number;
   top4Pct: number;
-  top4Wilson: WilsonInterval;
+  /** NULL when n===0 — never a fake {lower:0,upper:0}. See wilsonInterval()'s header note. */
+  top4Wilson: WilsonInterval | null;
 }
 
 const EMPTY_STRATUM: StratumStats = {
   n: 0,
   hits: 0,
   top1Pct: 0,
-  top1Wilson: { lower: 0, upper: 0 },
+  top1Wilson: null,
   top4Hits: 0,
   top4Pct: 0,
-  top4Wilson: { lower: 0, upper: 0 },
+  top4Wilson: null,
 };
 
 /**

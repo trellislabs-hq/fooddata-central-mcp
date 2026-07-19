@@ -88,7 +88,7 @@ import {
 import { DEFAULT_FIXTURE_PATH, loadFixture, validateFixtureSchema, type EvalCase, type EvalFixture, type ExcludedEvalCase } from "./lib/fixture.js";
 import { computeAggregate, scoreCase, type AggregateReport, type CaseResult } from "./lib/scoring.js";
 import { CacheMissError, makeRecordingSearchFn, makeReplaySearchFn } from "./lib/search-fn.js";
-import { computeRepresentativeStats, type RepresentativeStats } from "./lib/statistics.js";
+import { computeRepresentativeStats, formatBoundOutward, type RepresentativeStats, type WilsonInterval } from "./lib/statistics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_RESULTS_DIR = path.join(__dirname, "results");
@@ -412,8 +412,15 @@ function pct(n: number): string {
   return `${n.toFixed(1)}%`;
 }
 
-function ci(interval: { lower: number; upper: number }): string {
-  return `[${interval.lower.toFixed(1)}, ${interval.upper.toFixed(1)}]`;
+/**
+ * Prints a Wilson interval OUTWARD-ROUNDED (lower floored, upper ceiled —
+ * see eval/lib/statistics.ts's formatBoundOutward() header note on why
+ * nearest-rounding the lower bound would overstate confidence). NULL
+ * (n===0, no interval available — never a fake [0,0]) prints "n/a".
+ */
+function ci(interval: WilsonInterval | null): string {
+  if (interval === null) return "n/a";
+  return `[${formatBoundOutward(interval.lower, "lower")}, ${formatBoundOutward(interval.upper, "upper")}]`;
 }
 
 function printReport(runId: string, live: boolean, fixtureKey: string, outcome: RunOutcome): void {

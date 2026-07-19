@@ -111,7 +111,9 @@ import {
   computeRepresentativeStats,
   computeStratumStats,
   computeWeightedPositiveStats,
+  formatBoundOutward,
   wilsonInterval,
+  type WilsonInterval,
 } from "./lib/statistics.js";
 import { FIXTURE_REGISTRY, resolveFixtureBinding, runEval } from "./run.js";
 import {
@@ -1097,22 +1099,30 @@ describe("household-representative-v1 fixture", () => {
 
 // ─── 16. Statistics layer (eval/lib/statistics.ts, jump-1778 fix-pass) ────
 
+/** Narrows WilsonInterval | null -> WilsonInterval for tests that already know (by construction) n>0. */
+function assertRealInterval(interval: WilsonInterval | null): asserts interval is WilsonInterval {
+  assert.ok(interval !== null, "expected a real (non-null) Wilson interval, got null");
+}
+
 describe("statistics layer: wilsonInterval", () => {
-  test("n<=0 returns {lower:0, upper:0} — no claim can be made from zero draws", () => {
-    assert.deepEqual(wilsonInterval(0, 0), { lower: 0, upper: 0 });
-    assert.deepEqual(wilsonInterval(5, -1), { lower: 0, upper: 0 });
+  test("n<=0 returns NULL — not a fake {lower:0, upper:0} (a [0,0] interval is a confidence claim from zero observations)", () => {
+    assert.equal(wilsonInterval(0, 0), null);
+    assert.equal(wilsonInterval(5, -1), null);
   });
 
   test("known reference values (hand-computed Wilson score interval, z=1.96)", () => {
     const half = wilsonInterval(50, 100);
+    assertRealInterval(half);
     assert.ok(Math.abs(half.lower - 40.383) < 0.01, `lower ${half.lower}`);
     assert.ok(Math.abs(half.upper - 59.617) < 0.01, `upper ${half.upper}`);
 
     const zero = wilsonInterval(0, 10);
+    assertRealInterval(zero);
     assert.ok(Math.abs(zero.lower - 0) < 0.01);
     assert.ok(Math.abs(zero.upper - 27.754) < 0.01);
 
     const all = wilsonInterval(10, 10);
+    assertRealInterval(all);
     assert.ok(Math.abs(all.lower - 72.246) < 0.01);
     assert.equal(all.upper, 100);
   });
@@ -1129,7 +1139,31 @@ describe("statistics layer: wilsonInterval", () => {
     for (const [hits, n] of cases) {
       const pointPct = (hits / n) * 100;
       const interval = wilsonInterval(hits, n);
+      assertRealInterval(interval);
       assert.ok(pointPct >= interval.lower - 1e-9 && pointPct <= interval.upper + 1e-9, `${hits}/${n}: point ${pointPct} not in [${interval.lower}, ${interval.upper}]`);
+    }
+  });
+
+  test("OUTWARD-ROUNDING exact values (jump-1778 second fix-pass): the 94/142 and 25/38 reference cases from the dry-demo battery", () => {
+    // 94/142 (66.2%): raw lower=58.081334888204935, raw upper=73.45973432661442
+    const battery = wilsonInterval(94, 142);
+    assertRealInterval(battery);
+    assert.equal(formatBoundOutward(battery.lower, "lower"), "58.0", "floor(58.0813...) must be 58.0, NOT nearest-rounded 58.1");
+    assert.equal(formatBoundOutward(battery.upper, "upper"), "73.5");
+
+    // 25/38 (65.8%): raw lower=49.891811629074546, raw upper=78.78777997354105
+    const human = wilsonInterval(25, 38);
+    assertRealInterval(human);
+    assert.equal(formatBoundOutward(human.lower, "lower"), "49.8", "floor(49.8918...) must be 49.8, NOT nearest-rounded 49.9");
+    assert.equal(formatBoundOutward(human.upper, "upper"), "78.8");
+  });
+
+  test("formatBoundOutward never rounds the lower bound UP or the upper bound DOWN relative to the raw value", () => {
+    for (const raw of [0, 12.34, 49.891811629074546, 58.081334888204935, 73.45973432661442, 99.95, 100]) {
+      const lower = Number(formatBoundOutward(raw, "lower"));
+      const upper = Number(formatBoundOutward(raw, "upper"));
+      assert.ok(lower <= raw + 1e-9, `floor-rounded lower ${lower} must never exceed the raw value ${raw}`);
+      assert.ok(upper >= raw - 1e-9, `ceil-rounded upper ${upper} must never be less than the raw value ${raw}`);
     }
   });
 });
@@ -1146,6 +1180,22 @@ describe("statistics layer: computeStratumStats / computeWeightedPositiveStats /
     assert.equal(stratum.hits, 1);
     assert.equal(stratum.top1Pct, 50);
     assert.deepEqual(stratum.top1Wilson, wilsonInterval(1, 2));
+  });
+
+  test("computeStratumStats on an EMPTY set (n=0) carries NULL Wilson intervals, never a fake [0,0] (jump-1778 second fix-pass)", () => {
+    const empty = computeStratumStats([], () => true);
+    assert.equal(empty.n, 0);
+    assert.equal(empty.hits, 0);
+    assert.equal(empty.top1Pct, 0);
+    assert.equal(empty.top1Wilson, null);
+    assert.equal(empty.top4Wilson, null);
+
+    // Same result when the predicate matches nothing (a non-empty rows array, empty stratum).
+    const rows: CaseResult[] = [row({ name: "a", status: "hit", evidenceClass: "automated_screened" })];
+    const noMatch = computeStratumStats(rows, (r) => r.evidenceClass === "human_pin");
+    assert.equal(noMatch.n, 0);
+    assert.equal(noMatch.top1Wilson, null);
+    assert.equal(noMatch.top4Wilson, null);
   });
 
   test("computeWeightedPositiveStats produces a DIFFERENT number than the unique stratum when occurrences are skewed — proves weighting actually changes the answer", () => {
@@ -1345,13 +1395,27 @@ describe("representative fixture — dry statistics demo (no live cache; synthet
     assert.equal(stats.coverage.weightedTotal, 251);
 
     assert.equal(stats.unique.n, 142);
+    assert.equal(stats.unique.hits, 94, "sanity: the i%3===0-miss synthetic pattern over 142 sorted cases yields exactly 94 hits");
+    assertRealInterval(stats.unique.top1Wilson);
     assert.ok(stats.unique.top1Pct > stats.unique.top1Wilson.lower && stats.unique.top1Pct < stats.unique.top1Wilson.upper);
 
     assert.equal(stats.humanAdjudicated.n, 38, "30 human_pin + 8 human_ruling");
+    assert.equal(stats.humanAdjudicated.hits, 25, "sanity: the same synthetic pattern restricted to the human-adjudicated 38 yields 25 hits");
+    assertRealInterval(stats.humanAdjudicated.top1Wilson);
 
     assert.ok(stats.weighted.n >= stats.unique.n, "weighted denominator counts every occurrence, so it's >= the unique denominator");
 
     assert.equal(Object.keys(stats.byPack).length, 4, "all four packs should appear in the rollup");
+
+    // OUTWARD-ROUNDING exact values (jump-1778 second fix-pass DONE WHEN):
+    // 94/142 (66.2%) unique top-1 -> [58.0, 73.5] (NOT nearest-rounded [58.1, 73.5]);
+    // 25/38 (65.8%) human-adjudicated top-1 -> [49.8, 78.8] (NOT nearest-rounded [49.9, 78.8]).
+    assert.equal(formatBoundOutward(stats.unique.top1Wilson.lower, "lower"), "58.0");
+    assert.equal(formatBoundOutward(stats.unique.top1Wilson.upper, "upper"), "73.5");
+    assert.equal(formatBoundOutward(stats.humanAdjudicated.top1Wilson.lower, "lower"), "49.8");
+    assert.equal(formatBoundOutward(stats.humanAdjudicated.top1Wilson.upper, "upper"), "78.8");
+
+    assertRealInterval(stats.unique.top4Wilson);
 
     console.log("");
     console.log("── representative fixture: dry statistics demo (synthetic scoring, NOT a real measurement) ──");
@@ -1360,20 +1424,34 @@ describe("representative fixture — dry statistics demo (no live cache; synthet
         `weighted ${stats.coverage.weightedEligible}/${stats.coverage.weightedTotal} (${stats.coverage.weightedCoveragePct.toFixed(1)}%)`
     );
     console.log(
-      `unique top-1:   ${stats.unique.top1Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${stats.unique.top1Wilson.lower.toFixed(1)}, ${stats.unique.top1Wilson.upper.toFixed(1)}]`
+      `unique top-1:   ${stats.unique.top1Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${formatBoundOutward(stats.unique.top1Wilson.lower, "lower")}, ${formatBoundOutward(stats.unique.top1Wilson.upper, "upper")}]`
     );
     console.log(
-      `unique top-4:   ${stats.unique.top4Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${stats.unique.top4Wilson.lower.toFixed(1)}, ${stats.unique.top4Wilson.upper.toFixed(1)}]`
+      `unique top-4:   ${stats.unique.top4Pct.toFixed(1)}% (n=${stats.unique.n}) 95% CI [${formatBoundOutward(stats.unique.top4Wilson.lower, "lower")}, ${formatBoundOutward(stats.unique.top4Wilson.upper, "upper")}]`
     );
     console.log(`weighted top-1: ${stats.weighted.top1Pct.toFixed(1)}% (pack-item-weighted, n=${stats.weighted.n}, descriptive — no CI)`);
     console.log(`weighted top-4: ${stats.weighted.top4Pct.toFixed(1)}% (pack-item-weighted, n=${stats.weighted.n}, descriptive — no CI)`);
     console.log(
-      `human-adjudicated top-1: ${stats.humanAdjudicated.top1Pct.toFixed(1)}% (n=${stats.humanAdjudicated.n}) 95% CI [${stats.humanAdjudicated.top1Wilson.lower.toFixed(1)}, ${stats.humanAdjudicated.top1Wilson.upper.toFixed(1)}]`
+      `human-adjudicated top-1: ${stats.humanAdjudicated.top1Pct.toFixed(1)}% (n=${stats.humanAdjudicated.n}) 95% CI [${formatBoundOutward(stats.humanAdjudicated.top1Wilson.lower, "lower")}, ${formatBoundOutward(stats.humanAdjudicated.top1Wilson.upper, "upper")}]`
     );
     for (const packId of Object.keys(stats.byPack).sort()) {
       const p = stats.byPack[packId];
       console.log(`  ${packId}: weighted top-1 ${p.top1Pct.toFixed(1)}% (scored ${p.weightedHits}/${p.weightedScored} weighted, ${p.uniqueHits}/${p.uniqueScored} unique)`);
     }
+  });
+
+  test("n=0 human-adjudicated stratum (a fixture with zero human_pin/human_ruling rows scored) carries NULL intervals end-to-end through computeRepresentativeStats", () => {
+    const rows: CaseResult[] = [{ name: "a", kind: "positive", status: "hit", evidenceClass: "automated_screened" }];
+    const stats = computeRepresentativeStats(rows, []);
+    assert.equal(stats.humanAdjudicated.n, 0);
+    assert.equal(stats.humanAdjudicated.top1Wilson, null);
+    assert.equal(stats.humanAdjudicated.top4Wilson, null);
+    // The manifest embeds representativeStats wholesale (see run.ts buildManifest) — JSON.stringify
+    // must serialize the null literally, never drop the key or fabricate [0,0].
+    const serialized = JSON.parse(JSON.stringify(stats.humanAdjudicated));
+    assert.equal(serialized.top1Wilson, null);
+    assert.equal(serialized.top4Wilson, null);
+    assert.ok("top1Wilson" in serialized, "the key must be PRESENT with value null, not dropped");
   });
 });
 
