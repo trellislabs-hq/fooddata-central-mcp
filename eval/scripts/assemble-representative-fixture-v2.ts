@@ -18,6 +18,28 @@
  *   cross-repo import (recipe-app's ingredient-parser.js/aggregate.js/
  *   ingredient-name-index.js logic is PORTED below, not imported).
  *
+ *   jump-1778 P2 (this pass) REPLACED the original "exact resolution tier
+ *   only" scope with the FULL production dictionaryLookup() cascade (Thomas
+ *   ruling 2026-07-19: exact-tier-only eligibility undercounts — 843/2224
+ *   distinct keys — and biases the frame toward easy names). The cascade
+ *   added below (SAFE_PREP_WORDS/lookupCandidate/dictionaryLookup) is a
+ *   faithful port of recipe-app @ 7e681cb scripts/lib/ingredient-parser.js
+ *   lookupCandidate()/dictionaryLookup() (~L439-675) — NOT the simplified,
+ *   already-diverged cascade at src/normalize.ts. That file is this MCP
+ *   server's OWN find_food candidate-query builder against a 14-entry food-
+ *   identity alias table (wired from src/find-food.ts — genuine production
+ *   code, just not a faithful recipe-app port), self-documented as "adapted
+ *   ...since there is no local ingredient dictionary here." It diverges from
+ *   7e681cb's real dictionaryLookup() in every one of: no
+ *   QUALIFIER_ONLY_KEYS guard at all; SAFE_PREP_WORDS missing 'freshly'/
+ *   'softened'/'torn' (a stale, pre-jump-1701 word list); prep-strip returns
+ *   the FIRST hit found rather than the most-specific hit across the whole
+ *   safe-prefix chain; or-split tries only a direct alternative match,
+ *   missing the or_split+shorten and or_split+front_drop sub-stages
+ *   entirely. Left untouched per CONSTRAINTS (out of scope, and correct on
+ *   its own terms for its actual job); every divergence above is cited
+ *   again, in-line, at each cascade tier below.
+ *
  * Algorithm:
  *   1. Read data/shared-recipes.json at the resolved --commit via git show
  *      (raw Buffer, for an exact content sha256 — NOT a decoded-then-
@@ -34,27 +56,38 @@
  *      port of recipe-app's scripts/lib/ingredient-parser.js function of the
  *      same name (quantity/unit/prep stripping, container-size folding,
  *      qualifier-only-key guard, THEN an internal canonicalize() call against
- *      the SAME nameIndex) — produces a `key`. `dict[key]` is then the
- *      "resolve via name-index to a canonical entry" step: since
- *      extractProductKey's own canonicalize() already ran the exact+plural
- *      nameIndex lookup internally (passthrough: hit -> canonical dict key,
- *      miss -> the lowercased leftover text unchanged), a bare object-
- *      property lookup on the resulting key is what surfaces the canonical
- *      DictEntry. This is intentionally the "exact" tier only — it does NOT
- *      port recipe-app's separate, much larger dictionaryLookup() cascade
- *      (prep-word stripping beyond extractProductKey's own inline qualifier
- *      strip, drop-last-word, or-split, the ingredient CACHE, or the LLM
- *      fallback) — out of scope per the dispatch, which named exactly
- *      "extractProductKey ... then resolve via name-index". The corpus-wide
- *      hit rate here is therefore materially LOWER than production's
- *      documented ~99% (which benefits from the full cascade + cache + LLM);
- *      the gap is exactly what the "unresolved (parser-tail)" coverage
- *      bucket below reports honestly.
- *   5. FREQUENCY = count of DISTINCT recipes each canonical entry (or, for
- *      unresolved lines, each raw extracted key) appears in — a recipe using
- *      the same key twice (e.g. shredded AND cubed cheddar in one recipe)
- *      contributes ONE occurrence, not two (aggregateCorpus dedupes with a
- *      per-recipe Set before the cross-recipe tally).
+ *      the SAME nameIndex — production's OWN inline resolve attempt, exact +
+ *      -es/-s plural only) — produces a `key`. That key is then run through
+ *      dictionaryLookup(dict, nameIndex, key) — a faithful port of
+ *      production's SEPARATE, SECOND resolution stage — mirroring
+ *      production's actual resolveIngredientLine() = extractProductKey() +
+ *      dictionaryLookup() pipeline (server.js @ 7e681cb, wired live since
+ *      jump-1701/P2a per recipe-app/CLAUDE.md's own "dictionaryLookup()
+ *      fallbacks" bullet) EXACTLY, MINUS the MISS-ONLY colon-artifact
+ *      fallback (tryColonFallback — a narrow blog-formatting special case
+ *      layered on top of the cascade, not part of "the resolution cascade"
+ *      this pass's dispatch scoped: "exact -> plural -> safe-prep-word-strip
+ *      -> drop-last-word -> or-split"). dictionaryLookup's OWN qualifier-
+ *      only-key guard (isQualifierOnlyKey, checked BEFORE any dict/index
+ *      lookup, at every candidate — already ALSO used inside
+ *      extractProductKey's own inline canonicalize gate, so this is the SAME
+ *      guard reused, not a new one) is what makes this pass a CORRECTNESS
+ *      fix as well as a coverage expansion: the prior exact-tier-only
+ *      assembler's raw `dict[key]` check had no such guard at its own layer,
+ *      so a qualifier-only parser-tail residue that survives
+ *      extractProductKey's inline guard unresolved (e.g. "large", which the
+ *      base dictionary carries as a poisoned literal entry — see
+ *      QUALIFIER_ONLY_KEYS's own block comment below) could still mis-
+ *      resolve via the bare `dict[key]` hasOwnProperty check; the full
+ *      cascade now correctly refuses it, matching production.
+ *   5. FREQUENCY = count of DISTINCT recipes each canonical entry appears
+ *      in — the cascade's OWN matchedKey on a hit (NOT necessarily
+ *      extractProductKey's raw `key`, which may still be a pre-cascade
+ *      candidate like "sliced mushroom") — or, for unresolved lines, each
+ *      raw extracted key. A recipe using the same key twice (e.g. shredded
+ *      AND cubed cheddar in one recipe) contributes ONE occurrence, not two
+ *      (aggregateCorpus dedupes with a per-recipe Set before the cross-recipe
+ *      tally).
  *   6. Each resolved key classifies into eligible (has fdc_ref, preferred
  *      data_type) / no_ref (resolved, no fdc_ref) / non_preferred_type
  *      (resolved, has fdc_ref, but data_type isn't Foundation/SR Legacy/
@@ -63,6 +96,12 @@
  *      per eligible row is classifyEvidence(), IMPORTED UNCHANGED from the
  *      v1 assembler (same pin-binding guard: a fdc-pins.json entry only
  *      counts as human_pin when its OWN fdc_id matches THIS row's fdc_ref).
+ *      Each eligible row's `reason` records which cascade tier resolved it
+ *      (spec DONE WHEN: "records WHICH tier resolved each newly-eligible
+ *      name") — the FIRST-SEEN tier for that canonical key across the
+ *      corpus (a key may be reachable via more than one raw ingredient
+ *      phrasing; one representative tier is recorded, not one per
+ *      occurrence).
  *   7. A defensive name-collision dedup (dedupeCandidatesByName) runs across
  *      ALL candidates (eligible + all three excluded buckets) BEFORE ranking
  *      — priority eligible > no_ref > non_preferred_type > unresolved, ties
@@ -92,22 +131,36 @@
  *     resolveName — the SAME strict lookup, passthrough-wrapped here exactly
  *     as production's ingredient-name-index.js does), extractProductKey()
  *     (ingredient-parser.js, the full faithful port)
- *   - aggregateCorpus() — per-recipe within-recipe dedup, cross-recipe
- *     distinct-recipe-count tally, exported for direct unit testing
+ *   - jump-1778 P2: the full dictionaryLookup() cascade — SAFE_PREP_WORDS
+ *     (35-word set, matches 7e681cb exactly incl. 'freshly'/'softened'/
+ *     'torn'), lookupCandidate() (literal dict-key check, then — unless
+ *     literalOnly — the names index; qualifier-guarded at every candidate),
+ *     dictionaryLookup() (the 5-tier ladder: exact,literalOnly -> plural
+ *     -es/-s/+s -> prep-strip most-specific-wins -> drop-last -> or-split
+ *     direct/shorten/front-drop) — both re-implemented locally against
+ *     explicit dict/nameIndex params (the same module-closure-to-parameter
+ *     adaptation canonicalize() above already makes), faithful to
+ *     recipe-app @ 7e681cb scripts/lib/ingredient-parser.js L439-675
+ *   - aggregateCorpus() — per-recipe within-recipe dedup (now keyed by the
+ *     CASCADE's matchedKey, not just extractProductKey's raw key), cross-
+ *     recipe distinct-recipe-count tally, first-seen cascade tier per
+ *     canonical key, exported for direct unit testing
  *   - classifyResolvedKey() / unresolvedToExcluded() — per-key bucket
  *     decision (eligible/no_ref/non_preferred_type/unresolved), evidence
- *     class wiring
+ *     class wiring, cascade-tier-aware reason string
  *   - dedupeCandidatesByName() / rankEligible() — pure, exported, directly
  *     unit-testable name-collision guard and top-N ranking with documented
  *     tie order
  *   - buildFixtureV2() — the PURE core (no I/O): takes already-loaded
  *     recipes/dict/pins/rulings/hashes and returns the assembled,
- *     schema-validated EvalFixture + a summary object. Calling this twice
- *     with identical input is how the byte-identical-rerun test works
- *     without needing a live git corpus fetch inside the test.
+ *     schema-validated EvalFixture + a summary object (incl. per-tier
+ *     newly-eligible counts — eligible rows resolved via any tier other
+ *     than "exact"). Calling this twice with identical input is how the
+ *     byte-identical-rerun test works without needing a live git corpus
+ *     fetch inside the test.
  *   - main() — orchestrates the git reads, calls buildFixtureV2(), writes
  *     the fixture, prints the summary (coverage unique+weighted, evidence
- *     class counts, top-20 frequency head)
+ *     class counts, per-tier newly-eligible breakdown, top-20 frequency head)
  *
  * Dependencies: node:child_process (git shell-outs), node:crypto (sha256),
  *   node:fs, node:path, node:url, ../lib/fixture.js (types +
@@ -141,6 +194,7 @@ import {
   PREFERRED_DATA_TYPES,
   classifyEvidence,
   type Dictionary,
+  type DictEntry,
   type FdcPins,
   type IdentityRulings,
 } from "./assemble-representative-fixture.js";
@@ -463,6 +517,200 @@ export function extractProductKey(raw: string, nameIndex: Map<string, string>): 
   return { key, qty, unit };
 }
 
+// ─── jump-1778 P2: the full dictionaryLookup() cascade ─────────────────────
+// Faithful port of recipe-app @ 7e681cb scripts/lib/ingredient-parser.js
+// lookupCandidate() (~L513-523) and dictionaryLookup() (~L528-675) — the
+// SECOND resolution stage production runs AFTER extractProductKey's own
+// inline canonicalize() call above (production: resolveIngredientLine() =
+// extractProductKey() -> dictionaryLookup(extracted.key), server.js @
+// 7e681cb, wired live since jump-1701/P2a). Module-closure `ingredientDict`/
+// `nameIndex` variables replaced by explicit parameters — the SAME
+// adaptation canonicalize() above already makes, not a behavior change.
+//
+// Divergence from src/normalize.ts's dictionaryLookup() (this MCP server's
+// OWN find_food candidate-query builder, a DIFFERENT, already-diverged,
+// intentionally-simplified cascade over a 14-entry alias table — left
+// untouched per CONSTRAINTS): see the file header's jump-1778 P2 note for
+// the full list (no qualifier guard, stale SAFE_PREP_WORDS, first-hit-wins
+// prep-strip, missing two of three or-split sub-stages).
+
+/**
+ * Words that NEVER change what physical product you buy at the store — safe
+ * to strip from the front of a candidate key during the prep-strip cascade
+ * tier. Ported VERBATIM from recipe-app @ 7e681cb
+ * scripts/lib/ingredient-parser.js dictionaryLookup() (~L585-594) — 35
+ * words, including 'freshly'/'softened'/'torn' (added jump-1701/P1; the
+ * src/normalize.ts port above predates that addition and is missing all
+ * three). Words NOT in this list (fresh, frozen, dried, canned, cooked, raw,
+ * uncooked, boneless, skinless, whole, ground, roasted, toasted, boiled)
+ * intentionally excluded — they can change the product/food identity (e.g.
+ * "roasted red pepper" is a different product than "red pepper").
+ */
+export const SAFE_PREP_WORDS = new Set([
+  "chopped", "sliced", "diced", "minced", "grated", "shredded",
+  "sauteed", "steamed",
+  "roughly", "finely", "coarsely", "thinly", "thickly",
+  "lightly", "firmly", "loosely", "tightly", "packed",
+  "good", "quality", "crusty", "sturdy", "hard",
+  "peeled", "halved", "quartered", "julienned", "cubed",
+  "rinsed", "drained", "trimmed", "pitted",
+  "freshly", "softened", "torn",
+]);
+
+export type CascadeMethod =
+  | "exact"
+  | "plural_es"
+  | "plural_s"
+  | "plural_add_s"
+  | "prep_strip"
+  | "prep_strip+plural"
+  | "drop_last"
+  | "or_split"
+  | "or_split+shorten"
+  | "or_split+front_drop";
+
+export interface CascadeMatchMeta {
+  method: CascadeMethod;
+  matchedKey: string;
+  /** The prep words stripped off the front, when method starts with "prep_strip". */
+  stripped?: string;
+}
+
+export interface CascadeHit {
+  entry: DictEntry;
+  matchedKey: string;
+}
+
+/**
+ * Ported from recipe-app scripts/lib/ingredient-parser.js lookupCandidate()
+ * (~L513-523). Resolves a single candidate string: qualifier-only guard
+ * FIRST (a bare qualifier word, or a trivial inflection of one, is never a
+ * valid product key at ANY cascade stage — see QUALIFIER_ONLY_KEYS above),
+ * then the literal dict KEY (production: `ingredientDict[candidate]`, a
+ * plain truthy check — ported as-is, including its theoretical
+ * prototype-property quirk, since this is a faithful port, not a rewrite),
+ * then — unless `literalOnly` — the names index. Returns null on a miss at
+ * every stage.
+ */
+export function lookupCandidate(dict: Dictionary, nameIndex: Map<string, string>, candidate: string, literalOnly = false): CascadeHit | null {
+  if (isQualifierOnlyKey(candidate)) return null;
+  if (dict[candidate]) return { entry: dict[candidate], matchedKey: candidate };
+  if (literalOnly) return null;
+  const indexed = nameIndex.get(candidate.toLowerCase());
+  if (indexed !== undefined && dict[indexed]) return { entry: dict[indexed], matchedKey: indexed };
+  return null;
+}
+
+/**
+ * Ported from recipe-app scripts/lib/ingredient-parser.js dictionaryLookup()
+ * (~L528-675) — the full 5-tier fallback ladder run on extractProductKey's
+ * output, matching recipe-app/CLAUDE.md's own summary exactly: "exact ->
+ * plural (-s, -es, +s) -> safe prep word stripping ... -> drop last word ->
+ * or-split (tries all alternatives)". Returns null on a total miss (never
+ * resolves to a qualifier-only residue, at any tier — the guard runs before
+ * even the top-level exact check, so a key that WOULD pluralize into a
+ * resolvable-but-wrong candidate, e.g. "large" -> "larges", is refused
+ * unconditionally).
+ *
+ * Tier 1 — exact (literalOnly): dict-key-only match on `key` itself, no
+ *   names-index fallback (production: this keeps the cascade's FIRST stage
+ *   byte-identical to the dict's own literal keys, distinguishing which
+ *   DERIVED stage — prep_strip, drop_last, etc. — restores a name absorbed
+ *   into another entry's names[]).
+ * Tier 2 — plural: -es strip, then -s strip, then +s add (each via
+ *   lookupCandidate, non-literal — dict key OR names index).
+ * Tier 3 — prep-strip: walks the SAFE_PREP_WORDS prefix chain one word at a
+ *   time (stopping at the first non-safe word), trying each remaining
+ *   suffix AND its -es/-s/+s plural variants at every step, then picks the
+ *   MOST SPECIFIC resolving candidate across the WHOLE chain (matchedKey
+ *   word count DESC, ties keep first-found order) — NOT the first hit found
+ *   while walking (a shorter strip can hit a more-generic entry's names[]
+ *   before a deeper strip reaches the product's own specific literal entry;
+ *   production's own jump-1701/P1b fix-pass comment documents this exactly).
+ * Tier 4 — drop-last-word: single attempt, one word off the end.
+ * Tier 5 — or-split: splits on " or " (a bare "/" is first rewritten to
+ *   " or "), then per alternative tries (a) a direct match, (b) progressive
+ *   shortening from the END (or_split+shorten), (c) progressive dropping
+ *   from the FRONT (or_split+front_drop) — in that order, first hit wins.
+ */
+export function dictionaryLookup(dict: Dictionary, nameIndex: Map<string, string>, key: string): { entry: DictEntry; matchMeta: CascadeMatchMeta } | null {
+  if (!key) return null;
+  if (isQualifierOnlyKey(key)) return null;
+
+  {
+    const hit = lookupCandidate(dict, nameIndex, key, true);
+    if (hit) return { entry: hit.entry, matchMeta: { method: "exact", matchedKey: hit.matchedKey } };
+  }
+
+  if (key.endsWith("es")) {
+    const hit = lookupCandidate(dict, nameIndex, key.slice(0, -2));
+    if (hit) return { entry: hit.entry, matchMeta: { method: "plural_es", matchedKey: hit.matchedKey } };
+  }
+  if (key.endsWith("s")) {
+    const hit = lookupCandidate(dict, nameIndex, key.slice(0, -1));
+    if (hit) return { entry: hit.entry, matchMeta: { method: "plural_s", matchedKey: hit.matchedKey } };
+  }
+  if (!key.endsWith("s")) {
+    const hit = lookupCandidate(dict, nameIndex, key + "s");
+    if (hit) return { entry: hit.entry, matchMeta: { method: "plural_add_s", matchedKey: hit.matchedKey } };
+  }
+
+  const words = key.split(" ");
+  const prepStripCandidates: Array<{ stripped: string; method: CascadeMethod; hit: CascadeHit }> = [];
+  for (let start = 1; start < words.length; start++) {
+    if (!SAFE_PREP_WORDS.has(words[start - 1])) break;
+    const stripped = words.slice(0, start).join(" ");
+    const shorter = words.slice(start).join(" ");
+    const attempts: Array<{ text: string; method: CascadeMethod }> = [{ text: shorter, method: "prep_strip" }];
+    if (shorter.endsWith("es")) attempts.push({ text: shorter.slice(0, -2), method: "prep_strip+plural" });
+    if (shorter.endsWith("s")) attempts.push({ text: shorter.slice(0, -1), method: "prep_strip+plural" });
+    if (!shorter.endsWith("s")) attempts.push({ text: shorter + "s", method: "prep_strip+plural" });
+    for (const attempt of attempts) {
+      const hit = lookupCandidate(dict, nameIndex, attempt.text);
+      if (hit) prepStripCandidates.push({ stripped, method: attempt.method, hit });
+    }
+  }
+  if (prepStripCandidates.length > 0) {
+    const sorted = [...prepStripCandidates].sort((a, b) => b.hit.matchedKey.split(" ").length - a.hit.matchedKey.split(" ").length);
+    const best = sorted[0];
+    return { entry: best.hit.entry, matchMeta: { method: best.method, matchedKey: best.hit.matchedKey, stripped: best.stripped } };
+  }
+
+  if (words.length > 1) {
+    const shorter = words.slice(0, -1).join(" ");
+    const hit = lookupCandidate(dict, nameIndex, shorter);
+    if (hit) return { entry: hit.entry, matchMeta: { method: "drop_last", matchedKey: hit.matchedKey } };
+  }
+
+  const orKey = key.includes("/") ? key.replace(/\//g, " or ") : key;
+  if (orKey.includes(" or ")) {
+    const alternatives = orKey.split(" or ").map((s) => s.trim()).filter(Boolean);
+    for (const alt of alternatives) {
+      {
+        const hit = lookupCandidate(dict, nameIndex, alt);
+        if (hit) return { entry: hit.entry, matchMeta: { method: "or_split", matchedKey: hit.matchedKey } };
+      }
+      const altWords = alt.split(" ");
+      for (let len = altWords.length - 1; len >= 1; len--) {
+        const shorter = altWords.slice(0, len).join(" ");
+        if (shorter) {
+          const hit = lookupCandidate(dict, nameIndex, shorter);
+          if (hit) return { entry: hit.entry, matchMeta: { method: "or_split+shorten", matchedKey: hit.matchedKey } };
+        }
+      }
+      for (let start = 1; start < altWords.length; start++) {
+        const trimmed = altWords.slice(start).join(" ");
+        if (trimmed) {
+          const hit = lookupCandidate(dict, nameIndex, trimmed);
+          if (hit) return { entry: hit.entry, matchMeta: { method: "or_split+front_drop", matchedKey: hit.matchedKey } };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 // ─── corpus loading + per-recipe frequency aggregation ────────────────────
 
 export interface RecipeCorpusEntry {
@@ -480,10 +728,12 @@ export function loadCorpusRecipes(raw: string): RecipeCorpusEntry[] {
 }
 
 export interface CorpusAggregate {
-  /** Canonical dict key -> count of DISTINCT recipes it appears in (within-recipe duplicates collapsed). */
+  /** Canonical dict key (the CASCADE's matchedKey, per dictionaryLookup — not necessarily extractProductKey's raw key) -> count of DISTINCT recipes it appears in (within-recipe duplicates collapsed). */
   resolvedKeyRecipeCount: Map<string, number>;
-  /** Raw extractProductKey key with NO dict entry -> count of DISTINCT recipes it appears in. */
+  /** Raw extractProductKey key with NO cascade resolution -> count of DISTINCT recipes it appears in. */
   unresolvedKeyRecipeCount: Map<string, number>;
+  /** Canonical dict key -> the FIRST-SEEN cascade tier that resolved it (jump-1778 P2, spec DONE WHEN: "records WHICH tier resolved each newly-eligible name"). A key reachable via more than one raw phrasing keeps whichever tier was encountered first in corpus order — one representative tier per key, not one per occurrence. */
+  resolvedKeyTier: Map<string, CascadeMethod>;
   corpusIngredientLineCount: number;
   /** Lines whose extractProductKey key was empty/falsy — skipped entirely (no name to report under the fixture schema's non-empty-name rule), tallied here for honest provenance. */
   emptyKeyLineCount: number;
@@ -491,14 +741,21 @@ export interface CorpusAggregate {
 }
 
 /**
- * Per recipe: extractProductKey every ingredient line, dedupe by key WITHIN
- * the recipe (a Set — the within-recipe-dedup rule spec S1 requires), then
- * tally each distinct key's cross-recipe occurrence count. Exported for
- * direct unit testing (the "within-recipe dedup" DONE WHEN item).
+ * Per recipe: extractProductKey every ingredient line, then run the result
+ * through the FULL dictionaryLookup() cascade (jump-1778 P2 — exact,
+ * literalOnly -> plural -> prep-strip -> drop-last -> or-split; see that
+ * function's own doc comment for the tier-by-tier detail), dedupe by the
+ * CASCADE's resolved matchedKey WITHIN the recipe (a Set — the within-recipe
+ * dedup rule spec S1 requires; two lines that resolve to the SAME canonical
+ * entry via DIFFERENT tiers, e.g. "mushroom" and "sliced mushrooms" in one
+ * recipe, still dedupe to one occurrence), then tally each distinct key's
+ * cross-recipe occurrence count. Exported for direct unit testing (the
+ * "within-recipe dedup" DONE WHEN item).
  */
 export function aggregateCorpus(recipes: RecipeCorpusEntry[], dict: Dictionary, nameIndex: Map<string, string>): CorpusAggregate {
   const resolvedKeyRecipeCount = new Map<string, number>();
   const unresolvedKeyRecipeCount = new Map<string, number>();
+  const resolvedKeyTier = new Map<string, CascadeMethod>();
   let corpusIngredientLineCount = 0;
   let emptyKeyLineCount = 0;
 
@@ -518,8 +775,11 @@ export function aggregateCorpus(recipes: RecipeCorpusEntry[], dict: Dictionary, 
         emptyKeyLineCount++;
         continue;
       }
-      if (Object.prototype.hasOwnProperty.call(dict, key)) {
-        recipeResolvedKeys.add(key);
+      const resolution = dictionaryLookup(dict, nameIndex, key);
+      if (resolution) {
+        const canonicalKey = resolution.matchMeta.matchedKey;
+        recipeResolvedKeys.add(canonicalKey);
+        if (!resolvedKeyTier.has(canonicalKey)) resolvedKeyTier.set(canonicalKey, resolution.matchMeta.method);
       } else {
         recipeUnresolvedKeys.add(key);
       }
@@ -529,7 +789,7 @@ export function aggregateCorpus(recipes: RecipeCorpusEntry[], dict: Dictionary, 
     for (const key of recipeUnresolvedKeys) unresolvedKeyRecipeCount.set(key, (unresolvedKeyRecipeCount.get(key) ?? 0) + 1);
   }
 
-  return { resolvedKeyRecipeCount, unresolvedKeyRecipeCount, corpusIngredientLineCount, emptyKeyLineCount, recipesProcessed: recipes.length };
+  return { resolvedKeyRecipeCount, unresolvedKeyRecipeCount, resolvedKeyTier, corpusIngredientLineCount, emptyKeyLineCount, recipesProcessed: recipes.length };
 }
 
 // ─── classification (bucket decision + evidence class) ────────────────────
@@ -542,6 +802,8 @@ export interface EligibleCandidateV2 {
   occurrences: number;
   fdcRef: { fdc_id: string; description?: string; data_type: PreferredDataType; match_method?: string };
   evidenceClass: EvidenceClass;
+  /** jump-1778 P2: the dictionaryLookup() cascade tier that resolved this canonical key ("exact" when it came from extractProductKey's own inline canonicalize() call, one of the other CascadeMethod values when the cascade's own tiers were needed). Undefined only when classifyResolvedKey is called without a tier (test-only convenience). */
+  resolutionTier?: CascadeMethod;
 }
 
 export interface ExcludedCandidateV2 {
@@ -558,18 +820,25 @@ export type ClassifyResolvedResult = { kind: "eligible"; candidate: EligibleCand
  * three-way split as v1's classifyName (non_preferred_type kept DISTINCT
  * from no_ref — a jump-1778 fix-pass finding on v1, preserved here).
  * evidence_class for eligible rows is classifyEvidence(), IMPORTED from v1
- * unchanged (same pin-binding guard).
+ * unchanged (same pin-binding guard). `tier` (jump-1778 P2, optional —
+ * callers that don't care, e.g. existing unit tests, may omit it) is the
+ * dictionaryLookup() cascade tier that resolved `canonicalKey`; when
+ * present it's recorded on the eligible candidate AND folded into the
+ * excluded reason string, satisfying the spec DONE WHEN "records WHICH tier
+ * resolved each newly-eligible name."
  */
 export function classifyResolvedKey(
   canonicalKey: string,
   occurrences: number,
   dict: Dictionary,
   pins: FdcPins,
-  rulings: IdentityRulings
+  rulings: IdentityRulings,
+  tier?: CascadeMethod
 ): ClassifyResolvedResult {
   const entry = dict[canonicalKey];
   const fdcRef = entry?.fdc_ref;
   const displayName = entry?.product_name ?? canonicalKey;
+  const tierSuffix = tier ? ` [cascade tier: ${tier}]` : "";
 
   if (!fdcRef || !fdcRef.fdc_id) {
     return {
@@ -578,7 +847,7 @@ export function classifyResolvedKey(
         name: displayName,
         bucket: "no_ref",
         occurrences,
-        reason: `Resolved to canonical dictionary entry "${canonicalKey}" (${occurrences} distinct recipe(s)) but it carries no fdc_ref.`,
+        reason: `Resolved to canonical dictionary entry "${canonicalKey}" (${occurrences} distinct recipe(s)) but it carries no fdc_ref.${tierSuffix}`,
       },
     };
   }
@@ -591,7 +860,7 @@ export function classifyResolvedKey(
         name: displayName,
         bucket: "non_preferred_type",
         occurrences,
-        reason: `Resolved to canonical dictionary entry "${canonicalKey}" (${occurrences} distinct recipe(s)) but its fdc_ref.data_type ("${dataType}") is not one of Foundation | SR Legacy | Survey (FNDDS) — HAS an fdc_ref, so this is distinct from no_ref.`,
+        reason: `Resolved to canonical dictionary entry "${canonicalKey}" (${occurrences} distinct recipe(s)) but its fdc_ref.data_type ("${dataType}") is not one of Foundation | SR Legacy | Survey (FNDDS) — HAS an fdc_ref, so this is distinct from no_ref.${tierSuffix}`,
       },
     };
   }
@@ -605,6 +874,7 @@ export function classifyResolvedKey(
       occurrences,
       fdcRef: { fdc_id: fdcRef.fdc_id, description: fdcRef.description, data_type: dataType as PreferredDataType, match_method: fdcRef.match_method },
       evidenceClass,
+      resolutionTier: tier,
     },
   };
 }
@@ -614,7 +884,7 @@ export function unresolvedToExcluded(rawKey: string, occurrences: number): Exclu
     name: rawKey,
     bucket: "unresolved",
     occurrences,
-    reason: `extractProductKey resolved to "${rawKey}", which has no matching dictionary entry (name-index + literal-key miss) — parser-tail, not a dictionary identity gap.`,
+    reason: `extractProductKey resolved to "${rawKey}", which dictionaryLookup's full cascade (exact/plural/prep-strip/drop-last/or-split) still could not match to any dictionary entry — parser-tail, not a dictionary identity gap.`,
   };
 }
 
@@ -698,23 +968,28 @@ const DERIVATION_RULE_TEXT =
   "(data/shared-recipes.json at a pinned commit — 935 recipes, ~11,873 raw ingredient lines). Each ingredient " +
   "line is run through extractProductKey (a faithful port of recipe-app's scripts/lib/ingredient-parser.js " +
   "function of the same name — quantity/unit/prep stripping, container-size folding, then an internal " +
-  "canonicalize() call against the base.json-only name index), and the resulting key is looked up directly " +
-  "against the dictionary (dict[key]) to fetch a canonical entry — the 'exact' resolution tier only, NOT the " +
-  "full production dictionaryLookup() cascade (prep-word stripping beyond extractProductKey's own inline strip, " +
-  "drop-last-word, or-split, the ingredient cache, or the LLM fallback are all out of scope here). FREQUENCY is " +
-  "the count of DISTINCT recipes each canonical entry (or, for unresolved lines, each raw extracted key) " +
-  "appears in — a recipe using the same entry twice contributes one occurrence, not two. Eligible entries " +
-  "(resolved, have an fdc_ref, preferred data_type) rank by occurrences DESC / product_name ASC and are cut to " +
-  "the top --target-n (default 1,000; ALL eligible entries are kept if fewer exist). Names that fail resolution " +
-  "entirely (unresolved — parser-tail), resolve to an entry with no fdc_ref (no_ref), or resolve to an entry " +
-  "whose fdc_ref.data_type isn't a preferred type (non_preferred_type — distinct from no_ref) are EXCLUDED " +
-  "(never scored) and recorded with a reason for honest coverage reporting. evidence_class is IMPORTED " +
-  "unchanged from the v1 assembler (human_pin / human_ruling / automated_screened, pin-binding guarded). Every " +
-  "case additionally carries labelProvenance: 'dictionary-candidate-unverified' — these are CANDIDATE labels " +
-  "for the SEPARATE, later independent-judge + human-audit ground-truth pass (spec " +
-  "spec_findfood_representative_eval_v1_2026-07-19.md 'v2 GROUND TRUTH'), NOT final ratified identities. This " +
-  "is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app repo at runtime; only this assembly " +
-  "script does, and only at assembly time.";
+  "canonicalize() call against the base.json-only name index), and the resulting key is run through the FULL " +
+  "production dictionaryLookup() cascade (jump-1778 P2 — a faithful port of recipe-app's own second resolution " +
+  "stage: exact,literalOnly -> plural -es/-s/+s -> SAFE_PREP_WORDS stripping, most-specific-match-wins across the " +
+  "whole safe-prefix chain -> drop-last-word -> or-split, three sub-stages: direct/shorten/front-drop — matching " +
+  "production's resolveIngredientLine() = extractProductKey() + dictionaryLookup(), MINUS the MISS-ONLY colon- " +
+  "artifact fallback, the ingredient cache, and the LLM fallback, all of which stay out of scope). FREQUENCY is " +
+  "the count of DISTINCT recipes each canonical entry (the cascade's own matchedKey on a hit — or, for unresolved " +
+  "lines, each raw extracted key) appears in — a recipe using the same entry twice contributes one occurrence, " +
+  "not two. Eligible entries (resolved, have an fdc_ref, preferred data_type) rank by occurrences DESC / " +
+  "product_name ASC and are cut to the top --target-n (default 1,000; ALL eligible entries are kept if fewer " +
+  "exist). Names that fail resolution entirely even after the full cascade (unresolved — parser-tail), resolve " +
+  "to an entry with no fdc_ref (no_ref), or resolve to an entry whose fdc_ref.data_type isn't a preferred type " +
+  "(non_preferred_type — distinct from no_ref) are EXCLUDED (never scored) and recorded with a reason (which " +
+  "cascade tier resolved it, for eligible/no_ref/non_preferred_type rows) for honest coverage reporting. " +
+  "evidence_class is IMPORTED unchanged from the v1 assembler (human_pin / human_ruling / automated_screened, " +
+  "pin-binding guarded) — an orthogonal concept from the cascade tier: evidence_class is about HUMAN " +
+  "ADJUDICATION of the dictionary-entry-to-FDC-record identity, the cascade tier is about HOW the corpus text " +
+  "resolved to that dictionary entry in the first place. Every case additionally carries labelProvenance: " +
+  "'dictionary-candidate-unverified' — these are CANDIDATE labels for the SEPARATE, later independent-judge + " +
+  "human-audit ground-truth pass (spec spec_findfood_representative_eval_v1_2026-07-19.md 'v2 GROUND TRUTH'), " +
+  "NOT final ratified identities. This is a ONE-TIME SNAPSHOT — the eval harness never re-reads the recipe-app " +
+  "repo at runtime; only this assembly script does, and only at assembly time.";
 
 export interface BuildInputV2 {
   recipes: RecipeCorpusEntry[];
@@ -747,6 +1022,8 @@ export interface BuildSummaryV2 {
   weightedNonPreferredType: number;
   weightedUnresolved: number;
   evidenceClassCounts: Record<EvidenceClass, number>;
+  /** jump-1778 P2: count of ELIGIBLE entries (total pool, pre-target-N-cutoff) per dictionaryLookup() cascade tier — "exact" is what an exact-tier-only assembler would already have found; every other key is "newly eligible" that tier contributes. */
+  perTierEligibleCounts: Record<string, number>;
   nameDedupDropped: number;
   topFrequencyHead: Array<{ name: string; occurrences: number }>;
 }
@@ -770,7 +1047,7 @@ export function buildFixtureV2(input: BuildInputV2): BuildOutputV2 {
 
   const tagged: TaggedCandidate[] = [];
   for (const [key, occurrences] of agg.resolvedKeyRecipeCount) {
-    const result = classifyResolvedKey(key, occurrences, input.dict, input.pins, input.rulings);
+    const result = classifyResolvedKey(key, occurrences, input.dict, input.pins, input.rulings, agg.resolvedKeyTier.get(key));
     if (result.kind === "eligible") {
       tagged.push({ name: result.candidate.productName, occurrences, priority: 0, ref: { kind: "eligible", c: result.candidate } });
     } else {
@@ -791,7 +1068,12 @@ export function buildFixtureV2(input: BuildInputV2): BuildOutputV2 {
     name: c.productName,
     kind: "positive",
     expected: { fdcId: Number(c.fdcRef.fdc_id), description: c.fdcRef.description ?? c.productName, dataType: c.fdcRef.data_type },
-    reason: `Corpus-frequency battery: canonical entry "${c.canonicalKey}" (product_name "${c.productName}") appears in ${c.occurrences} of ${input.recipes.length} recipes; match_method "${c.fdcRef.match_method ?? "?"}".`,
+    // jump-1778 P2: "[cascade tier: X]" records WHICH dictionaryLookup() tier
+    // resolved this corpus identity (spec DONE WHEN) — distinct from
+    // match_method just after it, which is the DICT ENTRY's OWN fdc_ref
+    // match method (how recipe-app matched this entry to an FDC record),
+    // an orthogonal, already-existing concept.
+    reason: `Corpus-frequency battery: canonical entry "${c.canonicalKey}" (product_name "${c.productName}") appears in ${c.occurrences} of ${input.recipes.length} recipes; match_method "${c.fdcRef.match_method ?? "?"}". [cascade tier: ${c.resolutionTier ?? "unknown"}]`,
     evidenceClass: c.evidenceClass,
     expectedSource: "dictionary-ratified",
     labelProvenance: "dictionary-candidate-unverified",
@@ -806,6 +1088,17 @@ export function buildFixtureV2(input: BuildInputV2): BuildOutputV2 {
 
   const evidenceClassCounts: Record<EvidenceClass, number> = { human_pin: 0, human_ruling: 0, automated_screened: 0 };
   for (const c of rankedEligible) evidenceClassCounts[c.evidenceClass]++;
+
+  // jump-1778 P2: per-cascade-tier eligible counts over the TOTAL eligible
+  // pool (pre-target-N — matches how uniqueEligibleTotal/weightedEligibleTotal
+  // are computed just below), not just the selected top-N — "how many keys
+  // does each tier make eligible" is a pool-level question, independent of
+  // where the --target-n cutoff happens to fall.
+  const perTierEligibleCounts: Record<string, number> = {};
+  for (const c of dedupedEligible) {
+    const tier = c.resolutionTier ?? "unknown";
+    perTierEligibleCounts[tier] = (perTierEligibleCounts[tier] ?? 0) + 1;
+  }
 
   const noRefRows = dedupedExcluded.filter((c) => c.bucket === "no_ref");
   const nonPreferredRows = dedupedExcluded.filter((c) => c.bucket === "non_preferred_type");
@@ -886,6 +1179,7 @@ export function buildFixtureV2(input: BuildInputV2): BuildOutputV2 {
       weightedNonPreferredType,
       weightedUnresolved,
       evidenceClassCounts,
+      perTierEligibleCounts,
       nameDedupDropped: droppedCount,
       topFrequencyHead: cases.slice(0, 20).map((c) => ({ name: c.name, occurrences: c.occurrences ?? 0 })),
     },
@@ -948,6 +1242,11 @@ function main(): void {
   console.log("Evidence class counts (selected cases only):");
   for (const [cls, count] of Object.entries(summary.evidenceClassCounts)) {
     console.log(`  ${cls}: ${count}`);
+  }
+  console.log("");
+  console.log("Eligible entries by cascade tier (total pool, jump-1778 P2 — 'exact' is what an exact-tier-only assembler already found; every other tier is newly eligible this pass):");
+  for (const [tier, count] of Object.entries(summary.perTierEligibleCounts).sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${tier}: ${count}`);
   }
   console.log("");
   console.log("Top-20 frequency head:");

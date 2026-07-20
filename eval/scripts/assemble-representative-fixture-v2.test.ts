@@ -31,6 +31,14 @@
  *   committed household-representative-v2.json fixture's own schema +
  *   corpus-hash pinning + actualN/top-frequency-head sanity.
  *
+ *   jump-1778 P2 addition: dictionaryLookup()/lookupCandidate() cascade
+ *   coverage — one case per tier (plural -es/-s/+s, prep-strip incl. the
+ *   most-specific-across-the-whole-chain selection rule, drop-last-word,
+ *   or-split incl. all three sub-stages: direct/shorten/front-drop), the
+ *   QUALIFIER_ONLY_KEYS guard refusing to resolve at ANY tier (not just
+ *   extractProductKey's own inline guard), and a NEVER-strip word (e.g.
+ *   "roasted") that must NOT be treated as a safe prep word.
+ *
  * Dependencies: node:test, node:assert/strict, node:path, node:url,
  *   ./assemble-representative-fixture-v2.js (module under test),
  *   ./assemble-representative-fixture.js (v1 — read-only reuse: buildNameIndex),
@@ -51,12 +59,15 @@ import {
   canonicalize,
   classifyResolvedKey,
   dedupeCandidatesByName,
+  dictionaryLookup,
   extractProductKey,
   isQualifierOnlyKey,
   loadCorpusRecipes,
+  lookupCandidate,
   normalize,
   parseFraction,
   rankEligible,
+  SAFE_PREP_WORDS,
   unresolvedToExcluded,
   type BuildInputV2,
   type EligibleCandidateV2,
@@ -425,6 +436,164 @@ describe("extractProductKey — ported parser sanity", () => {
     assert.equal(parseFraction("1 1/2"), 1.5);
     assert.equal(parseFraction("2-3"), 3);
     assert.equal(parseFraction(null), null);
+  });
+});
+
+// ─── 7b. dictionaryLookup() cascade (jump-1778 P2) ─────────────────────────
+// Faithful port of recipe-app @ 7e681cb scripts/lib/ingredient-parser.js
+// lookupCandidate()/dictionaryLookup() — the SECOND resolution stage
+// production runs after extractProductKey's own inline canonicalize(). Every
+// case here is synthetic (a tiny purpose-built dict), proving the cascade's
+// own mechanics directly rather than depending on real corpus content.
+
+function cascadeDict(entries: Dictionary): Dictionary {
+  return entries;
+}
+
+describe("dictionaryLookup() cascade — jump-1778 P2", () => {
+  test("tier: exact (literalOnly) — a literal dict key resolves at the first tier", () => {
+    const dict = cascadeDict({ garlic: { product_name: "Garlic", names: ["garlic"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "garlic");
+    assert.deepEqual(result?.matchMeta, { method: "exact", matchedKey: "garlic" });
+  });
+
+  test("tier: plural_add_s — a singular key resolves against a dict entry known only in PLURAL form (extractProductKey's own inline canonicalize does NOT try this direction — only the full cascade does)", () => {
+    const dict = cascadeDict({ onions: { product_name: "Onions", names: ["onions"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "onion");
+    assert.deepEqual(result?.matchMeta, { method: "plural_add_s", matchedKey: "onions" });
+  });
+
+  test("tier: prep_strip — a single SAFE prep word strips and resolves", () => {
+    const dict = cascadeDict({ mushroom: { product_name: "Mushroom", names: ["mushroom"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "sliced mushroom");
+    assert.equal(result?.matchMeta.method, "prep_strip");
+    assert.equal(result?.matchMeta.matchedKey, "mushroom");
+  });
+
+  test("tier: prep_strip — MOST SPECIFIC match wins across the whole safe-prefix chain, not the first hit found (jump-1701/P1b production fix, ported faithfully)", () => {
+    // Both "sliced" and "chopped" are SAFE_PREP_WORDS, so the walk explores
+    // two candidates: stripping only "sliced" leaves "chopped red onion",
+    // which aliases to the GENERIC 1-word "onion" entry; stripping "sliced
+    // chopped" leaves "red onion", which is itself a literal 2-word dict
+    // key. The 2-word matchedKey must win over the 1-word one, even though
+    // it was found SECOND in the walk.
+    const dict = cascadeDict({
+      onion: { product_name: "Onion", names: ["onion", "chopped red onion"] },
+      "red onion": { product_name: "Red Onion", names: ["red onion"] },
+    });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "sliced chopped red onion");
+    assert.equal(result?.matchMeta.matchedKey, "red onion", "the more specific 2-word entry must win over the generic 1-word entry");
+    assert.equal(result?.matchMeta.method, "prep_strip");
+  });
+
+  test("NEVER-strip word (roasted) is not treated as a safe prep word — the cascade returns null rather than stripping it", () => {
+    const dict = cascadeDict({ "red pepper": { product_name: "Red Pepper", names: ["red pepper"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "roasted red pepper");
+    assert.equal(result, null, "roasted red pepper must NOT resolve to red pepper — roasted is a materially different product");
+  });
+
+  test("NEVER-strip words explicitly excluded from SAFE_PREP_WORDS: fresh/frozen/dried/boneless/skinless/whole/ground/cooked/uncooked/raw/canned/toasted/boiled", () => {
+    for (const word of ["fresh", "frozen", "dried", "boneless", "skinless", "whole", "ground", "cooked", "uncooked", "raw", "canned", "toasted", "boiled"]) {
+      assert.equal(SAFE_PREP_WORDS.has(word), false, `"${word}" must NOT be a safe prep word (7e681cb parity)`);
+    }
+    // freshly/softened/torn ARE safe (jump-1701 additions) — the inverse
+    // check that catches the exact staleness src/normalize.ts's cascade has.
+    for (const word of ["freshly", "softened", "torn"]) {
+      assert.equal(SAFE_PREP_WORDS.has(word), true, `"${word}" MUST be a safe prep word (jump-1701 addition, missing from src/normalize.ts's stale port)`);
+    }
+  });
+
+  test("tier: drop_last — a trailing word is dropped when nothing else resolves", () => {
+    const dict = cascadeDict({ "red pepper": { product_name: "Red Pepper", names: ["red pepper"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "red pepper flakes");
+    assert.deepEqual(result?.matchMeta, { method: "drop_last", matchedKey: "red pepper" });
+  });
+
+  test("tier: or_split — a direct alternative match", () => {
+    const dict = cascadeDict({ butter: { product_name: "Butter", names: ["butter"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "margarine or butter");
+    assert.deepEqual(result?.matchMeta, { method: "or_split", matchedKey: "butter" });
+  });
+
+  test("tier: or_split+shorten — an alternative resolves by shortening from the END", () => {
+    const dict = cascadeDict({ "chicken breast": { product_name: "Chicken Breast", names: ["chicken breast"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "chicken breast tenders or thighs");
+    assert.deepEqual(result?.matchMeta, { method: "or_split+shorten", matchedKey: "chicken breast" });
+  });
+
+  test("tier: or_split+front_drop — an alternative resolves only by dropping from the FRONT, after direct and shorten both exhaust", () => {
+    const dict = cascadeDict({ garlic: { product_name: "Garlic", names: ["garlic"] } });
+    const nameIndex = buildNameIndex(dict);
+    const result = dictionaryLookup(dict, nameIndex, "mystery paste or imported garlic");
+    assert.deepEqual(result?.matchMeta, { method: "or_split+front_drop", matchedKey: "garlic" });
+  });
+
+  test("QUALIFIER_ONLY_KEYS guard: the cascade refuses to resolve a bare qualifier word even when a poisoned literal dict entry exists — a CORRECTNESS FIX over the prior exact-tier-only assembler's raw dict[key] check", () => {
+    const dict = cascadeDict({ large: { product_name: "Poisoned Shell Entry", names: ["large"], fdc_ref: { fdc_id: "9999", data_type: "Foundation" } } });
+    const nameIndex = buildNameIndex(dict);
+    assert.equal(dictionaryLookup(dict, nameIndex, "large"), null, "a qualifier-only key must never resolve, even at the literal-exact tier");
+    // Also guarded before pluralization: a guarded singular must not resolve
+    // via a plural entry either.
+    const dict2 = cascadeDict({ larges: { product_name: "Also Poisoned", names: ["larges"] } });
+    const nameIndex2 = buildNameIndex(dict2);
+    assert.equal(dictionaryLookup(dict2, nameIndex2, "large"), null);
+  });
+
+  test("lookupCandidate literalOnly=true never falls back to the names index", () => {
+    const dict = cascadeDict({ garlic: { product_name: "Garlic", names: ["garlic", "garlic cloves"] } });
+    const nameIndex = buildNameIndex(dict);
+    assert.equal(lookupCandidate(dict, nameIndex, "garlic cloves", true), null, "an alias-only match must miss under literalOnly");
+    const nonLiteral = lookupCandidate(dict, nameIndex, "garlic cloves", false);
+    assert.equal(nonLiteral?.matchedKey, "garlic", "the same alias resolves once the names index is allowed");
+  });
+
+  test("returns null when nothing matches at any tier", () => {
+    const dict = cascadeDict({ mushroom: { product_name: "Mushroom", names: ["mushroom"] } });
+    const nameIndex = buildNameIndex(dict);
+    assert.equal(dictionaryLookup(dict, nameIndex, "xyzzy nonfood item"), null);
+  });
+
+  test("returns null for an empty key", () => {
+    const dict = cascadeDict({});
+    const nameIndex = buildNameIndex(dict);
+    assert.equal(dictionaryLookup(dict, nameIndex, ""), null);
+  });
+});
+
+describe("aggregateCorpus — cascade tier tracking (jump-1778 P2)", () => {
+  test("a line that only resolves via a non-exact cascade tier is now counted as resolved, and its tier is recorded", () => {
+    const dict: Dictionary = { mushroom: { product_name: "Mushroom", names: ["mushroom"] } };
+    const nameIndex = buildNameIndex(dict);
+    const recipes: RecipeCorpusEntry[] = [{ id: "r1", ingredients: ["1 cup sliced mushroom"] }];
+    const agg = aggregateCorpus(recipes, dict, nameIndex);
+    assert.equal(agg.resolvedKeyRecipeCount.get("mushroom"), 1, "prep-strip must now resolve this line instead of leaving it unresolved");
+    assert.equal(agg.unresolvedKeyRecipeCount.size, 0);
+    assert.equal(agg.resolvedKeyTier.get("mushroom"), "prep_strip");
+  });
+
+  test("two phrasings of the SAME canonical entry via DIFFERENT tiers still dedupe to one occurrence within a recipe", () => {
+    const dict: Dictionary = { mushroom: { product_name: "Mushroom", names: ["mushroom"] } };
+    const nameIndex = buildNameIndex(dict);
+    const recipes: RecipeCorpusEntry[] = [{ id: "r1", ingredients: ["1 mushroom", "1 cup sliced mushroom"] }];
+    const agg = aggregateCorpus(recipes, dict, nameIndex);
+    assert.equal(agg.resolvedKeyRecipeCount.get("mushroom"), 1, "exact-tier 'mushroom' and prep-strip-tier 'sliced mushroom' must dedupe to the SAME canonical key within one recipe");
+  });
+
+  test("a qualifier-only parser-tail residue stays unresolved even when the dictionary carries a poisoned literal entry under that word", () => {
+    const dict: Dictionary = { large: { product_name: "Poisoned Shell Entry", names: ["large"] } };
+    const nameIndex = buildNameIndex(dict);
+    const recipes: RecipeCorpusEntry[] = [{ id: "r1", ingredients: ["1 cup large, unsweetened coconut flakes"] }];
+    const agg = aggregateCorpus(recipes, dict, nameIndex);
+    assert.equal(agg.resolvedKeyRecipeCount.size, 0, "the qualifier-only residue must NOT resolve to the poisoned 'large' entry");
+    assert.equal(agg.unresolvedKeyRecipeCount.get("large"), 1);
   });
 });
 
