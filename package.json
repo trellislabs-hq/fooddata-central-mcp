@@ -13,7 +13,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "node --import tsx --test tests/**/*.test.ts",
-    "test:eval": "node --import tsx --test eval/run.test.ts eval/scripts/assemble-representative-fixture-v2.test.ts",
+    "test:eval": "node --import tsx --test eval/run.test.ts eval/scripts/assemble-representative-fixture-v2.test.ts eval/scripts/assemble-dictionary-foods-fixture-v3.test.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

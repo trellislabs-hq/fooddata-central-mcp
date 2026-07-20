@@ -3,9 +3,13 @@
  * Purpose: The customer-shaped accuracy + latency measurement of find_food
  *   (src/find-food.ts), run against one of the FIXTURE_REGISTRY fixtures —
  *   "household" (the adversarial stress corpus, default, backward-compatible
- *   with pre-jump-1778 invocations) or "representative" (the household-
+ *   with pre-jump-1778 invocations), "representative" (the household-
  *   representative-v1 corpus assembled from the four-cart recipe-pack
- *   battery — see eval/scripts/assemble-representative-fixture.ts). Each
+ *   battery — see eval/scripts/assemble-representative-fixture.ts), or
+ *   "dictionary-foods" (household-dictionary-foods-v3, the 585-distinct-food
+ *   dictionary-identity frame — see
+ *   eval/scripts/assemble-dictionary-foods-fixture-v3.ts; registered with its
+ *   own cache binding, not yet exercised by any live recording run). Each
  *   fixture is bound to its OWN cache file (eval/lib/cache.js's
  *   FIXTURE_REGISTRY-implied binding) so the two corpora never share or
  *   collide on cached responses. Two modes:
@@ -115,6 +119,8 @@ export interface FixtureBinding {
 
 const REPRESENTATIVE_FIXTURE_PATH = path.join(__dirname, "fixtures", "household-representative-v1.json");
 const REPRESENTATIVE_CACHE_PATH = path.join(__dirname, "cache", "representative-search-cache.json");
+const DICTIONARY_FOODS_FIXTURE_PATH = path.join(__dirname, "fixtures", "household-dictionary-foods-v3.json");
+const DICTIONARY_FOODS_CACHE_PATH = path.join(__dirname, "cache", "dictionary-foods-search-cache.json");
 
 /**
  * Every fixture is bound to its OWN cache file (spec S8/S9's "separate
@@ -123,10 +129,16 @@ const REPRESENTATIVE_CACHE_PATH = path.join(__dirname, "cache", "representative-
  * cache. "household" is the pre-jump-1778 default and stays wired to the
  * original DEFAULT_FIXTURE_PATH/DEFAULT_CACHE_PATH for backward
  * compatibility with existing invocations that pass no --fixture at all.
+ * "dictionary-foods" (jump-1778 P3) is the household-dictionary-foods-v3
+ * frame (585 distinct FDC foods from the recipe-app dictionary, see
+ * eval/scripts/assemble-dictionary-foods-fixture-v3.ts) — registered here
+ * with its own cache-file binding ONLY; this pass performs NO live
+ * recording run (an API-spend step gated for a later, CoS-approved pass).
  */
 export const FIXTURE_REGISTRY: Readonly<Record<string, FixtureBinding>> = {
   household: { key: "household", fixturePath: DEFAULT_FIXTURE_PATH, cachePath: DEFAULT_CACHE_PATH },
   representative: { key: "representative", fixturePath: REPRESENTATIVE_FIXTURE_PATH, cachePath: REPRESENTATIVE_CACHE_PATH },
+  "dictionary-foods": { key: "dictionary-foods", fixturePath: DICTIONARY_FOODS_FIXTURE_PATH, cachePath: DICTIONARY_FOODS_CACHE_PATH },
 };
 
 export function resolveFixtureBinding(key: string): FixtureBinding {

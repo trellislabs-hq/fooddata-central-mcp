@@ -956,12 +956,24 @@ describe("fixture <-> cache binding (--fixture registry)", () => {
     assert.notEqual(binding.cachePath, DEFAULT_CACHE_PATH, "the representative fixture must never share a cache file with the household fixture");
   });
 
+  test("resolveFixtureBinding('dictionary-foods') binds the household-dictionary-foods-v3 fixture to its OWN cache file (jump-1778 P3)", () => {
+    const binding = resolveFixtureBinding("dictionary-foods");
+    assert.ok(binding.fixturePath.endsWith(path.join("fixtures", "household-dictionary-foods-v3.json")));
+    assert.ok(binding.cachePath.endsWith(path.join("cache", "dictionary-foods-search-cache.json")));
+    assert.notEqual(binding.cachePath, DEFAULT_CACHE_PATH, "the dictionary-foods fixture must never share a cache file with the household fixture");
+    assert.notEqual(
+      binding.cachePath,
+      resolveFixtureBinding("representative").cachePath,
+      "the dictionary-foods fixture must never share a cache file with the representative fixture"
+    );
+  });
+
   test("resolveFixtureBinding throws a clear error on an unknown key", () => {
     assert.throws(() => resolveFixtureBinding("nonexistent"), /Unknown --fixture/);
   });
 
-  test("FIXTURE_REGISTRY exposes exactly household + representative", () => {
-    assert.deepEqual(new Set(Object.keys(FIXTURE_REGISTRY)), new Set(["household", "representative"]));
+  test("FIXTURE_REGISTRY exposes exactly household + representative + dictionary-foods", () => {
+    assert.deepEqual(new Set(Object.keys(FIXTURE_REGISTRY)), new Set(["household", "representative", "dictionary-foods"]));
   });
 });
 

@@ -77,7 +77,7 @@ export interface EvalCaseMeta {
   expectedSource?: string;
   /** Spec S11's actual "resolver source" per row: the dictionary entry's OWN fdc_ref.match_method (e.g. "exact" | "close" | "pinned") — how THAT identity was matched during recipe-app's dictionary-to-FDC enrichment, independent of evidenceClass (which is about human adjudication tier, not match mechanics). */
   resolverSource?: string;
-  /** Total occurrences of this name across the pack battery (within-pack duplicates included — see the fixture's own provenance for the exact rule). On household-representative-v2 rows this is instead the DISTINCT-RECIPE count (a recipe using the same canonical entry twice counts once) — see that fixture's provenance.derivationRule for the exact rule; the field name is shared, the counting rule is fixture-specific. */
+  /** Total occurrences of this name across the pack battery (within-pack duplicates included — see the fixture's own provenance for the exact rule). On household-representative-v2 rows this is instead the DISTINCT-RECIPE count (a recipe using the same canonical entry twice counts once) — see that fixture's provenance.derivationRule for the exact rule; the field name is shared, the counting rule is fixture-specific. On household-dictionary-foods-v3 rows this is the FOOD-LEVEL distinct-recipe count: the SUM of the distinct-recipe count across EVERY dictionary name (base.json entry) that resolves to this case's shared fdc_id — legitimately 0 for a real dictionary food that never appears in the pinned corpus (see `cooked` below; jump-1778 P3 is why this field is allowed to be 0 at all — see validateMeta's own comment). */
   occurrences?: number;
   /** Per-pack occurrence counts, e.g. {"pack-1": 2, "pack-3": 1}. Packs the name never appears in are simply absent (never zero-valued). Undefined on fixtures with no pack concept (e.g. household-representative-v2, assembled from the full recipe corpus rather than a four-cart battery). */
   packs?: Record<string, number>;
@@ -89,9 +89,20 @@ export interface EvalCaseMeta {
    * NOT a final ratified identity. The literal value used today is
    * "dictionary-candidate-unverified". Undefined on v1 and the adversarial
    * fixture, whose `expected` values are NOT candidates awaiting further
-   * adjudication.
+   * adjudication. household-dictionary-foods-v3 also carries this tag — the
+   * ground-truth caveat is identical (still cascade/dictionary-lineage
+   * labels, not independently human-verified).
    */
   labelProvenance?: string;
+  /**
+   * household-dictionary-foods-v3 only (jump-1778 P3): true when this food's
+   * `occurrences` (see above) is > 0 — i.e. it appears at least once in the
+   * pinned recipe corpus under ANY of its dictionary names. false means a
+   * real, distinct FDC food in the dictionary that this corpus never
+   * actually cooks — reported honestly, never dropped. Undefined on every
+   * other fixture (no "cooked" concept applies to a name-resolution frame).
+   */
+  cooked?: boolean;
 }
 
 export interface PositiveEvalCase extends EvalCaseMeta {
@@ -211,6 +222,44 @@ export interface EvalFixtureProvenance {
   corpusIngredientLineCount?: number;
   /** sha256 of the raw corpus file bytes at the pinned commit (content hash, NOT a git blob object hash — see dictionaryBlobSha for the git-blob-hash sibling). */
   corpusBlobSha256?: string;
+
+  /**
+   * household-dictionary-foods-v3-only provenance (jump-1778 P3) — all
+   * optional so every other fixture's provenance block is unaffected.
+   * Assembled by eval/scripts/assemble-dictionary-foods-fixture-v3.ts; NEVER
+   * hand-edited. Unlike v1/v2 (frames over recipe-corpus NAMES and their
+   * resolutions), this frame is over DISTINCT FDC FOODS in the recipe-app
+   * dictionary itself — these counts describe dict-ENTRY coverage, not
+   * name-resolution coverage, so they intentionally do not reuse the
+   * `coverage` block above (whose fields are documented in terms of
+   * corpus-name resolution).
+   */
+  dictionaryFoodsStats?: {
+    /** Every base.json entry, preferred-ref or not (1,738 measured 2026-07-19). */
+    totalDictEntries: number;
+    /** Entries carrying an fdc_ref of a preferred data_type (Foundation | SR Legacy | Survey (FNDDS)) — pre-dedup, i.e. before collapsing cart/prep/phrasing variants into one representative per food (1,599 measured). */
+    preferredRefEntries: number;
+    /** Distinct fdc_id count among preferredRefEntries — equals cases.length (585 measured). */
+    distinctPreferredFoods: number;
+    /** preferredRefEntries - distinctPreferredFoods: cart/prep/phrasing variant entries collapsed into their food's single representative case (1,014 measured). */
+    duplicateNameEntriesCollapsed: number;
+    /** No fdc_ref at all, dictionary status "legacy" (83 measured). */
+    noRefLegacy: number;
+    /** No fdc_ref at all, dictionary status "flagged" (56 measured). */
+    noRefFlagged: number;
+    /** No fdc_ref at all, any OTHER status (0 measured on the pinned dictionary — a generic bucket kept for future data). */
+    noRefOther: number;
+    /** HAS an fdc_ref, but its data_type is not a preferred type (e.g. Branded) — 0 measured on the pinned dictionary (a generic bucket, distinct from the no-ref buckets — mirrors v1/v2's own non_preferred_type/no_ref split). */
+    nonPreferredType: number;
+    /** cases with occurrences > 0 (see EvalCaseMeta.cooked). */
+    cookedFoods: number;
+    /** cases with occurrences === 0 — a real dictionary food never cooked in this corpus, reported honestly, never dropped (~31 expected). */
+    uncookedFoods: number;
+    /** Count of fdc_id groups whose representative selection needed tie-break rung 3, 4, or the implicit rung-5 dict-key fallback — i.e. rung 1 (fewest cart_modifiers) + rung 2 (shortest product_name, token-count then char-length) alone did not leave exactly one candidate. See the assembly run's build report for the full per-fdc_id list (spot-review candidates). */
+    pastTieBreak2Count: number;
+    /** Excluded rows dropped by the defensive name-collision guard (an excluded entry's product_name collided with a case's chosen representative product_name) — 0 on the pinned dictionary; the guard exists for future data changes, see assemble-dictionary-foods-fixture-v3.ts's own header. */
+    nameCollisionDropped: number;
+  };
 }
 
 export interface EvalFixture {
@@ -235,7 +284,7 @@ const PREFERRED_DATA_TYPES = new Set<PreferredDataType>([
 const EVIDENCE_CLASSES = new Set<EvidenceClass>(["human_pin", "human_ruling", "automated_screened"]);
 
 /** Shared meta-field validation for both case kinds and (loosely) excluded rows. Pushes onto `errors`, never throws directly. */
-function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; resolverSource?: unknown; labelProvenance?: unknown; occurrences?: unknown; packs?: unknown }, errors: string[]): void {
+function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; resolverSource?: unknown; labelProvenance?: unknown; occurrences?: unknown; packs?: unknown; cooked?: unknown }, errors: string[]): void {
   if (c.evidenceClass !== undefined && !EVIDENCE_CLASSES.has(c.evidenceClass as EvidenceClass)) {
     errors.push(`${label}: evidenceClass must be one of human_pin | human_ruling | automated_screened, got ${JSON.stringify(c.evidenceClass)}`);
   }
@@ -248,8 +297,17 @@ function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSourc
   if (c.labelProvenance !== undefined && (typeof c.labelProvenance !== "string" || c.labelProvenance.trim().length === 0)) {
     errors.push(`${label}: labelProvenance must be a non-empty string when present, got ${JSON.stringify(c.labelProvenance)}`);
   }
-  if (c.occurrences !== undefined && (!Number.isInteger(c.occurrences) || (c.occurrences as number) <= 0)) {
-    errors.push(`${label}: occurrences must be a positive integer when present, got ${JSON.stringify(c.occurrences)}`);
+  // jump-1778 P3: NON-NEGATIVE, not strictly positive — household-dictionary-
+  // foods-v3 legitimately reports occurrences:0 for a real dictionary food
+  // that never appears in the pinned corpus (see EvalCaseMeta.occurrences /
+  // .cooked doc comments). v1/v2/adversarial never construct a 0-occurrence
+  // row today, so this is a pure widening: nothing that validated before
+  // stops validating now.
+  if (c.occurrences !== undefined && (!Number.isInteger(c.occurrences) || (c.occurrences as number) < 0)) {
+    errors.push(`${label}: occurrences must be a non-negative integer when present, got ${JSON.stringify(c.occurrences)}`);
+  }
+  if (c.cooked !== undefined && typeof c.cooked !== "boolean") {
+    errors.push(`${label}: cooked must be a boolean when present, got ${JSON.stringify(c.cooked)}`);
   }
   if (c.packs !== undefined) {
     if (typeof c.packs !== "object" || c.packs === null || Array.isArray(c.packs)) {
