@@ -2,10 +2,14 @@
  * Module: eval fixture loader + schema validation
  * Purpose: Load an eval fixture (household-food-eval-v1.json — the adversarial
  *   stress corpus, a one-time snapshot derived from recipe-app's Thomas-ratified
- *   FDC identity pin corpus; or household-representative-v1.json — the
+ *   FDC identity pin corpus; household-representative-v1.json — the
  *   representative-traffic corpus, assembled from the four-cart recipe-pack
- *   battery, see eval/scripts/assemble-representative-fixture.ts) and validate
- *   its shape before any case is run. Positive cases MUST carry a
+ *   battery, see eval/scripts/assemble-representative-fixture.ts; or
+ *   household-representative-v2.json — the frequency-ranked corpus-frame
+ *   fixture (top-1,000 most-recipe-frequent canonical entries across the
+ *   FULL 935-recipe corpus), see
+ *   eval/scripts/assemble-representative-fixture-v2.ts) and validate its
+ *   shape before any case is run. Positive cases MUST carry a
  *   positive-integer `expected.fdcId` — the source pins file stores fdc_id as
  *   a STRING while FdcFood.fdcId (src/fdc-client.ts) is NUMERIC, so a
  *   coercion bug upstream in a (one-time, not re-run) derivation step would
@@ -14,11 +18,16 @@
  *
  * Major Sections:
  *   - Types: EvalCaseMeta (shared representative-fixture metadata: evidence
- *     class, resolver source, occurrence/pack weighting — undefined on the
- *     adversarial fixture's cases), PositiveEvalCase, NegativeEvalCase,
- *     ExcludedEvalCase (names with no scoreable reference identity — never
- *     enters `cases`, never touches findFood(), carried for coverage
- *     reporting only), EvalFixture
+ *     class, resolver source, occurrence/pack weighting, v2's labelProvenance
+ *     — undefined on the adversarial fixture's cases), PositiveEvalCase,
+ *     NegativeEvalCase, ExcludedEvalCase (names/entries with no scoreable
+ *     reference identity — never enters `cases`, never touches findFood(),
+ *     carried for coverage reporting only; occurrences/packs stay REQUIRED,
+ *     unchanged from v1 — v2's corpus-frame excluded rows supply an explicit
+ *     empty packs:{} rather than loosening the shared type), EvalFixture
+ *     (provenance gained v2-only corpus* fields —
+ *     corpusPath/corpusRecipeCount/corpusIngredientLineCount/
+ *     corpusBlobSha256 — all optional, jump-1778 P1v2)
  *   - loadFixture() — reads + JSON.parses the committed fixture file
  *   - validateFixtureSchema() — throws a single Error listing every
  *     violation found (not just the first) so a bad derivation run is easy
@@ -68,10 +77,21 @@ export interface EvalCaseMeta {
   expectedSource?: string;
   /** Spec S11's actual "resolver source" per row: the dictionary entry's OWN fdc_ref.match_method (e.g. "exact" | "close" | "pinned") — how THAT identity was matched during recipe-app's dictionary-to-FDC enrichment, independent of evidenceClass (which is about human adjudication tier, not match mechanics). */
   resolverSource?: string;
-  /** Total occurrences of this name across the pack battery (within-pack duplicates included — see the fixture's own provenance for the exact rule). */
+  /** Total occurrences of this name across the pack battery (within-pack duplicates included — see the fixture's own provenance for the exact rule). On household-representative-v2 rows this is instead the DISTINCT-RECIPE count (a recipe using the same canonical entry twice counts once) — see that fixture's provenance.derivationRule for the exact rule; the field name is shared, the counting rule is fixture-specific. */
   occurrences?: number;
-  /** Per-pack occurrence counts, e.g. {"pack-1": 2, "pack-3": 1}. Packs the name never appears in are simply absent (never zero-valued). */
+  /** Per-pack occurrence counts, e.g. {"pack-1": 2, "pack-3": 1}. Packs the name never appears in are simply absent (never zero-valued). Undefined on fixtures with no pack concept (e.g. household-representative-v2, assembled from the full recipe corpus rather than a four-cart battery). */
   packs?: Record<string, number>;
+  /**
+   * v2 addition (household-representative-v2 only, jump-1778 P1v2): marks a
+   * case's `expected` as a CANDIDATE label awaiting the separate, later
+   * independent-judge + human-audit ground-truth pass (spec
+   * spec_findfood_representative_eval_v1_2026-07-19.md "v2 GROUND TRUTH") —
+   * NOT a final ratified identity. The literal value used today is
+   * "dictionary-candidate-unverified". Undefined on v1 and the adversarial
+   * fixture, whose `expected` values are NOT candidates awaiting further
+   * adjudication.
+   */
+  labelProvenance?: string;
 }
 
 export interface PositiveEvalCase extends EvalCaseMeta {
@@ -99,6 +119,15 @@ export type EvalCase = PositiveEvalCase | NegativeEvalCase;
  * Never enters `cases`, never calls findFood() — carried purely so coverage
  * denominators (spec S4: "exclusions skew toward hard names — hiding them
  * would inflate accuracy") can be printed honestly.
+ *
+ * `occurrences`/`packs` stay REQUIRED (kept identical to v1 deliberately —
+ * eval/lib/statistics.ts reads both unconditionally, and loosening them to
+ * optional here would regress its own type-safety). household-representative-v2
+ * (assembled from the full recipe corpus, which has no pack concept) always
+ * supplies `occurrences` from its distinct-recipe tally and an EXPLICIT empty
+ * `packs: {}` — an honest "this row has no pack attribution" value, not a
+ * fabricated one; see that field's own doc comment ("packs the name never
+ * appears in are simply absent").
  */
 export interface ExcludedEvalCase {
   name: string;
@@ -143,12 +172,17 @@ export interface EvalFixtureProvenance {
     commitArg: string;
     /** The same commit, resolved to its full 40-hex SHA — see dictionaryCommit. */
     commitResolved: string;
-    packDir: string;
+    /** v1 (four-cart pack battery) only — undefined for a corpus-frame assembly (household-representative-v2) which has no pack directory. */
+    packDir?: string;
     recipeAppPath: string;
     /** The --date argument AS PASSED — this fixture's derivedAt. */
     date: string;
+    /** household-representative-v2 only (jump-1778 P1v2): the --target-n the ranking was cut off at (spec: "top 1,000"). */
+    targetN?: number;
+    /** household-representative-v2 only: the ACTUAL number of cases produced — equals targetN unless fewer than targetN unique entries were eligible, in which case actualN < targetN and every eligible entry is included (spec: "if fewer unique resolvable exist, take all + report actual N prominently"). */
+    actualN?: number;
   };
-  /** Coverage buckets over the 178-name universe: unresolved (names-index miss) + noRef (resolved, has NO fdc_ref at all) + nonPreferredType (resolved, HAS an fdc_ref, but its data_type isn't Foundation/SR Legacy/Survey — a DISTINCT bucket from noRef, a jump-1778 fix-pass finding caught these being silently lumped together) + eligible (scoreable, in `cases`). */
+  /** Coverage buckets over the 178-name universe: unresolved (names-index miss) + noRef (resolved, has NO fdc_ref at all) + nonPreferredType (resolved, HAS an fdc_ref, but its data_type isn't Foundation/SR Legacy/Survey — a DISTINCT bucket from noRef, a jump-1778 fix-pass finding caught these being silently lumped together) + eligible (scoreable, in `cases`). On household-representative-v2 these are corpus-wide (over ALL distinct canonical entries the corpus resolves to, not just the top-1000 selected into `cases` — see uniqueEligibleSelected/weightedEligibleSelected below for the post-cutoff subset). */
   coverage?: {
     uniqueNames: number;
     uniqueEligible: number;
@@ -157,9 +191,26 @@ export interface EvalFixtureProvenance {
     uniqueNonPreferredType: number;
     weightedOccurrences: number;
     weightedEligible: number;
+    /** household-representative-v2 only: uniqueEligible narrowed to the entries that actually made the top-N frequency cutoff (== cases.length). Equals uniqueEligible whenever the corpus has <= targetN eligible entries. */
+    uniqueEligibleSelected?: number;
+    /** household-representative-v2 only: weightedEligible (distinct-recipe-occurrence sum) narrowed to the top-N selected entries — the descriptive "how much of the eligible corpus mass the published top-N actually covers" number. */
+    weightedEligibleSelected?: number;
   };
   /** Counts of `cases` by evidenceClass — printed by the assembly script, echoed here for the README fill-in phase. */
   evidenceClassCounts?: Record<EvidenceClass, number>;
+
+  // ── household-representative-v2-only provenance (jump-1778 P1v2) — all
+  // optional so v1 and the adversarial fixture's provenance blocks are
+  // unaffected. Assembled by
+  // eval/scripts/assemble-representative-fixture-v2.ts; NEVER hand-edited.
+  /** Repo-relative path this fixture's corpus was read from, e.g. "recipe-app/data/shared-recipes.json". Read via `git show` at the pinned commit — never the working tree (the working copy is a prod-maintained, growing dev snapshot; the fixture must stay re-derivable from a fixed commit). */
+  corpusPath?: string;
+  /** Total recipe count in the corpus at the pinned commit (935 measured 2026-07-19). */
+  corpusRecipeCount?: number;
+  /** Total raw ingredient LINE count across every recipe's `ingredients` array (11,873 measured 2026-07-19) — the denominator for the corpus-wide coverage buckets, distinct from uniqueNames (which counts distinct RESOLVED-OR-NOT canonical/extracted keys, not raw lines). */
+  corpusIngredientLineCount?: number;
+  /** sha256 of the raw corpus file bytes at the pinned commit (content hash, NOT a git blob object hash — see dictionaryBlobSha for the git-blob-hash sibling). */
+  corpusBlobSha256?: string;
 }
 
 export interface EvalFixture {
@@ -184,7 +235,7 @@ const PREFERRED_DATA_TYPES = new Set<PreferredDataType>([
 const EVIDENCE_CLASSES = new Set<EvidenceClass>(["human_pin", "human_ruling", "automated_screened"]);
 
 /** Shared meta-field validation for both case kinds and (loosely) excluded rows. Pushes onto `errors`, never throws directly. */
-function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; resolverSource?: unknown; occurrences?: unknown; packs?: unknown }, errors: string[]): void {
+function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSource?: unknown; resolverSource?: unknown; labelProvenance?: unknown; occurrences?: unknown; packs?: unknown }, errors: string[]): void {
   if (c.evidenceClass !== undefined && !EVIDENCE_CLASSES.has(c.evidenceClass as EvidenceClass)) {
     errors.push(`${label}: evidenceClass must be one of human_pin | human_ruling | automated_screened, got ${JSON.stringify(c.evidenceClass)}`);
   }
@@ -193,6 +244,9 @@ function validateMeta(label: string, c: { evidenceClass?: unknown; expectedSourc
   }
   if (c.resolverSource !== undefined && (typeof c.resolverSource !== "string" || c.resolverSource.trim().length === 0)) {
     errors.push(`${label}: resolverSource must be a non-empty string when present, got ${JSON.stringify(c.resolverSource)}`);
+  }
+  if (c.labelProvenance !== undefined && (typeof c.labelProvenance !== "string" || c.labelProvenance.trim().length === 0)) {
+    errors.push(`${label}: labelProvenance must be a non-empty string when present, got ${JSON.stringify(c.labelProvenance)}`);
   }
   if (c.occurrences !== undefined && (!Number.isInteger(c.occurrences) || (c.occurrences as number) <= 0)) {
     errors.push(`${label}: occurrences must be a positive integer when present, got ${JSON.stringify(c.occurrences)}`);
