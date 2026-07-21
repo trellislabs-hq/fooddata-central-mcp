@@ -12,8 +12,9 @@
  *   - ratePassing() — applies the relevance floor (src/relevance.ts) to one
  *     search batch, rated against the loop-local query that produced it —
  *     round-1 token-overlap floor AND round-2 Rule-1 (head-in-gate) AND
- *     Rule-2 (categorical guards), AND-layered (jump-1773; all three are
- *     filter-only, never a re-ranker)
+ *     Rule-2 (categorical guards) AND round-3 (derived-product guard, dish
+ *     guard), AND-layered (jump-1773, jump-1778 P5; all five are filter-only,
+ *     never a re-ranker)
  *   - findFood() — orchestrates: normalize/alias candidates -> preferred-type
  *     search (floor-filtered per batch) -> Branded fallback (opt-in or last
  *     resort, also floor-filtered) -> dedup -> format, or an honest
@@ -24,7 +25,8 @@
  *   - ./format.ts (formatFoodSummary, formatKeyNutrients)
  *   - ./normalize.ts (buildCandidateQueries)
  *   - ./relevance.ts (rateMatchQuality, MatchQuality, passesHeadInGate,
- *     passesCategoricalGuards) — the relevance floor (round-1 + round-2)
+ *     passesCategoricalGuards, passesDerivedProductGuard, passesDishGuard) —
+ *     the relevance floor (round-1 + round-2 + round-3)
  *
  * State: Stateless. Takes a `searchFoods` function as a parameter (typically
  * `client.searchFoods.bind(client)`) rather than importing FdcClient
@@ -49,12 +51,30 @@
  * candied/crystallized query families reject a contradicting description).
  * Both are reject-only; a candidate that already failed round-1 was never
  * going to reach round-2 anyway.
+ *
+ * Round-3 floor (jump-1778 P5): an engineering eval of find_food over 585
+ * real household-dictionary foods found round-1/Rule-1/Rule-2 still pass a
+ * food's own manufactured derivative (oil/flour/juice/vinegar/... — 24
+ * cases, "derived_product") or a prepared dish/composite/babyfood product
+ * (47 cases, "prepared_dish", the largest single error class) when the
+ * query's identity head lands in the description's VARIETY slot (segment 2:
+ * "Fish oil, SALMON") rather than the CATEGORY slot (segment 1: "FISH OIL,
+ * salmon") the two new guards check. passesDerivedProductGuard and
+ * passesDishGuard (src/relevance.ts) are both reject-only, same as
+ * Rule-1/Rule-2.
  */
 
 import type { FdcFood, FdcSearchParams, FdcSearchResult } from "./fdc-client.js";
 import { formatFoodSummary, formatKeyNutrients } from "./format.js";
 import { buildCandidateQueries, normalize } from "./normalize.js";
-import { passesCategoricalGuards, passesHeadInGate, rateMatchQuality, type MatchQuality } from "./relevance.js";
+import {
+  passesCategoricalGuards,
+  passesDerivedProductGuard,
+  passesDishGuard,
+  passesHeadInGate,
+  rateMatchQuality,
+  type MatchQuality,
+} from "./relevance.js";
 
 export type SearchFoodsFn = (params: FdcSearchParams) => Promise<FdcSearchResult>;
 
@@ -140,19 +160,30 @@ export function dedupeByDescription(foods: FdcFood[]): FdcFood[] {
 /**
  * Apply the full relevance floor to one search batch: keep only foods that
  * pass round-1 (rateMatchQuality !== 'miss') AND round-2 Rule-1
- * (passesHeadInGate) AND round-2 Rule-2 (passesCategoricalGuards), all
- * rated against `query` — the SAME query that produced this batch
- * (loop-local), never `name` nor a different candidate. A filter, never a
- * re-ranker: survivors keep their original (FDC relevance) order. Every
- * caller (preferred-type batches and Branded batches alike) routes through
- * this one function, so both flow through the identical combined floor.
+ * (passesHeadInGate) AND round-2 Rule-2 (passesCategoricalGuards) AND
+ * round-3 (passesDerivedProductGuard, passesDishGuard), all rated against
+ * `query` — the SAME query that produced this batch (loop-local), never
+ * `name` nor a different candidate. A filter, never a re-ranker: survivors
+ * keep their original (FDC relevance) order. Every caller (preferred-type
+ * batches and Branded batches alike) routes through this one function, so
+ * both flow through the identical combined floor.
+ *
+ * Round-3 (jump-1778 P5): the engineering eval of find_food over 585 real
+ * household-dictionary foods found round-1/Rule-1/Rule-2 still let through
+ * a food's own derived byproduct (oil/flour/juice/... — 24 cases) or a
+ * prepared dish/composite/babyfood product (47 cases, the largest single
+ * error class) when the query's identity head lands in the description's
+ * VARIETY slot (segment 2) rather than the CATEGORY slot (segment 1) the
+ * two new guards check. Both are reject-only, same as Rule-1/Rule-2.
  */
 function ratePassing(foods: FdcFood[], query: string): FdcFood[] {
   return foods.filter(
     (food) =>
       rateMatchQuality(query, food.description) !== "miss" &&
       passesHeadInGate(query, food.description) &&
-      passesCategoricalGuards(query, food.description)
+      passesCategoricalGuards(query, food.description) &&
+      passesDerivedProductGuard(query, food.description) &&
+      passesDishGuard(query, food.description)
   );
 }
 

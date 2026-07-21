@@ -5,7 +5,9 @@
  *   Covers the gate/identity/exact/close boundaries the heuristic's
  *   comments document as corpus-proven bug classes: neutral-word-only
  *   overlap, the segment-1/2 identity gate, deaccenting, plural tolerance,
- *   and comma-free ALL-CAPS Branded description behavior.
+ *   and comma-free ALL-CAPS Branded description behavior. Also covers
+ *   round-3 (jump-1778 P5): passesDerivedProductGuard() and
+ *   passesDishGuard() — see those describe blocks near the end of this file.
  * Dependencies: node:test, node:assert/strict, ../src/relevance.ts
  * State: Stateless — pure function tests, no fixtures/network.
  */
@@ -25,6 +27,12 @@ import {
   ANIMAL_BASE_TERMS,
   CANDIED_FAMILY_MARKERS,
   CANDIED_CONTRADICTION_TERMS,
+  passesDerivedProductGuard,
+  passesDishGuard,
+  DERIVED_PRODUCT_HEADS,
+  DISH_HEAD_NOUNS,
+  BABYFOOD_MARKERS,
+  COMPOSITE_DISH_MARKERS,
 } from "../src/relevance.js";
 
 describe("normalizeWords()", () => {
@@ -385,4 +393,316 @@ describe("Rule-2 vocabularies — deliberate asymmetry documentation", () => {
     assert.ok(CANDIED_FAMILY_MARKERS.some((m) => m.join(" ") === "crystallized"));
     assert.ok(CANDIED_CONTRADICTION_TERMS.has("fresh"));
   });
+});
+
+// ─── jump-1778 P5 round-3: passesDerivedProductGuard() ─────────────────────
+// Engineering eval of find_food over 585 real household-dictionary foods
+// found the round-1/Rule-1/Rule-2 floor still passing a food's own
+// manufactured derivative (oil/flour/juice/vinegar/...) for a query naming
+// the base food itself. All corpus query/description pairs below are the
+// REAL find_food picks from that eval (guard-error-corpus.json
+// "derived_product") and the REAL find_food picks that already agreed with
+// the dictionary (a cache-replay of the unmodified pre-guard pipeline
+// against the same committed household-dictionary-foods-v3 fixture — see
+// jump-1778 P5's dispatch report for the exact extraction method; the
+// eng-report-baseline.json summary this replay reproduces only itemizes
+// non-hit rows, so the hit rows were regenerated via computeCaseRecords()
+// against the identical fixture+cache rather than hand-picked).
+
+describe("passesDerivedProductGuard() — corpus TARGET catches (real derived_product errors, jump-1778 P5)", () => {
+  const DERIVED_PRODUCT_ERROR_ROWS: Array<{ query: string; description: string }> = [
+    { query: "corn", description: "Oil, corn" },
+    { query: "almonds", description: "Almond butter" },
+    { query: "cod fillets", description: "Fish oil, cod liver" },
+    { query: "oats", description: "Oil, oat" },
+    { query: "Yukon potatoes", description: "Flour, potato" },
+    { query: "coconut", description: "Flour, coconut" },
+    { query: "peanut sauce", description: "Oil, peanut" },
+    { query: "orange", description: "Marmalade, orange" },
+    { query: "nutmeg", description: "Oil, nutmeg butter" },
+    { query: "salmon", description: "Fish oil, salmon" },
+    { query: "lemon", description: "Lemon juice from concentrate, bottled, REAL LEMON" },
+    { query: "shredded coconut", description: "Flour, coconut" },
+    { query: "kalamata olives", description: "Oil, olive, extra light" },
+    { query: "pomegranate", description: "Juice, pomegranate, from concentrate, shelf-stable" },
+    { query: "apple cider", description: "Vinegar, cider" },
+    { query: "dry mustard", description: "Oil, mustard" },
+    { query: "salmon fillets", description: "Fish oil, salmon" },
+    { query: "red wine", description: "Vinegar, red wine" },
+    { query: "barley", description: "Flour, barley" },
+    { query: "quinoa", description: "Flour, quinoa" },
+    { query: "white rice", description: "Flour, rice, white, unenriched" },
+    { query: "brown rice", description: "Flour, rice, brown" },
+    { query: "peanuts", description: "Oil, peanut" },
+  ];
+
+  test(`rejects all ${DERIVED_PRODUCT_ERROR_ROWS.length} real derived_product corpus rows (>= 15 required)`, () => {
+    assert.ok(DERIVED_PRODUCT_ERROR_ROWS.length >= 15);
+    for (const { query, description } of DERIVED_PRODUCT_ERROR_ROWS) {
+      assert.equal(
+        passesDerivedProductGuard(query, description),
+        false,
+        `expected REJECT for query=${JSON.stringify(query)} desc=${JSON.stringify(description)}`
+      );
+    }
+  });
+
+  // NOT caught (documented, not a bug): "Beans, liquid from stewed kidney
+  // beans" for query "kidney beans" — segment-1 is "Beans", which names no
+  // DERIVED_PRODUCT_HEADS category; this shape (a "liquid from stewed X"
+  // trailing modifier) is a different pattern than the oil/flour/juice/...
+  // category-head class this guard targets.
+});
+
+describe("passesDerivedProductGuard() — SELF-DECLARATION exemption (mandatory)", () => {
+  test("same-word self-declaration — the query naming the exact derivative term always passes", () => {
+    assert.equal(passesDerivedProductGuard("olive oil", "Oil, olive"), true);
+    assert.equal(passesDerivedProductGuard("coconut flour", "Flour, coconut"), true);
+    assert.equal(passesDerivedProductGuard("orange juice", "Juice, orange"), true);
+    assert.equal(passesDerivedProductGuard("butter", "Butter, stick, salted"), true);
+    assert.equal(passesDerivedProductGuard("vinegar", "Vinegar, distilled"), true);
+  });
+
+  test("FAMILY-level self-declaration (deliberate broadening, corpus-verified zero-cost): the query need not use the SAME derivative word the description carries, only ANY DERIVED_PRODUCT_HEADS word — 'arrowroot starch' vs FDC's 'Arrowroot flour' is a real household-dictionary HIT", () => {
+    assert.equal(passesDerivedProductGuard("arrowroot starch", "Arrowroot flour"), true);
+  });
+
+  test("family-level self-declaration also covers a MISMATCHED pair — a query asking for 'flour' still self-declares against an 'Oil' pick (any DERIVED_PRODUCT_HEADS word suffices, not just the one the description happens to carry)", () => {
+    assert.equal(passesDerivedProductGuard("some flour product", "Oil, canola"), true);
+  });
+});
+
+describe("passesDerivedProductGuard() — no-op / independence / safety", () => {
+  test("plain, unrelated foods pass (segment-1 names no derived-product category)", () => {
+    assert.equal(passesDerivedProductGuard("salmon", "Salmon, raw"), true);
+    assert.equal(passesDerivedProductGuard("ground beef", "Beef, ground, raw"), true);
+  });
+
+  test("no description no-ops (passes)", () => {
+    assert.equal(passesDerivedProductGuard("salmon", undefined), true);
+    assert.equal(passesDerivedProductGuard("salmon", null), true);
+    assert.equal(passesDerivedProductGuard("salmon", ""), true);
+  });
+
+  test("a prepared_dish-only row (no derived-product head in segment 1) is NOT rejected by this guard — independence from passesDishGuard", () => {
+    assert.equal(passesDerivedProductGuard("turkey", "Bologna, turkey"), true);
+  });
+
+  test("DERIVED_PRODUCT_HEADS carries both singular and plural forms", () => {
+    assert.ok(DERIVED_PRODUCT_HEADS.has("oil"));
+    assert.ok(DERIVED_PRODUCT_HEADS.has("oils"));
+    assert.ok(DERIVED_PRODUCT_HEADS.has("jelly"));
+    assert.ok(DERIVED_PRODUCT_HEADS.has("jellies"));
+  });
+});
+
+// ─── jump-1778 P5 round-3: passesDishGuard() ────────────────────────────────
+// 47/585 cases (the LARGEST single error class in the eval) were a prepared
+// dish, composite, or babyfood/toddler product returned for a plain
+// base-ingredient query. Corpus rows below are the REAL find_food picks from
+// that eval (guard-error-corpus.json "prepared_dish").
+
+describe("passesDishGuard() — corpus TARGET catches (real prepared_dish errors, jump-1778 P5)", () => {
+  const PREPARED_DISH_ERROR_ROWS: Array<{ query: string; description: string }> = [
+    { query: "apple", description: "Croissants, apple" },
+    { query: "macaroni", description: "Babyfood, macaroni and cheese, toddler" },
+    { query: "tamarind puree", description: "Candies, Tamarind" },
+    { query: "sweet potato puree", description: "Sweet potato tots" },
+    { query: "canned corn", description: "Succotash, (corn and limas), canned, with cream style corn" },
+    { query: "granola", description: "Cookie, granola" },
+    { query: "turkey", description: "Bologna, turkey" },
+    { query: "wine", description: "Wine spritzer" },
+    { query: "mixed berries", description: "Babyfood, banana with mixed berries, strained" },
+    { query: "chocolate buttercream", description: "CHOCOLATE WITH CHOCOLATE BUTTERCREAM CAKE, CHOCOLATE BUTTERCREAM" },
+    { query: "cooked chicken", description: "Bratwurst, chicken, cooked" },
+    { query: "green apple", description: "Croissants, apple" },
+    { query: "peaches", description: "Pie, peach" },
+    { query: "frozen corn", description: "Corn dogs, frozen, prepared" },
+    { query: "shrimp", description: "Shrimp cocktail" },
+    { query: "hamburger buns", description: "Hamburger, on white bun, 1 small patty" },
+    { query: "chocolate chips", description: "Cookies, chocolate chip, dry mix" },
+    { query: "port wine", description: "Wine spritzer" },
+    { query: "sweet potatoes", description: "Sweet potato tots" },
+    { query: "buttercream frosting", description: "Cake, cherry fudge with chocolate frosting" },
+    { query: "mint", description: "Candy, mint" },
+    { query: "black olives", description: "Olive loaf, pork" },
+    { query: "whole wheat hamburger buns", description: "Hamburger, on wheat bun, 1 large patty" },
+    { query: "Mexican-style corn", description: "Succotash, (corn and limas), canned, with cream style corn" },
+  ];
+
+  test(`rejects all ${PREPARED_DISH_ERROR_ROWS.length} real prepared_dish corpus rows (>= 20 required)`, () => {
+    assert.ok(PREPARED_DISH_ERROR_ROWS.length >= 20);
+    for (const { query, description } of PREPARED_DISH_ERROR_ROWS) {
+      assert.equal(
+        passesDishGuard(query, description),
+        false,
+        `expected REJECT for query=${JSON.stringify(query)} desc=${JSON.stringify(description)}`
+      );
+    }
+  });
+
+  // NOT caught (documented, not a bug — spec instructs conservatism): bare
+  // modifier+food compounds with no explicit marker word, e.g. "steak" ->
+  // "Pepper steak" or "rice" -> "Dirty rice". No marker vocabulary
+  // distinguishes those from a legitimate "Grilled chicken"/"Basmati rice"
+  // without a dish-name gazetteer; round-4 backlog.
+});
+
+describe("passesDishGuard() — SELF-DECLARATION exemption (mandatory)", () => {
+  test("dish head-noun: a query naming the same dish word always passes", () => {
+    assert.equal(passesDishGuard("shrimp cocktail", "Shrimp cocktail"), true);
+    assert.equal(passesDishGuard("bologna", "Bologna, turkey"), true);
+    assert.equal(passesDishGuard("cake", "Cake, yellow, commercially prepared, with icing or filling"), true);
+  });
+
+  test("babyfood/toddler/junior/strained/stage: a query naming the same marker passes", () => {
+    assert.equal(passesDishGuard("strained peas babyfood", "Babyfood, peas, strained"), true);
+    assert.equal(passesDishGuard("toddler mixed vegetables", "Babyfood, vegetables, toddler"), true);
+  });
+
+  test("composite 'on ... bun': a query naming both 'on' and 'bun' passes", () => {
+    assert.equal(passesDishGuard("hot dog on a bun", "Hamburger, on white bun, 1 small patty"), true);
+  });
+
+  test("no dish/babyfood/composite marker anywhere: an unrelated description passes through untouched (guard doesn't fire)", () => {
+    assert.equal(passesDishGuard("chicken breast", "Chicken, broiler or fryers, breast, skinless, boneless, raw"), true);
+  });
+});
+
+describe("passesDishGuard() — segment-1 length cap (MAX_CATEGORY_SEGMENT_WORDS)", () => {
+  test("a long, comma-free free-text segment-1 that merely CONTAINS a dish word as its first token is NOT treated as a self-declared category (the exact adversarial-fixture regression this cap fixes: 'chang's pad thai dried rice sticks' vs a Survey/FNDDS sentence beginning with 'Cake')", () => {
+    assert.equal(
+      passesDishGuard("chang's pad thai dried rice stick", "Cake made with glutinous rice and dried beans"),
+      true
+    );
+  });
+
+  test("a genuinely short dish category label still rejects even at 5 words (the corpus's own 'chocolate buttercream' catch, unaffected by the cap)", () => {
+    assert.equal(
+      passesDishGuard("chocolate buttercream", "CHOCOLATE WITH CHOCOLATE BUTTERCREAM CAKE, CHOCOLATE BUTTERCREAM"),
+      false
+    );
+  });
+});
+
+describe("passesDishGuard() — no-op / independence / safety", () => {
+  test("plain, unrelated foods pass (no dish/babyfood/composite marker in the description)", () => {
+    assert.equal(passesDishGuard("salmon", "Salmon, raw"), true);
+    assert.equal(passesDishGuard("ground beef", "Beef, ground, raw"), true);
+  });
+
+  test("no description no-ops (passes)", () => {
+    assert.equal(passesDishGuard("turkey", undefined), true);
+    assert.equal(passesDishGuard("turkey", null), true);
+    assert.equal(passesDishGuard("turkey", ""), true);
+  });
+
+  test("a derived-product-only row (no dish/babyfood/composite marker) is NOT rejected by this guard — independence from passesDerivedProductGuard", () => {
+    assert.equal(passesDishGuard("salmon", "Fish oil, salmon"), true);
+  });
+
+  test("marker vocabularies are exported with the documented shapes", () => {
+    assert.ok(DISH_HEAD_NOUNS.has("candy"));
+    assert.ok(DISH_HEAD_NOUNS.has("candies"));
+    assert.ok(BABYFOOD_MARKERS.has("babyfood"));
+    assert.ok(BABYFOOD_MARKERS.has("stage"));
+    assert.ok(COMPOSITE_DISH_MARKERS.some((m) => m.join(" ") === "on bun"));
+    assert.ok(COMPOSITE_DISH_MARKERS.some((m) => m.join(" ") === "corn dog"));
+  });
+});
+
+describe("round-3 guards — INDEPENDENCE (a derived-product row need not trip the dish guard and vice-versa)", () => {
+  test("'salmon' -> 'Fish oil, salmon' trips ONLY the derived-product guard", () => {
+    assert.equal(passesDerivedProductGuard("salmon", "Fish oil, salmon"), false);
+    assert.equal(passesDishGuard("salmon", "Fish oil, salmon"), true);
+  });
+
+  test("'turkey' -> 'Bologna, turkey' trips ONLY the dish guard", () => {
+    assert.equal(passesDerivedProductGuard("turkey", "Bologna, turkey"), true);
+    assert.equal(passesDishGuard("turkey", "Bologna, turkey"), false);
+  });
+
+  test("a plain food with neither marker passes both guards", () => {
+    assert.equal(passesDerivedProductGuard("salmon", "Salmon, raw"), true);
+    assert.equal(passesDishGuard("salmon", "Salmon, raw"), true);
+    assert.equal(passesDerivedProductGuard("ground beef", "Beef, ground, raw"), true);
+    assert.equal(passesDishGuard("ground beef", "Beef, ground, raw"), true);
+  });
+});
+
+// ─── jump-1778 P5 round-3: REGRESSION SAFETY — real HIT descriptions ───────
+// Every pair below is a REAL find_food pick that already agreed with the
+// recipe-app dictionary candidate (a "hit" in eval terminology) before this
+// round-3 change — reconstructed via a cache replay of the unmodified
+// pre-guard pipeline (computeCaseRecords(), eval/scripts/
+// dictionary-foods-engineering-report.ts) against the exact committed
+// household-dictionary-foods-v3 fixture + cache the jump-1778 eval used.
+// eng-report-baseline.json's own summary.buckets.hit count (334) matches
+// this replay's hit count exactly, confirming the same underlying corpus.
+// Every one of these MUST still pass BOTH new guards — a false reject here
+// would turn a currently-correct answer into an honest-refusal regression.
+describe("round-3 guards — REGRESSION SAFETY (real HIT descriptions, jump-1778 P5 baseline replay)", () => {
+  const REAL_HIT_ROWS: Array<{ query: string; description: string }> = [
+    { query: "Black Forest Ham", description: "Lunchmeat, ham, black forest, sliced" },
+    { query: "Brussels sprouts", description: "Brussels sprouts, raw" },
+    { query: "Caesar dressing", description: "Salad dressing, caesar dressing, regular" },
+    { query: "Canadian bacon", description: "Canadian bacon, unprepared" },
+    { query: "Cotija cheese", description: "Cheese, cotija, solid" },
+    { query: "Dijon mustard", description: "Mustard, prepared, yellow" },
+    { query: "English muffins", description: "Muffins, English, wheat" },
+    { query: "Italian sausage", description: "Sausage, Italian, pork, mild, cooked, pan-fried" },
+    { query: "Italian turkey sausage", description: "Sausage, Italian, turkey, smoked" },
+    { query: "Merlot wine", description: "Alcoholic Beverage, wine, table, red, Merlot" },
+    { query: "Mexican blend cheese", description: "Cheese, Mexican blend" },
+    { query: "Napa cabbage", description: "Cabbage, napa, leaf, destemmed, raw" },
+    { query: "Parmesan cheese", description: "Cheese, parmesan, grated" },
+    { query: "Pecorino Romano", description: "Cheese, romano" },
+    { query: "Swiss cheese", description: "Cheese, swiss" },
+    { query: "Worcestershire sauce", description: "Sauce, worcestershire" },
+    { query: "acorn squash", description: "Squash, winter, acorn, raw" },
+    { query: "active dry yeast", description: "Leavening agents, yeast, baker's, active dry" },
+    // Derivative-family self-declared HITs (exercise the derived-product
+    // guard's self-declaration path against real data, including the
+    // family-broadened 'arrowroot starch' case):
+    { query: "all-purpose flour", description: "Flour, wheat, all-purpose, enriched, bleached" },
+    { query: "almond butter", description: "Almond butter, creamy" },
+    { query: "arrowroot starch", description: "Arrowroot flour" },
+    { query: "coconut oil", description: "Oil, coconut" },
+    { query: "lemon juice", description: "Lemon juice, raw" },
+    { query: "oat flour", description: "Flour, oat, whole grain" },
+    { query: "olive oil", description: "Oil, olive, extra light" },
+    { query: "peanut butter", description: "Peanut butter, creamy" },
+    { query: "sesame oil", description: "Oil, sesame, salad or cooking" },
+    { query: "unsalted butter", description: "Butter, stick, unsalted" },
+    { query: "vanilla extract", description: "Vanilla extract" },
+  ];
+
+  test(`all ${REAL_HIT_ROWS.length} real HIT rows pass BOTH round-3 guards (>= 20 required)`, () => {
+    assert.ok(REAL_HIT_ROWS.length >= 20, "regression set must cover at least 20 real HIT descriptions");
+    for (const { query, description } of REAL_HIT_ROWS) {
+      assert.equal(
+        passesDerivedProductGuard(query, description),
+        true,
+        `derived-product guard falsely rejected a real HIT: query=${JSON.stringify(query)} desc=${JSON.stringify(description)}`
+      );
+      assert.equal(
+        passesDishGuard(query, description),
+        true,
+        `dish guard falsely rejected a real HIT: query=${JSON.stringify(query)} desc=${JSON.stringify(description)}`
+      );
+    }
+  });
+
+  // KNOWN ACCEPTED GAPS (documented in src/relevance.ts's own guard
+  // comments, deliberately EXCLUDED from the must-pass set above — asserting
+  // pass===true on these would be false): 'balsamic glaze' -> "Vinegar,
+  // balsamic", 'cooking spray' -> "Oil, PAM cooking spray, original"
+  // (derived-product guard); 'brownie mix' -> "Cookies, brownies, dry mix,
+  // regular", 'sprinkles' -> "Candy, sprinkles", 'mini marshmallows' ->
+  // "Candies, marshmallows", 'miniature peanut butter cups' -> "Candies,
+  // REESE'S Peanut Butter Cups", 'semi-sweet chocolate' -> "Candies, sweet
+  // chocolate" (dish guard). All 7 are real household-dictionary HITs this
+  // round-3 floor would newly reject — see the guard functions' own
+  // "KNOWN ACCEPTED GAP" comments for why no vocabulary-level fix separates
+  // them from the real error rows without reopening a hole.
 });

@@ -22,6 +22,13 @@
  *     passesCategoricalGuards() (round-2 Rule-2) — reject vegan/plant-based
  *     queries landing on an animal-derived description, and
  *     candied/crystallized queries landing on a raw/fresh description
+ *   - DERIVED_PRODUCT_HEADS / passesDerivedProductGuard() (round-3, jump-1778
+ *     P5) — reject a food's own manufactured derivative (oil/flour/juice/
+ *     vinegar/...) landing for a query naming the base food itself
+ *   - DISH_HEAD_NOUNS / BABYFOOD_MARKERS / COMPOSITE_DISH_MARKERS /
+ *     passesDishGuard() (round-3, jump-1778 P5) — reject a prepared dish,
+ *     composite, or babyfood/toddler product landing for a plain
+ *     base-ingredient query
  *
  * Dependencies: none
  * State: Stateless.
@@ -385,6 +392,227 @@ export function passesCategoricalGuards(query: string, description: string | und
     for (const term of CANDIED_CONTRADICTION_TERMS) {
       if (descWordSet.has(term)) return false;
     }
+  }
+
+  return true;
+}
+
+// ─── Round-3: derived-product guard ────────────────────────────────────────
+// jump-1778 P5 (engineering eval of find_food over the 585-food
+// household-dictionary corpus). 24/585 cases (the "derived_product" error
+// class) were a food's own manufactured/extracted BYPRODUCT returned for a
+// query naming the base food itself — "salmon" -> "Fish oil, salmon",
+// "coconut" -> "Flour, coconut", "orange" -> "Marmalade, orange". Round-1 and
+// Rule-1 both let these through: the query's identity head DOES land in
+// segment 1/2 (it's segment 2, the VARIETY slot — "salmon" is a variety of
+// "Fish oil"), so passesHeadInGate is satisfied even though the CATEGORY
+// slot (segment 1) names the wrong kind of product entirely.
+
+/**
+ * Segment-1 word-count ceiling for the round-3 head-noun checks below
+ * (derived-product AND dish). Every genuine FDC comma-taxonomy category slot
+ * in this corpus is short — 1-3 words ("Flour", "Fish oil", "Bologna",
+ * "Sweet potato tots") — even a 5-word Branded segment-1 stays a real
+ * category label ("CHOCOLATE WITH CHOCOLATE BUTTERCREAM CAKE" — a real
+ * prepared_dish corpus catch). A LONGER segment-1 means the description
+ * isn't using the comma as a category/variety divider at all — it's a
+ * comma-free (or first-comma-mid-sentence) Survey/FNDDS free-text sentence,
+ * and a head-noun word landing inside it is incidental, not a category
+ * claim. Corpus-driven: found via a live regression on the adversarial
+ * fixture — "chang's pad thai dried rice sticks" search results included
+ * "Cake made with glutinous rice and dried beans" (a 7-word, comma-free
+ * segment-1 whose FIRST word happens to be "cake"), which the dish guard
+ * was wrongly treating as a self-declared-dish category rather than the
+ * prose it is. Applying the same cap to the derived-product guard is
+ * precautionary symmetry (no known corpus case needs it there today, but
+ * the failure mode is identical by construction).
+ */
+const MAX_CATEGORY_SEGMENT_WORDS = 5;
+
+/**
+ * Category-noun vocabulary for a food's own manufactured/extracted
+ * derivative — oils, flours, juices, and similar single-ingredient
+ * byproducts that are nutritionally distinct from the base food they're
+ * made from. Both singular and plural forms are listed explicitly and
+ * checked via plain Set membership on normalized words (the same convention
+ * ANIMAL_BASE_TERMS uses above — e.g. its own "egg"/"eggs" pair — not
+ * wordInSet, whose simple +s/+es suffix tolerance doesn't cover this list's
+ * irregular plurals: 'jelly'->'jellies', 'candy'->'candies' in
+ * DISH_HEAD_NOUNS below share the same issue). Derived from the real
+ * jump-1778 P5 corpus (guard-error-corpus.json "derived_product", 24 rows) —
+ * every member here is the literal segment-1 word of an actual wrong
+ * find_food pick in that corpus.
+ */
+export const DERIVED_PRODUCT_HEADS: Set<string> = new Set([
+  "oil", "oils",
+  "flour", "flours",
+  "juice", "juices",
+  "vinegar", "vinegars",
+  "marmalade", "marmalades",
+  "jam", "jams",
+  "jelly", "jellies",
+  "meal", "meals",
+  "starch", "starches",
+  "extract", "extracts",
+  "butter", "butters",
+]);
+
+/**
+ * Reject a candidate whose description's SEGMENT-1 head (the category slot)
+ * names a derived-product form the query never asked for. Filter-only, like
+ * Rule-2 above — never upgrades a candidate, only rejects one round-1/Rule-1
+ * already let through.
+ *
+ * SELF-DECLARATION (mandatory, corpus-verified): exempt whenever the query
+ * contains ANY DERIVED_PRODUCT_HEADS word — not necessarily the SAME one the
+ * description carries. This deliberately broadens past
+ * passesCategoricalGuards' same-term pattern: 'arrowroot starch' vs FDC's
+ * "Arrowroot flour" is a real household-dictionary HIT (find_food and the
+ * dictionary candidate already agree) — arrowroot flour and arrowroot starch
+ * are the same product under two names, so requiring the literal word
+ * 'flour' in the query would falsely reject a currently-correct match.
+ * Family-level self-declaration costs nothing against the real corpus: every
+ * one of the 24 "derived_product" error rows' queries contains ZERO
+ * DERIVED_PRODUCT_HEADS words (verified directly against the corpus), so
+ * broadening same-word to same-family never reopens a hole for a real bad
+ * match.
+ *
+ * KNOWN ACCEPTED GAP (documented, not fixed — mirrors passesHeadInGate's
+ * spring-mix gap above): 'balsamic glaze' -> "Vinegar, balsamic" and
+ * 'cooking spray' -> "Oil, PAM cooking spray, original" are both real
+ * household-dictionary HITS this guard rejects (neither query contains any
+ * DERIVED_PRODUCT_HEADS word, yet both are the correct/only practical FDC
+ * match — no separate "glaze" or "spray" entry exists in FDC). No
+ * formulation over the corpus-derived vocabulary distinguishes these two
+ * from the real oil/flour/juice mismatches without reopening a hole for them
+ * (e.g. treating 'spray' or 'glaze' as family words would also exempt
+ * unrelated bad matches carrying those words) — round-4 backlog if this
+ * proves costly in practice.
+ */
+export function passesDerivedProductGuard(query: string, description: string | undefined | null): boolean {
+  if (!description) return true; // no description: round-1's own miss-on-no-description already governs
+
+  const seg1Words = normalizeWords(description.split(",")[0] || "");
+  if (seg1Words.length > MAX_CATEGORY_SEGMENT_WORDS) return true; // too long to be a genuine category slot — prose, not a taxonomy head
+
+  const seg1Set = new Set(seg1Words);
+  const hasDerivedHead = [...DERIVED_PRODUCT_HEADS].some((h) => seg1Set.has(h));
+  if (!hasDerivedHead) return true; // no-op: segment-1 doesn't name a derived-product category
+
+  const queryWords = new Set(normalizeWords(query));
+  return [...DERIVED_PRODUCT_HEADS].some((h) => queryWords.has(h));
+}
+
+// ─── Round-3: dish / composite guard ───────────────────────────────────────
+// jump-1778 P5. 47/585 cases (the LARGEST single error class,
+// "prepared_dish") were a prepared DISH, composite, or babyfood/toddler
+// product returned for a query naming a plain base ingredient — "steak" ->
+// "Pepper steak", "Oreos" -> "McFLURRY with OREO cookies", "turkey" ->
+// "Bologna, turkey". Same root cause as the derived-product guard above: the
+// query's identity head lands in segment 2 (the variety slot of a DISH, not
+// a plain food), so passesHeadInGate lets it through.
+
+/** Dish/confection category-noun heads — checked against description segment 1 (the category slot), same convention as DERIVED_PRODUCT_HEADS. */
+export const DISH_HEAD_NOUNS: Set<string> = new Set([
+  "pie", "pies",
+  "cake", "cakes",
+  "cookie", "cookies",
+  "croissant", "croissants",
+  "cocktail", "cocktails",
+  "succotash",
+  "spritzer", "spritzers",
+  "candy", "candies",
+  "bologna",
+  "bratwurst",
+  "loaf", "loaves",
+  "tots",
+]);
+
+/**
+ * Babyfood/toddler-food markers — checked ANYWHERE in the description (not
+ * just segment 1), since these commonly trail in a later segment: "Babyfood,
+ * banana with mixed berries, STRAINED", "Baby Toddler sweet potatoes, STAGE
+ * 1".
+ */
+export const BABYFOOD_MARKERS: Set<string> = new Set(["babyfood", "toddler", "junior", "strained", "stage"]);
+
+/**
+ * Composite/assembled-dish token pairs — order-independent (same
+ * marker-array shape as VEGAN_FAMILY_MARKERS/CANDIED_FAMILY_MARKERS above,
+ * reused via queryHasMarker()), checked against the FULL description since
+ * these phrases land past segment 1: "Hamburger, ON WHITE BUN, 1 small
+ * patty" (bun in segment 2), "CORN DOGs, frozen, prepared" (spans segment 1
+ * itself).
+ */
+export const COMPOSITE_DISH_MARKERS: string[][] = [
+  ["on", "bun"],
+  ["on", "buns"],
+  ["corn", "dog"],
+  ["corn", "dogs"],
+];
+
+/**
+ * Reject a candidate whose description signals a prepared dish, composite,
+ * or babyfood/toddler product the query (a plain base-ingredient name) never
+ * asked for. Filter-only, like the guards above.
+ *
+ * Deliberately CONSERVATIVE (spec instruction — a false reject costs a
+ * correct answer): only the three explicit, corpus-derived signal families
+ * below trigger a reject. A bare modifier+food compound with no marker word
+ * ("Pepper steak" for query "steak", "Dirty rice" for query "rice") is NOT
+ * caught here — round-4 backlog; no marker vocabulary separates those from a
+ * legitimate "Grilled chicken" or "Basmati rice" without a dish-name
+ * gazetteer, and guessing wrong there is exactly the failure mode this
+ * module exists to avoid.
+ *
+ * SELF-DECLARATION (mandatory): a query naming the SAME marker the
+ * description carries always passes — 'shrimp cocktail' vs "Shrimp
+ * cocktail", 'bologna' vs "Bologna, turkey", 'cake' vs "Cake, ...".
+ *
+ * KNOWN ACCEPTED GAP (documented, not fixed): FDC's "Candies"/"Cookies"
+ * segment-1 category is ALSO USDA's actual, only entry for several
+ * legitimately candy/cookie-classified snack foods — 'sprinkles' ->
+ * "Candy, sprinkles", 'mini marshmallows' -> "Candies, marshmallows",
+ * 'miniature peanut butter cups' -> "Candies, REESE'S Peanut Butter Cups",
+ * 'semi-sweet chocolate' -> "Candies, sweet chocolate", and 'brownie mix' ->
+ * "Cookies, brownies, dry mix, regular" are all real household-dictionary
+ * HITS this guard rejects under strict same-word self-declaration. Unlike
+ * the derived-product guard's arrowroot case, family-broadening doesn't
+ * rescue these (none of the five queries contains ANY DISH_HEAD_NOUNS word),
+ * and candy/candies is itself a required catch for real errors ('tamarind
+ * puree' -> "Candies, Tamarind", 'mint' -> "Candy, mint") — no
+ * vocabulary-level fix separates the two groups. Round-4 backlog.
+ */
+export function passesDishGuard(query: string, description: string | undefined | null): boolean {
+  if (!description) return true; // no description: round-1's own miss-on-no-description already governs
+
+  const queryWords = normalizeWords(query);
+  const querySet = new Set(queryWords);
+  const seg1Words = normalizeWords(description.split(",")[0] || "");
+  const seg1Set = new Set(seg1Words);
+  const descWords = normalizeWords(description);
+  const descSet = new Set(descWords);
+
+  // Dish head-noun: segment-1 (the category slot) names a dish/confection.
+  // Skipped when segment-1 is too long to be a genuine category slot — see
+  // MAX_CATEGORY_SEGMENT_WORDS's own comment (the "Cake made with glutinous
+  // rice and dried beans" false trigger this cap exists to fix).
+  if (seg1Words.length <= MAX_CATEGORY_SEGMENT_WORDS) {
+    const presentHeadNouns = [...DISH_HEAD_NOUNS].filter((h) => seg1Set.has(h));
+    if (presentHeadNouns.length > 0 && !presentHeadNouns.some((h) => querySet.has(h))) {
+      return false;
+    }
+  }
+
+  // Babyfood/toddler/junior/strained/stage.
+  const presentBaby = [...BABYFOOD_MARKERS].filter((m) => descSet.has(m));
+  if (presentBaby.length > 0 && !presentBaby.some((m) => querySet.has(m))) {
+    return false;
+  }
+
+  // Composite/assembled-dish phrases.
+  if (queryHasMarker(descWords, COMPOSITE_DISH_MARKERS) && !queryHasMarker(queryWords, COMPOSITE_DISH_MARKERS)) {
+    return false;
   }
 
   return true;
