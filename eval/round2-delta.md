@@ -1,5 +1,21 @@
 # find_food round-2 relevance floor — delta report (jump-1773)
 
+> **CORRECTION (2026-07-26).** This report's headline claim — *"all 9 honest
+> results are REFUSALS (best undefined) — zero via Branded rescue"* — is
+> **false**. The round-2 scoring counted any result with `usedBranded` as
+> "honest," and a replay audit confirmed **all 9 "honest" rows are labeled
+> Branded rescues** (e.g. "Mrs. Dash seasoning" → an actual MRS. DASH
+> Branded product, returned with the low-confidence Branded label). The true
+> refusal count (`best` undefined) was and is **0 of 31**. The measured
+> improvement is real — confident bluffs fell 28 → 22, and each conversion
+> is honestly labeled in the tool output — but the honest-outcome class is
+> `labeled_branded_fallback`, not `refusal`. The eval harness has since been
+> split into three scored outcomes (`refusal` / `labeled_branded_fallback` /
+> `confident_wrong`) so this distinction is printed by the public replay
+> rather than asserted in prose. Historical numbers below are preserved
+> unedited under the old scoring; the specific false assertion is
+> annotated inline where it appears.
+
 Status: **COMPLETE — measured live 2026-07-18.** The Builder's two structural findings
 (preserved below as the decision record) were resolved by CoS: finding 1 by a one-time
 live recording run extending the committed cache (105 → post-round-2 coverage; replay is
@@ -18,8 +34,9 @@ falsified by the corpus — see finding 2 and the revision note in `src/relevanc
 
 Row-level: **zero baseline hits lost**; +1 near→hit promotion (`low sodium beef
 broth`); exactly one near→miss (`mixed spring greens` — the design's named accepted
-regression); **all 9 honest results are REFUSALS (best undefined)** — zero via Branded
-rescue; negative-row Branded-rescue count 0 → 0.
+regression); ~~**all 9 honest results are REFUSALS (best undefined)** — zero via Branded
+rescue; negative-row Branded-rescue count 0 → 0.~~ **[FALSE — see CORRECTION at top:
+all 9 are labeled Branded rescues; true refusals 0/31.]**
 
 Confident-wrong flips (6, by rule): `gluten free flour` + `gluten-free flour` (Rule-1
 head gate — the corpus's two EXACT-rated highest-confidence errors), `whole grain

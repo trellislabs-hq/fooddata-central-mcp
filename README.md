@@ -163,10 +163,28 @@ two separate numbers (measured 2026-07-18, round-2 floor):
 
 - **When no correct answer exists, do we say so?** 31 of the names are
   human-verified to have *no* correct match in FDC's preferred data types.
-  The only right answer is a refusal. Raw FDC behavior scores **0%** here —
-  it always bluffs. `find_food` currently refuses **29.0%** of the time
-  (up from 0% pre-floor and 9.7% after round 1), and every refusal is
-  genuine — none are rescued by lower-quality data behind your back.
+  Raw FDC behavior always bluffs here — a confident wrong food, 31 out
+  of 31. `find_food` today (round-2 floor, three-outcome scoring):
+  **22 of 31 still return a confident wrong pick · 9 of 31 return a
+  clearly-labeled Branded fallback · 0 of 31 refuse outright.** The 9
+  fallbacks are honestly labeled as lower-confidence Branded data (ask
+  for "Mrs. Dash seasoning" and you get a MRS. DASH Branded product,
+  marked as a Branded fallback). The label is the honesty — the product
+  behind it may still be a poor match, since these are names with no
+  correct answer. We no longer count a labeled fallback as a refusal.
+  Converting the remaining bluffs into genuine refusals is open,
+  unshipped work.
+
+  > **Correction (2026-07-26):** an earlier version of this section
+  > claimed a **29.0% refusal rate** with "every refusal is genuine —
+  > none are rescued by lower-quality data." That was wrong. Our scoring
+  > at the time counted any `usedBranded` result as a single "honest"
+  > outcome, and this prose then presented every honest outcome as a
+  > refusal. In fact all 9 were Branded rescues, and the true refusal
+  > count was and is **0 of 31**. The eval harness now scores the three
+  > outcomes separately (`refusal` / `labeled_branded_fallback` /
+  > `confident_wrong`), so this distinction comes from the replay output
+  > rather than our prose.
 - **When a correct answer exists, do we return exactly it?** On the other
   65 names, **12.3%** of top-1 results and **24.6%** of exposed top-4
   results match the *byte-exact human-ratified FDC ID*. This scoring is
@@ -179,12 +197,15 @@ two separate numbers (measured 2026-07-18, round-2 floor):
 **Practical guidance:** for common, plainly-named foods a confident
 `find_food` match is usually what you want. For compound or niche names —
 seasoning blends, brand names, "X of choice" — treat a confident match
-skeptically and check the alternates. When it refuses, believe it: the
-refusal is the feature.
+skeptically and check the alternates. When a result is marked as a Branded
+fallback, take that label seriously: Branded entries are
+manufacturer-submitted data, not USDA lab reference data, and the label
+means our floor had lower confidence in the match.
 
-Each release only ever tightens the floor: round 2 tripled the honest-miss
-rate with zero top-1 answers lost (cost: one top-4 alternate on one name —
-a deliberate, documented trade; see [`eval/round2-delta.md`](./eval/round2-delta.md)).
+Each release only ever tightens the floor: round 2 tripled the
+labeled-fallback rate (3 → 9 of 31) with zero top-1 answers lost (cost:
+one top-4 alternate on one name — a deliberate, documented trade; see
+[`eval/round2-delta.md`](./eval/round2-delta.md)).
 The full harness, scoring rules, per-name results, and dataset provenance
 are public in [`eval/`](./eval) — run the replay yourself; it's
 deterministic and needs no API key.
