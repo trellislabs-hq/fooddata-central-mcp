@@ -1,5 +1,20 @@
 # FoodData Central MCP Server
 
+> [!WARNING]
+> **Withdrawn (2026-07-27).** This package is deprecated on npm and delisted
+> from the MCP registry. We launched it before the identity layer met our
+> quality bar: on the 31 names in our adversarial benchmark that have no
+> correct match in FDC's preferred data types, `find_food` still returns a
+> confident wrong pick for 22 and a genuine refusal for none
+> (see [Reliability, tool by tool](#reliability-tool-by-tool) for the full,
+> honest numbers). Rather than iterate
+> on a weak foundation in public, we're rebuilding on a verified food
+> knowledge base, and we intend to relaunch under this package name if and
+> when it clears pre-defined acceptance criteria. Existing installs keep working; the raw
+> FDC passthrough tools (`search_foods`, `get_food`, `get_foods`,
+> `list_foods`) are unaffected by the identity-quality issues. The history
+> below, including our public correction of an inaccurate claim, stays as-is.
+
 An [MCP](https://modelcontextprotocol.io) server that exposes the USDA
 [FoodData Central](https://fdc.nal.usda.gov/) database — search foods, look
 up nutrient data by FDC ID, and find the canonical version of a food name

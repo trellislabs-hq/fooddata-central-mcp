@@ -1,0 +1,54 @@
+name: Registry Status
+
+# Changes the lifecycle status of our server listing on the official MCP registry
+# (registry.modelcontextprotocol.io). Used for delisting (status: deleted) and
+# restoring at relaunch (status: active). Same GitHub OIDC auth as
+# publish-mcp-registry.yml: running inside the trellislabs-hq org repo proves
+# ownership of the io.github.trellislabs-hq/* namespace.
+#
+# Deleted servers are hidden from default listings but preserved (restorable);
+# the registry never permanently removes metadata.
+#
+# 2026-07-27: added for the product withdrawal (rebuilding on a verified food
+# knowledge base). Relaunch = run this with status "active".
+
+on:
+  workflow_dispatch:
+    inputs:
+      status:
+        description: "New status for ALL versions"
+        required: true
+        type: choice
+        options:
+          - deleted
+          - deprecated
+          - active
+      message:
+        description: "Status message (must be empty when status is active)"
+        required: false
+        type: string
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for GitHub OIDC
+    steps:
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry (OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Update status (all versions)
+        env:
+          NEW_STATUS: ${{ inputs.status }}
+          STATUS_MESSAGE: ${{ inputs.message }}
+        run: |
+          if [ -n "$STATUS_MESSAGE" ]; then
+            ./mcp-publisher status --status "$NEW_STATUS" --all-versions --yes --message "$STATUS_MESSAGE" io.github.trellislabs-hq/fooddata-central-mcp
+          else
+            ./mcp-publisher status --status "$NEW_STATUS" --all-versions --yes io.github.trellislabs-hq/fooddata-central-mcp
+          fi
